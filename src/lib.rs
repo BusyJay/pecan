@@ -1,3 +1,5 @@
+#![feature(ptr_offset_from)]
+
 mod error;
 mod codec;
 

@@ -7,6 +7,18 @@ pub enum Error {
     PbOther(Box<error::Error>),
 }
 
+impl Error {
+    #[inline]
+    pub(crate) fn unexpected_eof() -> Error {
+        Error::PbIo(io::Error::new(io::ErrorKind::UnexpectedEof, ""))
+    }
+
+    #[inline]
+    pub(crate) fn invalid_data() -> Error {
+        Error::PbIo(io::Error::new(io::ErrorKind::InvalidData, ""))
+    }
+}
+
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Error {
         Error::PbIo(e)
