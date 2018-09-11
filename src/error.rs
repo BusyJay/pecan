@@ -17,6 +17,11 @@ impl Error {
     pub(crate) fn invalid_data() -> Error {
         Error::PbIo(io::Error::new(io::ErrorKind::InvalidData, ""))
     }
+
+    #[inline]
+    pub(crate) fn invalid_wired(number: u32, wired_tag: u8, actual: u8) -> Error {
+        Error::PbIo(io::Error::new(io::ErrorKind::InvalidData, format!("expect {} for field {}, but got {}", wired_tag, number, actual)))
+    }
 }
 
 impl From<io::Error> for Error {
