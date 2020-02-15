@@ -1,6 +1,8 @@
-#![feature(ptr_offset_from)]
+#![allow(dead_code)]
+#![allow(unused_macros)]
 
-mod error;
 mod codec;
+mod enumerate;
+mod error;
 
-pub use error::{Result, Error};
+pub use error::{Error, Result};

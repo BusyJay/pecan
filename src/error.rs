@@ -1,10 +1,10 @@
-use std::{io, result, error};
 use std::fmt::{self, Display, Formatter};
+use std::{error, io, result};
 
 #[derive(Debug)]
 pub enum Error {
     PbIo(io::Error),
-    PbOther(Box<error::Error>),
+    PbOther(Box<dyn error::Error>),
 }
 
 impl Error {
@@ -20,7 +20,13 @@ impl Error {
 
     #[inline]
     pub(crate) fn invalid_wired(number: u32, wired_tag: u8, actual: u8) -> Error {
-        Error::PbIo(io::Error::new(io::ErrorKind::InvalidData, format!("expect {} for field {}, but got {}", wired_tag, number, actual)))
+        Error::PbIo(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "expect {} for field {}, but got {}",
+                wired_tag, number, actual
+            ),
+        ))
     }
 }
 
@@ -47,7 +53,7 @@ impl error::Error for Error {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::PbIo(ref e) => Some(e),
             Error::PbOther(ref o) => Some(o.as_ref()),

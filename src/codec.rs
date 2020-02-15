@@ -1,5 +1,4 @@
-
-use std::{u64, mem, slice, ptr, str};
+use std::{mem, ptr, slice, str, u64};
 
 use super::{Error, Result};
 
@@ -43,8 +42,20 @@ macro_rules! slow_var_decode {
     }
 }
 
-slow_var_decode!(u32, decode_varint_u32_fallback, 5, 15, decode_varint_u32_slow);
-slow_var_decode!(u64, decode_varint_u64_fallback, 10, 1, decode_varint_u64_slow);
+slow_var_decode!(
+    u32,
+    decode_varint_u32_fallback,
+    5,
+    15,
+    decode_varint_u32_slow
+);
+slow_var_decode!(
+    u64,
+    decode_varint_u64_fallback,
+    10,
+    1,
+    decode_varint_u64_slow
+);
 
 #[inline]
 pub fn decode_varint_s32(data: &mut &[u8]) -> Result<i32> {
@@ -107,29 +118,29 @@ pub fn decode_varint_u64(data: &mut &[u8]) -> Result<u64> {
 macro_rules! var_encode {
     ($t:ty, $arr_func:ident, $enc_func:ident, $max:expr) => {
         unsafe fn $arr_func(start: *mut u8, mut n: $t) -> usize {
-            let mut end = start;
+            let mut counter = 0;
             while n >= 0x80 {
-                ptr::write(end, 0x80 | (n as u8 & 0x7f));
+                ptr::write(start.add(counter), 0x80 | (n as u8 & 0x7f));
                 n >>= 7;
-                end = end.offset(1);
+                counter += 1;
             }
-            ptr::write(end, n as u8);
-            end.offset_from(start) as usize + 1
+            ptr::write(start.add(counter), n as u8);
+            counter + 1
         }
-        
+
         pub fn $enc_func(data: &mut Vec<u8>, n: $t) {
             let left = data.capacity() - data.len();
             if left >= $max {
                 let old_len = data.len();
                 unsafe {
-                    let start = data.as_mut_ptr().offset(old_len as isize);
+                    let start = data.as_mut_ptr().add(old_len);
                     let len = $arr_func(start, n);
                     data.set_len(old_len + len);
                 }
             }
-            
+
             let mut buf = [0; $max];
-            
+
             unsafe {
                 let start = buf.as_mut_ptr();
                 let len = $arr_func(start, n);
@@ -137,7 +148,7 @@ macro_rules! var_encode {
                 data.extend_from_slice(written);
             }
         }
-    }
+    };
 }
 
 var_encode!(u32, encode_varint_u32_to_array, encode_varint_u32, 5);
@@ -266,21 +277,16 @@ macro_rules! encode_fixed {
             let mut b: $t = 0;
             if data.len() >= $len {
                 unsafe {
-                    let buf: [u8; $len] = mem::transmute(b);
-                    let mut buf = &mut b as *mut $t as *mut u8;
-                    let mut data = data.as_ptr();
-                    for i in 0..$len {
-                        buf.write(data.read());
-                        buf = buf.offset(1);
-                        data = data.offset(1);
-                    }
+                    let buf = &mut b as *mut $t as *mut u8;
+                    let data = data.as_ptr();
+                    ptr::copy_nonoverlapping(data, buf, $len);
                 }
                 Ok($ti::from_le(b))
             } else {
                 Err(Error::invalid_data())
             }
         }
-    }
+    };
 }
 
 encode_fixed!(i32, i32, 4, encode_fixed_i32, decode_fixed_i32);
@@ -354,7 +360,7 @@ macro_rules! wired {
             encode_varint_u32(buf, tag);
             $encode(buf, val);
         }
-    }
+    };
 }
 
 wired!(u64, 0, encode_varint_u64, wired_varint_u64);
@@ -453,7 +459,7 @@ pub fn decode_wired_str<'a>(data: &mut &'a [u8], number: u32, wired_id: u8) -> R
     let bytes = decode_wired_bytes(data, number, wired_id)?;
     match str::from_utf8(bytes) {
         Ok(s) => Ok(s),
-        Err(e) => Err(Error::invalid_data()),
+        Err(_e) => Err(Error::invalid_data()),
     }
 }
 
@@ -505,11 +511,11 @@ macro_rules! check_return_early {
 
 #[cfg(test)]
 mod test {
-    use std::{u32, i64};
     use super::*;
+    use std::{i64, u32};
 
     macro_rules! make_test {
-        ($test_name:ident, $cases:expr, $enc:ident, $dec:ident, $len:ident) => (
+        ($test_name:ident, $cases:expr, $enc:ident, $dec:ident, $len:ident) => {
             #[test]
             fn $test_name() {
                 let cases = $cases;
@@ -523,115 +529,184 @@ mod test {
                     assert_eq!(res, n, "decode for {}", n);
                 }
             }
-        )
+        };
     }
 
-    make_test!(test_varint_i64, vec![
-        (vec![1], 1),
-        (vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1], -1),
-        (vec![2], 2),
-        (vec![254, 255, 255, 255, 255, 255, 255, 255, 255, 1], -2),
-        (vec![0], 0),
-        (vec![128, 1], 128),
-        (vec![150, 1], 150),
-    ], encode_varint_i64, decode_varint_i64, varint_i64_bytes_len);
+    make_test!(
+        test_varint_i64,
+        vec![
+            (vec![1], 1),
+            (vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1], -1),
+            (vec![2], 2),
+            (vec![254, 255, 255, 255, 255, 255, 255, 255, 255, 1], -2),
+            (vec![0], 0),
+            (vec![128, 1], 128),
+            (vec![150, 1], 150),
+        ],
+        encode_varint_i64,
+        decode_varint_i64,
+        varint_i64_bytes_len
+    );
 
-    make_test!(test_varint_s64, vec![
-        (vec![2], 1),
-        (vec![1], -1),
-        (vec![4], 2),
-        (vec![3], -2),
-        (vec![0], 0),
-        (vec![128, 2], 128),
-        (vec![255, 1], -128),
-        (vec![172, 2], 150),
-        (vec![254, 255, 255, 255, 15], 2147483647),
-        (vec![255, 255, 255, 255, 15], -2147483648),
-        (vec![254, 255, 255, 255, 255, 255, 255, 255, 255, 1], 9223372036854775807),
-        (vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1], -9223372036854775808),
-    ], encode_varint_s64, decode_varint_s64, varint_s64_bytes_len);
+    make_test!(
+        test_varint_s64,
+        vec![
+            (vec![2], 1),
+            (vec![1], -1),
+            (vec![4], 2),
+            (vec![3], -2),
+            (vec![0], 0),
+            (vec![128, 2], 128),
+            (vec![255, 1], -128),
+            (vec![172, 2], 150),
+            (vec![254, 255, 255, 255, 15], 2147483647),
+            (vec![255, 255, 255, 255, 15], -2147483648),
+            (
+                vec![254, 255, 255, 255, 255, 255, 255, 255, 255, 1],
+                9223372036854775807
+            ),
+            (
+                vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1],
+                -9223372036854775808
+            ),
+        ],
+        encode_varint_s64,
+        decode_varint_s64,
+        varint_s64_bytes_len
+    );
 
-    make_test!(test_varint_u64, vec![
-        (vec![1], 1),
-        (vec![150, 1], 150),
-        (vec![255, 255, 255, 255, 15], u32::MAX as u64),
-        (vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1], u64::MAX),
-    ], encode_varint_u64, decode_varint_u64, varint_u64_bytes_len);
+    make_test!(
+        test_varint_u64,
+        vec![
+            (vec![1], 1),
+            (vec![150, 1], 150),
+            (vec![255, 255, 255, 255, 15], u32::MAX as u64),
+            (
+                vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1],
+                u64::MAX
+            ),
+        ],
+        encode_varint_u64,
+        decode_varint_u64,
+        varint_u64_bytes_len
+    );
 
-    make_test!(test_varint_u32, vec![
-        (vec![1], 1),
-        (vec![150, 1], 150),
-        (vec![255, 255, 255, 255, 15], u32::MAX),
-    ], encode_varint_u32, decode_varint_u32, varint_u32_bytes_len);
+    make_test!(
+        test_varint_u32,
+        vec![
+            (vec![1], 1),
+            (vec![150, 1], 150),
+            (vec![255, 255, 255, 255, 15], u32::MAX),
+        ],
+        encode_varint_u32,
+        decode_varint_u32,
+        varint_u32_bytes_len
+    );
 
-    make_test!(test_varint_i32, vec![
-        (vec![1], 1),
-        (vec![255, 255, 255, 255, 15], -1),
-        (vec![254, 255, 255, 255, 15], -2),
-        (vec![0], 0),
-        (vec![128, 1], 128),
-        (vec![150, 1], 150),
-    ], encode_varint_i32, decode_varint_i32, varint_i32_bytes_len);
+    make_test!(
+        test_varint_i32,
+        vec![
+            (vec![1], 1),
+            (vec![255, 255, 255, 255, 15], -1),
+            (vec![254, 255, 255, 255, 15], -2),
+            (vec![0], 0),
+            (vec![128, 1], 128),
+            (vec![150, 1], 150),
+        ],
+        encode_varint_i32,
+        decode_varint_i32,
+        varint_i32_bytes_len
+    );
 
-    make_test!(test_varint_s32, vec![
-        (vec![2], 1),
-        (vec![1], -1),
-        (vec![4], 2),
-        (vec![3], -2),
-        (vec![0], 0),
-        (vec![128, 2], 128),
-        (vec![255, 1], -128),
-        (vec![172, 2], 150),
-        (vec![254, 255, 255, 255, 15], 2147483647),
-        (vec![255, 255, 255, 255, 15], -2147483648),
-    ], encode_varint_s32, decode_varint_s32, varint_s32_bytes_len);
+    make_test!(
+        test_varint_s32,
+        vec![
+            (vec![2], 1),
+            (vec![1], -1),
+            (vec![4], 2),
+            (vec![3], -2),
+            (vec![0], 0),
+            (vec![128, 2], 128),
+            (vec![255, 1], -128),
+            (vec![172, 2], 150),
+            (vec![254, 255, 255, 255, 15], 2147483647),
+            (vec![255, 255, 255, 255, 15], -2147483648),
+        ],
+        encode_varint_s32,
+        decode_varint_s32,
+        varint_s32_bytes_len
+    );
 
-    make_test!(test_fixed_i32, vec![
-        (vec![1, 0, 0, 0], 1),
-        (vec![255, 255, 255, 255], -1),
-        (vec![2, 0, 0, 0], 2),
-        (vec![254, 255, 255, 255], -2),
-        (vec![0, 0, 0, 0], 0),
-        (vec![128, 0, 0, 0], 128),
-        (vec![128, 255, 255, 255], -128),
-        (vec![150, 0, 0, 0], 150),
-        (vec![255, 255, 255, 127], 2147483647),
-        (vec![0, 0, 0, 128], -2147483648),
-    ], encode_fixed_i32, decode_fixed_i32, fixed_i32_bytes_len);
+    make_test!(
+        test_fixed_i32,
+        vec![
+            (vec![1, 0, 0, 0], 1),
+            (vec![255, 255, 255, 255], -1),
+            (vec![2, 0, 0, 0], 2),
+            (vec![254, 255, 255, 255], -2),
+            (vec![0, 0, 0, 0], 0),
+            (vec![128, 0, 0, 0], 128),
+            (vec![128, 255, 255, 255], -128),
+            (vec![150, 0, 0, 0], 150),
+            (vec![255, 255, 255, 127], 2147483647),
+            (vec![0, 0, 0, 128], -2147483648),
+        ],
+        encode_fixed_i32,
+        decode_fixed_i32,
+        fixed_i32_bytes_len
+    );
 
-    make_test!(test_fixed_i64, vec![
-        (vec![1, 0, 0, 0, 0, 0, 0, 0], 1),
-        (vec![255, 255, 255, 255, 255, 255, 255, 255], -1),
-        (vec![2, 0, 0, 0, 0, 0, 0, 0], 2),
-        (vec![254, 255, 255, 255, 255, 255, 255, 255], -2),
-        (vec![0, 0, 0, 0, 0, 0, 0, 0], 0),
-        (vec![128, 0, 0, 0, 0, 0, 0, 0], 128),
-        (vec![128, 255, 255, 255, 255, 255, 255, 255], -128),
-        (vec![150, 0, 0, 0, 0, 0, 0, 0], 150),
-        (vec![255, 255, 255, 127, 0, 0, 0, 0], 2147483647),
-        (vec![0, 0, 0, 128, 255, 255, 255, 255], -2147483648),
-        (vec![255, 255, 255, 255, 255, 255, 255, 127], i64::MAX),
-        (vec![0, 0, 0, 0, 0, 0, 0, 128], i64::MIN),
-    ], encode_fixed_i64, decode_fixed_i64, fixed_i64_bytes_len);
+    make_test!(
+        test_fixed_i64,
+        vec![
+            (vec![1, 0, 0, 0, 0, 0, 0, 0], 1),
+            (vec![255, 255, 255, 255, 255, 255, 255, 255], -1),
+            (vec![2, 0, 0, 0, 0, 0, 0, 0], 2),
+            (vec![254, 255, 255, 255, 255, 255, 255, 255], -2),
+            (vec![0, 0, 0, 0, 0, 0, 0, 0], 0),
+            (vec![128, 0, 0, 0, 0, 0, 0, 0], 128),
+            (vec![128, 255, 255, 255, 255, 255, 255, 255], -128),
+            (vec![150, 0, 0, 0, 0, 0, 0, 0], 150),
+            (vec![255, 255, 255, 127, 0, 0, 0, 0], 2147483647),
+            (vec![0, 0, 0, 128, 255, 255, 255, 255], -2147483648),
+            (vec![255, 255, 255, 255, 255, 255, 255, 127], i64::MAX),
+            (vec![0, 0, 0, 0, 0, 0, 0, 128], i64::MIN),
+        ],
+        encode_fixed_i64,
+        decode_fixed_i64,
+        fixed_i64_bytes_len
+    );
 
-    make_test!(test_f32, vec![
-        (vec![0x00, 0x00, 0x80, 0x3f], 1f32),
-        (vec![0x00, 0x00, 0x80, 0xbf], -1f32),
-        (vec![0x00, 0x00, 0x00, 0x40], 2f32),
-        (vec![0x00, 0x00, 0x00, 0xc0], -2f32),
-        (vec![0x00, 0x00, 0x00, 0x00], 0f32),
-        (vec![0x00, 0x00, 0x00, 0x43], 128f32),
-        (vec![0x00, 0x00, 0x00, 0xc3], -128f32),
-        (vec![0xc3, 0xf5, 0x48, 0x40], 3.14),
-        (vec![0x00, 0x00, 0x00, 0x4f], 2147483647f32),
-    ], encode_fixed_f32, decode_fixed_f32, f32_bytes_len);
+    make_test!(
+        test_f32,
+        vec![
+            (vec![0x00, 0x00, 0x80, 0x3f], 1f32),
+            (vec![0x00, 0x00, 0x80, 0xbf], -1f32),
+            (vec![0x00, 0x00, 0x00, 0x40], 2f32),
+            (vec![0x00, 0x00, 0x00, 0xc0], -2f32),
+            (vec![0x00, 0x00, 0x00, 0x00], 0f32),
+            (vec![0x00, 0x00, 0x00, 0x43], 128f32),
+            (vec![0x00, 0x00, 0x00, 0xc3], -128f32),
+            (vec![0xc3, 0xf5, 0x48, 0x40], 3.14),
+            (vec![0x00, 0x00, 0x00, 0x4f], 2147483647f32),
+        ],
+        encode_fixed_f32,
+        decode_fixed_f32,
+        f32_bytes_len
+    );
 
-    make_test!(test_f64, vec![
-        (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f], 1f64),
-        (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0xbf], -1f64),
-        (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40], 2f64),
-        (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0], -2f64),
-        (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], 0f64),
-        (vec![0x1f, 0x85, 0xeb, 0x51, 0xb8, 0x1e, 0x09, 0x40], 3.14),
-    ], encode_fixed_f64, decode_fixed_f64, f64_bytes_len);
+    make_test!(
+        test_f64,
+        vec![
+            (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f], 1f64),
+            (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0xbf], -1f64),
+            (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40], 2f64),
+            (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc0], -2f64),
+            (vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], 0f64),
+            (vec![0x1f, 0x85, 0xeb, 0x51, 0xb8, 0x1e, 0x09, 0x40], 3.14),
+        ],
+        encode_fixed_f64,
+        decode_fixed_f64,
+        f64_bytes_len
+    );
 }
