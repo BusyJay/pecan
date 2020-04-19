@@ -137,6 +137,7 @@ macro_rules! var_encode {
                     let len = $arr_func(start, n);
                     data.set_len(old_len + len);
                 }
+                return;
             }
 
             let mut buf = [0; $max];
@@ -197,7 +198,7 @@ pub fn varint_s32_bytes_len(n: i32) -> u32 {
 #[inline]
 pub fn varint_u64_bytes_len(mut n: u64) -> u32 {
     n |= 0x01;
-    ((64 - n.leading_zeros()) * 9 + 73) / 64
+    ((63 - n.leading_zeros()) * 9 + 73) / 64
 }
 
 #[inline]
@@ -352,163 +353,6 @@ pub fn decode_bytes<'a>(data: &'a [u8]) -> Result<(&'a [u8], usize)> {
     };
     Ok((res, read as usize + len as usize))
 }
-/*
-macro_rules! wired {
-    ($t:ty, $wired_id:expr, $encode:ident, $func:ident) => {
-        #[inline]
-        pub fn $func(buf: &mut Vec<u8>, field_number: u32, val: $t) {
-            let tag = encode_tag(field_number, $wired_id);
-            encode_varint_u32(buf, tag);
-            $encode(buf, val);
-        }
-    };
-}
-
-wired!(u64, 0, encode_varint_u64, wired_varint_u64);
-wired!(u32, 0, encode_varint_u32, wired_varint_u32);
-wired!(i64, 0, encode_varint_i64, wired_varint_i64);
-wired!(i32, 0, encode_varint_i32, wired_varint_i32);
-wired!(i64, 0, encode_varint_s64, wired_varint_s64);
-wired!(i32, 0, encode_varint_s32, wired_varint_s32);
-wired!(i32, 5, encode_fixed_i32, wired_fixed_i32);
-wired!(i64, 1, encode_fixed_i64, wired_fixed_i64);
-wired!(i32, 5, encode_fixed_s32, wired_fixed_s32);
-wired!(i64, 1, encode_fixed_s64, wired_fixed_s64);
-wired!(f32, 5, encode_fixed_f32, wired_fixed_f32);
-wired!(f64, 1, encode_fixed_f64, wired_fixed_f64);
-
-#[inline]
-pub fn decode_wired(data: &mut &[u8], number: &mut u32, wired_id: &mut u8) -> Result<()> {
-    let n = decode_varint_u32(data)?;
-    *number = n >> 3;
-    *wired_id = n as u8 & 0x07;
-    Ok(())
-}
-
-macro_rules! decode_wired_type {
-    ($func:ident, $wired_id:expr, $result:ty, $work:ident) => {
-        #[inline]
-        pub fn $func(data: &mut &[u8], number: u32, wired_id: u8) -> $result {
-            if wired_id == $wired_id {
-                $work(data)
-            } else {
-                Err(Error::invalid_wired(number, $wired_id, wired_id))
-            }
-        }
-    };
-}
-
-decode_wired_type!(decode_wired_varint_u64, 0, Result<u64>, decode_varint_u64);
-decode_wired_type!(deocde_wired_varint_u32, 0, Result<u32>, decode_varint_u32);
-decode_wired_type!(deocde_wired_varint_i64, 0, Result<i64>, decode_varint_i64);
-decode_wired_type!(deocde_wired_varint_i32, 0, Result<i32>, decode_varint_i32);
-decode_wired_type!(deocde_wired_varint_s64, 0, Result<i64>, decode_varint_s64);
-decode_wired_type!(deocde_wired_varint_s32, 0, Result<i32>, decode_varint_s32);
-decode_wired_type!(deocde_wired_fixed_i32, 5, Result<i32>, decode_fixed_i32);
-decode_wired_type!(deocde_wired_fixed_i64, 1, Result<i64>, decode_fixed_i64);
-decode_wired_type!(deocde_wired_fixed_s32, 5, Result<i32>, decode_fixed_s32);
-decode_wired_type!(deocde_wired_fixed_s64, 1, Result<i64>, decode_fixed_s64);
-decode_wired_type!(deocde_wired_fixed_f32, 5, Result<f32>, decode_fixed_f32);
-decode_wired_type!(deocde_wired_fixed_f64, 1, Result<f64>, decode_fixed_f64);
-
-#[inline]
-pub fn wired_bool(buf: &mut Vec<u8>, field_number: u32, val: bool) {
-    let tag = encode_tag(field_number, 0);
-    encode_varint_u32(buf, tag);
-    buf.push(val as u8);
-}
-
-#[inline]
-pub fn decode_wired_bool(data: &mut &[u8], number: u32, wired_id: u8) -> Result<bool> {
-    if wired_id == 0 {
-        let b = decode_varint_u32(data)?;
-        if b == 1 {
-            Ok(true)
-        } else if b == 0 {
-            Ok(false)
-        } else {
-            Err(Error::Corrupted)
-        }
-    } else {
-        Err(Error::invalid_wired(number, 0, wired_id))
-    }
-}
-
-#[inline]
-pub fn wired_bytes(buf: &mut Vec<u8>, field_number: u32, val: &[u8]) {
-    let tag = encode_tag(field_number, 2);
-    encode_varint_u32(buf, tag);
-    encode_bytes(buf, val);
-}
-
-#[inline]
-pub fn wired_str(buf: &mut Vec<u8>, field_number: u32, val: &str) {
-    wired_bytes(buf, field_number, val.as_bytes())
-}
-
-#[inline]
-pub fn decode_wired_bytes<'a>(data: &mut &'a [u8], number: u32, wired_id: u8) -> Result<&'a [u8]> {
-    if wired_id == 2 {
-        decode_bytes(data)
-    } else {
-        Err(Error::invalid_wired(number, 2, wired_id))
-    }
-}
-
-#[inline]
-pub fn decode_wired_str<'a>(data: &mut &'a [u8], number: u32, wired_id: u8) -> Result<&'a str> {
-    let bytes = decode_wired_bytes(data, number, wired_id)?;
-    match str::from_utf8(bytes) {
-        Ok(s) => Ok(s),
-        Err(_e) => Err(Error::Corrupted),
-    }
-}
-
-#[inline]
-pub fn bytes_len(bytes: &[u8]) -> u32 {
-    varint_u32_bytes_len(bytes.len() as u32) + bytes.len() as u32
-}
-
-#[inline]
-pub fn str_bytes_len(s: &str) -> u32 {
-    bytes_len(s.as_bytes())
-}
-
-pub fn decode_unknown_tag<'a>(buf: &mut &'a [u8], wired_id: u8) -> Result<()> {
-    let cnt = match wired_id {
-        0 => {
-            let mut i = 0;
-            while i < buf.len() {
-                if buf[i] & 0x80 == 0 {
-                    i += 1;
-                    break;
-                }
-                i += 1;
-            }
-            i
-        }
-        1 => 8,
-        2 => decode_varint_u32(buf)? as usize,
-        5 => 4,
-        n => return Err(Error::invalid_wired(0, 0, n)),
-    };
-    if buf.len() >= cnt {
-        *buf = unsafe { buf.get_unchecked(cnt..) };
-        Ok(())
-    } else {
-        Err(Error::Corrupted)
-    }
-}
-
-macro_rules! check_return_early {
-    ($data:ident, $number:ident, $wired_id:ident) => {
-        if !$data.is_empty() {
-            ::codec::decode_wired(data, &mut $number, &mut $wired_id)?;
-        } else {
-            return Ok(());
-        }
-    };
-}*/
 
 #[cfg(test)]
 mod test {
@@ -533,11 +377,18 @@ mod test {
             fn $test_name() {
                 let cases = $cases;
 
+                let mut large_buffer = Vec::with_capacity(11);
+
                 for (bin, n) in cases {
                     let mut output = vec![];
                     $enc(&mut output, n);
                     assert_eq!(output, bin, "encode for {}", n);
-                    assert_eq!($len(n), bin.len() as u32);
+
+                    large_buffer.clear();
+                    $enc(&mut large_buffer, n);
+                    assert_eq!(large_buffer, bin, "encode for {}", n);
+
+                    assert_eq!($len(n), bin.len() as u32, "{:?}", n);
                     check_res!(
                         n,
                         $dec(&mut output.as_slice()).unwrap(),
@@ -600,6 +451,15 @@ mod test {
         vec![
             (vec![1], 1),
             (vec![150, 1], 150),
+            (vec![127], 127),
+            (vec![128, 127], 16256),
+            (vec![128, 128, 127], 2080768),
+            (vec![128, 128, 128, 127], 266338304),
+            (vec![128, 128, 128, 128, 127], 34091302912),
+            (vec![128, 128, 128, 128, 128, 127], 4363686772736),
+            (vec![128, 128, 128, 128, 128, 128, 127], 558551906910208),
+            (vec![128, 128, 128, 128, 128, 128, 128, 127], 71494644084506624),
+            (vec![128, 128, 128, 128, 128, 128, 128, 128, 127], 9151314442816847872),
             (vec![255, 255, 255, 255, 15], u32::MAX as u64),
             (
                 vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1],
@@ -616,6 +476,10 @@ mod test {
         vec![
             (vec![1], 1),
             (vec![150, 1], 150),
+            (vec![127], 127),
+            (vec![128, 127], 16256),
+            (vec![128, 128, 127], 2080768),
+            (vec![128, 128, 128, 127], 266338304),
             (vec![255, 255, 255, 255, 15], u32::MAX),
         ],
         encode_varint_u32,
