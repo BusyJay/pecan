@@ -512,7 +512,7 @@ message FieldOptions {
   optional CType ctype = 1 [default = STRING];
   enum CType {
     // Default mode.
-    STRING = 0;
+    STRING = 0; 
 
     CORD = 1;
 

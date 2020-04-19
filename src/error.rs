@@ -1,46 +1,50 @@
+use pecan_utils::codec;
 use std::fmt::{self, Display, Formatter};
-use std::{error, io, result};
+use std::{error, result};
 
 #[derive(Debug)]
 pub enum Error {
-    PbIo(io::Error),
-    PbOther(Box<dyn error::Error>),
+    ExceedRecursiveLimit(usize),
+    InvalidData {
+        wire: u8,
+        index: u8,
+        reason: codec::Error,
+    },
+    OutOfSpace,
 }
 
 impl Error {
-    #[inline]
-    pub(crate) fn unexpected_eof() -> Error {
-        Error::PbIo(io::Error::new(io::ErrorKind::UnexpectedEof, ""))
+    pub(crate) fn truncated() -> Error {
+        Error::InvalidData {
+            wire: 0,
+            index: 0,
+            reason: codec::Error::Truncated,
+        }
     }
 
-    #[inline]
-    pub(crate) fn invalid_data() -> Error {
-        Error::PbIo(io::Error::new(io::ErrorKind::InvalidData, ""))
-    }
-
-    #[inline]
-    pub(crate) fn invalid_wired(number: u32, wired_tag: u8, actual: u8) -> Error {
-        Error::PbIo(io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!(
-                "expect {} for field {}, but got {}",
-                wired_tag, number, actual
-            ),
-        ))
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Error {
-        Error::PbIo(e)
+    pub(crate) fn corrupted() -> Error {
+        Error::InvalidData {
+            wire: 0,
+            index: 0,
+            reason: codec::Error::Corrupted,
+        }
     }
 }
 
 impl Display for Error {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            Error::PbIo(ref e) => write!(formatter, "PbIo({})", e),
-            Error::PbOther(ref o) => write!(formatter, "PbOther({})", o),
+            Error::ExceedRecursiveLimit(limit) => write!(f, "recursive too deep > {}", limit),
+            Error::InvalidData {
+                wire,
+                index,
+                reason,
+            } => write!(
+                f,
+                "invalid data for [wire: {}, index: {}]: {:?}",
+                wire, index, reason
+            ),
+            Error::OutOfSpace => write!(f, "out of space"),
         }
     }
 }
@@ -48,16 +52,14 @@ impl Display for Error {
 impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
-            Error::PbIo(_) => "PbIo",
-            Error::PbOther(_) => "PbOther",
+            Error::ExceedRecursiveLimit(_) => "ExceedRecursiveLimit",
+            Error::InvalidData { .. } => "InvalidData",
+            Error::OutOfSpace => "OutOfSpace",
         }
     }
 
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match *self {
-            Error::PbIo(ref e) => Some(e),
-            Error::PbOther(ref o) => Some(o.as_ref()),
-        }
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
     }
 }
 

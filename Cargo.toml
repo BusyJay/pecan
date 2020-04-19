@@ -5,3 +5,11 @@ authors = ["Jay Lee <BusyJayLee@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+pecan-utils = { path = "utils" }
+
+[workspace]
+members = [
+    "compiler",
+    "descriptor",
+    "utils",
+]

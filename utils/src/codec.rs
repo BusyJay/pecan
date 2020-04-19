@@ -1,42 +1,44 @@
-use std::{mem, ptr, slice, str, u64};
+use std::{mem, ptr, slice, u64};
 
-use super::{Error, Result};
+#[derive(Debug, Clone, Copy)]
+pub enum Error {
+    Corrupted,
+    Truncated,
+}
+
+type Result<T> = std::result::Result<T, Error>;
 
 macro_rules! slow_var_decode {
     ($t:ty, $fallback_func:ident, $max:expr, $last:expr, $slow_func:ident) => {
-        fn $slow_func(data: &mut &[u8]) -> Result<$t> {
+        fn $slow_func(data: &[u8]) -> Result<($t, u8)> {
             let mut res = 0;
             for i in 0..data.len() {
                 let b = data[i];
                 res |= (b as $t & 0x7f) << (i * 7);
                 if b < 0x80 {
-                    *data = unsafe { data.get_unchecked(i + 1..) };
-                    return Ok(res);
+                    return Ok((res, i as u8 + 1));
                 }
             }
-            Err(Error::unexpected_eof())
+            Err(Error::Truncated)
         }
 
-        fn $fallback_func(data: &mut &[u8]) -> Result<$t> {
+        fn $fallback_func(data: &[u8]) -> Result<($t, u8)> {
             if data.len() >= $max || *data.last().unwrap() < 0x80 {
                 let mut res = 0;
                 for i in 0..$max - 1 {
                     let b = unsafe { *data.get_unchecked(i) };
                     res |= (b & 0x7f) as $t << (i * 7);
                     if b < 0x80 {
-                        *data = unsafe { data.get_unchecked(i + 1..) };
-                        return Ok(res);
+                        return Ok((res, i as u8 + 1));
                     }
                 }
                 let b = unsafe { *data.get_unchecked($max - 1) };
                 if b <= $last {
                     res |= b as $t << (($max - 1) * 7);
-                    *data = unsafe { data.get_unchecked($max..) };
-                    return Ok(res);
+                    return Ok((res, $max));
                 }
-                return Err(Error::invalid_data());
+                return Err(Error::Corrupted);
             }
-
             $slow_func(data)
         }
     }
@@ -58,66 +60,64 @@ slow_var_decode!(
 );
 
 #[inline]
-pub fn decode_varint_s32(data: &mut &[u8]) -> Result<i32> {
-    let n = decode_varint_u32(data)?;
-    Ok(unzig_zag_32(n))
+pub fn decode_varint_s32(data: &[u8]) -> Result<(i32, u8)> {
+    let (r, n) = decode_varint_u32(data)?;
+    Ok((unzig_zag_32(r), n))
 }
 
 #[inline]
-pub fn decode_varint_i32(data: &mut &[u8]) -> Result<i32> {
-    let n = decode_varint_u32(data)?;
-    Ok(n as i32)
+pub fn decode_varint_i32(data: &[u8]) -> Result<(i32, u8)> {
+    let (r, n) = decode_varint_u32(data)?;
+    Ok((r as i32, n))
 }
 
 #[inline]
-pub fn decode_varint_u32(data: &mut &[u8]) -> Result<u32> {
+pub fn decode_varint_u32(data: &[u8]) -> Result<(u32, u8)> {
     if !data.is_empty() {
         // process with value < 127 independently at first
         // since it matches most of the cases.
         if data[0] < 0x80 {
             let res = u32::from(data[0]);
-            *data = unsafe { data.get_unchecked(1..) };
-            return Ok(res);
+            return Ok((res, 1));
         }
 
         return decode_varint_u32_fallback(data);
     }
 
-    Err(Error::unexpected_eof())
+    Err(Error::Truncated)
 }
 
 #[inline]
-pub fn decode_varint_s64(data: &mut &[u8]) -> Result<i64> {
-    let n = decode_varint_u64(data)?;
-    Ok(unzig_zag_64(n))
+pub fn decode_varint_s64(data: &[u8]) -> Result<(i64, u8)> {
+    let (r, n) = decode_varint_u64(data)?;
+    Ok((unzig_zag_64(r), n))
 }
 
 #[inline]
-pub fn decode_varint_i64(data: &mut &[u8]) -> Result<i64> {
-    let n = decode_varint_u64(data)?;
-    Ok(n as i64)
+pub fn decode_varint_i64(data: &[u8]) -> Result<(i64, u8)> {
+    let (r, n) = decode_varint_u64(data)?;
+    Ok((r as i64, n))
 }
 
 #[inline]
-pub fn decode_varint_u64(data: &mut &[u8]) -> Result<u64> {
+pub fn decode_varint_u64(data: &[u8]) -> Result<(u64, u8)> {
     if !data.is_empty() {
         // process with value < 127 independently at first
         // since it matches most of the cases.
         if data[0] < 0x80 {
             let res = u64::from(data[0]);
-            *data = unsafe { data.get_unchecked(1..) };
-            return Ok(res);
+            return Ok((res, 1));
         }
 
         return decode_varint_u64_fallback(data);
     }
 
-    Err(Error::unexpected_eof())
+    Err(Error::Truncated)
 }
 
 macro_rules! var_encode {
     ($t:ty, $arr_func:ident, $enc_func:ident, $max:expr) => {
-        unsafe fn $arr_func(start: *mut u8, mut n: $t) -> usize {
+        pub unsafe fn $arr_func(start: *mut u8, mut n: $t) -> usize {
             let mut counter = 0;
             while n >= 0x80 {
                 ptr::write(start.add(counter), 0x80 | (n as u8 & 0x7f));
@@ -179,8 +179,9 @@ pub fn encode_varint_i64(data: &mut Vec<u8>, n: i64) {
 }
 
 #[inline]
-pub fn varint_u32_bytes_len(n: u32) -> u32 {
-    ((32 - n.leading_zeros()) / 7 + 1)
+pub fn varint_u32_bytes_len(mut n: u32) -> u32 {
+    n |= 0x01;
+    ((31 - n.leading_zeros()) * 9 + 73) / 64
 }
 
 #[inline]
@@ -194,8 +195,9 @@ pub fn varint_s32_bytes_len(n: i32) -> u32 {
 }
 
 #[inline]
-pub fn varint_u64_bytes_len(n: u64) -> u32 {
-    ((64 - n.leading_zeros()) / 7 + 1) as u32
+pub fn varint_u64_bytes_len(mut n: u64) -> u32 {
+    n |= 0x01;
+    ((64 - n.leading_zeros()) * 9 + 73) / 64
 }
 
 #[inline]
@@ -239,22 +241,22 @@ pub fn f64_bytes_len(_: f64) -> u32 {
 }
 
 #[inline]
-fn zig_zag_64(n: i64) -> u64 {
+pub fn zig_zag_64(n: i64) -> u64 {
     ((n << 1) ^ (n >> 63)) as u64
 }
 
 #[inline]
-fn unzig_zag_64(n: u64) -> i64 {
+pub fn unzig_zag_64(n: u64) -> i64 {
     ((n >> 1) ^ (!(n & 1)).wrapping_add(1)) as i64
 }
 
 #[inline]
-fn zig_zag_32(n: i32) -> u32 {
+pub fn zig_zag_32(n: i32) -> u32 {
     ((n << 1) ^ (n >> 31)) as u32
 }
 
 #[inline]
-fn unzig_zag_32(n: u32) -> i32 {
+pub fn unzig_zag_32(n: u32) -> i32 {
     ((n >> 1) ^ (!(n & 1)).wrapping_add(1)) as i32
 }
 
@@ -283,7 +285,7 @@ macro_rules! encode_fixed {
                 }
                 Ok($ti::from_le(b))
             } else {
-                Err(Error::invalid_data())
+                Err(Error::Corrupted)
             }
         }
     };
@@ -341,17 +343,16 @@ pub fn encode_bytes(data: &mut Vec<u8>, bytes: &[u8]) {
 }
 
 #[inline]
-pub fn decode_bytes<'a>(data: &mut &'a [u8]) -> Result<&'a [u8]> {
-    let len = decode_varint_u32(data)? as usize;
-    let (res, left) = if data.len() > len {
-        data.split_at(len)
+pub fn decode_bytes<'a>(data: &'a [u8]) -> Result<(&'a [u8], usize)> {
+    let (len, read) = decode_varint_u32(data)?;
+    let res = if data.len() > len as usize {
+        unsafe { data.get_unchecked(read as usize..len as usize) }
     } else {
-        return Err(Error::unexpected_eof());
+        return Err(Error::Truncated);
     };
-    *data = left;
-    Ok(res)
+    Ok((res, read as usize + len as usize))
 }
-
+/*
 macro_rules! wired {
     ($t:ty, $wired_id:expr, $encode:ident, $func:ident) => {
         #[inline]
@@ -426,7 +427,7 @@ pub fn decode_wired_bool(data: &mut &[u8], number: u32, wired_id: u8) -> Result<
         } else if b == 0 {
             Ok(false)
         } else {
-            Err(Error::invalid_data())
+            Err(Error::Corrupted)
         }
     } else {
         Err(Error::invalid_wired(number, 0, wired_id))
@@ -459,7 +460,7 @@ pub fn decode_wired_str<'a>(data: &mut &'a [u8], number: u32, wired_id: u8) -> R
     let bytes = decode_wired_bytes(data, number, wired_id)?;
     match str::from_utf8(bytes) {
         Ok(s) => Ok(s),
-        Err(_e) => Err(Error::invalid_data()),
+        Err(_e) => Err(Error::Corrupted),
     }
 }
 
@@ -495,7 +496,7 @@ pub fn decode_unknown_tag<'a>(buf: &mut &'a [u8], wired_id: u8) -> Result<()> {
         *buf = unsafe { buf.get_unchecked(cnt..) };
         Ok(())
     } else {
-        Err(Error::invalid_data())
+        Err(Error::Corrupted)
     }
 }
 
@@ -507,15 +508,27 @@ macro_rules! check_return_early {
             return Ok(());
         }
     };
-}
+}*/
 
 #[cfg(test)]
 mod test {
     use super::*;
     use std::{i64, u32};
 
+    macro_rules! check_res {
+        ($num:ident, $res:expr, $len:expr, 1) => {
+            let (res, read) = $res;
+            assert_eq!(res, $num, "decode for {}", $num);
+            assert_eq!(usize::from(read), $len, "decode for {}", $num);
+        };
+        ($num:ident, $res:expr, $len:expr, 0) => {
+            let res = $res;
+            assert_eq!(res, $num, "decode for {}", $num);
+        };
+    }
+
     macro_rules! make_test {
-        ($test_name:ident, $cases:expr, $enc:ident, $dec:ident, $len:ident) => {
+        ($test_name:ident, $cases:expr, $enc:ident, $dec:ident, $len:ident, $check_len:tt) => {
             #[test]
             fn $test_name() {
                 let cases = $cases;
@@ -525,10 +538,17 @@ mod test {
                     $enc(&mut output, n);
                     assert_eq!(output, bin, "encode for {}", n);
                     assert_eq!($len(n), bin.len() as u32);
-                    let res = $dec(&mut output.as_slice()).unwrap();
-                    assert_eq!(res, n, "decode for {}", n);
+                    check_res!(
+                        n,
+                        $dec(&mut output.as_slice()).unwrap(),
+                        bin.len(),
+                        $check_len
+                    );
                 }
             }
+        };
+        ($test_name:ident, $cases:expr, $enc:ident, $dec:ident, $len:ident) => {
+            make_test!($test_name, $cases, $enc, $dec, $len, 1);
         };
     }
 
@@ -653,7 +673,8 @@ mod test {
         ],
         encode_fixed_i32,
         decode_fixed_i32,
-        fixed_i32_bytes_len
+        fixed_i32_bytes_len,
+        0
     );
 
     make_test!(
@@ -674,7 +695,8 @@ mod test {
         ],
         encode_fixed_i64,
         decode_fixed_i64,
-        fixed_i64_bytes_len
+        fixed_i64_bytes_len,
+        0
     );
 
     make_test!(
@@ -692,7 +714,8 @@ mod test {
         ],
         encode_fixed_f32,
         decode_fixed_f32,
-        f32_bytes_len
+        f32_bytes_len,
+        0
     );
 
     make_test!(
@@ -707,6 +730,7 @@ mod test {
         ],
         encode_fixed_f64,
         decode_fixed_f64,
-        f64_bytes_len
+        f64_bytes_len,
+        0
     );
 }
