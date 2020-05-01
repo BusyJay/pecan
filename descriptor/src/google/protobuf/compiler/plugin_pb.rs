@@ -26,16 +26,16 @@ pub static DESCRIPTOR: &[u8] = &[
     112, 114, 111, 116, 111, 98, 117, 102, 46, 99, 111, 109, 112, 105, 108, 101,
     114, 26, 32, 103, 111, 111, 103, 108, 101, 47, 112, 114, 111, 116, 111, 98,
     117, 102, 47, 100, 101, 115, 99, 114, 105, 112, 116, 111, 114, 46, 112, 114,
-    111, 116, 111, 66, 66, 103, 10, 28, 99, 111, 109, 46, 103, 111, 111, 103,
-    108, 101, 46, 112, 114, 111, 116, 111, 98, 117, 102, 46, 99, 111, 109, 112,
-    105, 108, 101, 114, 66, 12, 80, 108, 117, 103, 105, 110, 80, 114, 111, 116,
-    111, 115, 90, 57, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 103,
-    111, 108, 97, 110, 103, 47, 112, 114, 111, 116, 111, 98, 117, 102, 47, 112,
-    114, 111, 116, 111, 99, 45, 103, 101, 110, 45, 103, 111, 47, 112, 108, 117,
-    103, 105, 110, 59, 112, 108, 117, 103, 105, 110, 95, 103,
+    111, 116, 111, 66, 103, 10, 28, 99, 111, 109, 46, 103, 111, 111, 103, 108,
+    101, 46, 112, 114, 111, 116, 111, 98, 117, 102, 46, 99, 111, 109, 112, 105,
+    108, 101, 114, 66, 12, 80, 108, 117, 103, 105, 110, 80, 114, 111, 116, 111,
+    115, 90, 57, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 103, 111,
+    108, 97, 110, 103, 47, 112, 114, 111, 116, 111, 98, 117, 102, 47, 112, 114,
+    111, 116, 111, 99, 45, 103, 101, 110, 45, 103, 111, 47, 112, 108, 117, 103,
+    105, 110, 59, 112, 108, 117, 103, 105, 110, 95, 103, 111,
 ];
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Version {
     pub major: i32,
     pub minor: i32,
@@ -61,15 +61,15 @@ impl Message for Version {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.major != 0 {
+        if 0 != self.major {
             s.write_raw_1_byte([8])?;
             s.write_var_i32(self.major)?;
         }
-        if self.minor != 0 {
+        if 0 != self.minor {
             s.write_raw_1_byte([16])?;
             s.write_var_i32(self.minor)?;
         }
-        if self.patch != 0 {
+        if 0 != self.patch {
             s.write_raw_1_byte([24])?;
             s.write_var_i32(self.patch)?;
         }
@@ -85,13 +85,13 @@ impl Message for Version {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.major != 0 {
+        if 0 != self.major {
             n += 1 + encoded::var_i32_len(self.major);
         }
-        if self.minor != 0 {
+        if 0 != self.minor {
             n += 1 + encoded::var_i32_len(self.minor);
         }
-        if self.patch != 0 {
+        if 0 != self.patch {
             n += 1 + encoded::var_i32_len(self.patch);
         }
         if !self.suffix.is_empty() {
@@ -101,7 +101,7 @@ impl Message for Version {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CodeGeneratorRequest {
     pub file_to_generate: Vec<String>,
     pub parameter: String,
@@ -131,9 +131,9 @@ impl Message for CodeGeneratorRequest {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.file_to_generate.is_empty() {
-            for m in &self.file_to_generate {
+            for v in &self.file_to_generate {
                 s.write_raw_1_byte([10])?;
-                s.write_string(m)?;
+                s.write_string(v)?;
             }
         }
         if !self.parameter.is_empty() {
@@ -141,15 +141,14 @@ impl Message for CodeGeneratorRequest {
             s.write_string(&self.parameter)?;
         }
         if !self.proto_file.is_empty() {
-            for m in &self.proto_file {
+            for v in &self.proto_file {
                 s.write_raw_1_byte([122])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
-        if let Some(m) = &self.compiler_version {
-        s.write_raw_1_byte([26])?;
+        if let Some(v) = &self.compiler_version {
             s.write_raw_1_byte([26])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -168,14 +167,14 @@ impl Message for CodeGeneratorRequest {
         if !self.proto_file.is_empty() {
             n += encoded::arr_message_len(1, &self.proto_file);
         }
-        if let Some(msg) = &self.compiler_version {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.compiler_version {
+            n += 1 + encoded::message_len(v);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CodeGeneratorResponse {
     pub error: String,
     pub file: Vec<CodeGeneratorResponseNestedFile>,
@@ -202,9 +201,9 @@ impl Message for CodeGeneratorResponse {
             s.write_string(&self.error)?;
         }
         if !self.file.is_empty() {
-            for m in &self.file {
+            for v in &self.file {
                 s.write_raw_1_byte([122])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -225,7 +224,7 @@ impl Message for CodeGeneratorResponse {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct CodeGeneratorResponseNestedFile {
     pub name: String,
     pub insertion_point: String,

@@ -21,16 +21,16 @@ pub static DESCRIPTOR: &[u8] = &[
     10, 32, 103, 111, 111, 103, 108, 101, 47, 112, 114, 111, 116, 111, 98, 117,
     102, 47, 100, 101, 115, 99, 114, 105, 112, 116, 111, 114, 46, 112, 114, 111,
     116, 111, 18, 15, 103, 111, 111, 103, 108, 101, 46, 112, 114, 111, 116, 111,
-    98, 117, 102, 66, 66, 143, 1, 10, 19, 99, 111, 109, 46, 103, 111, 111,
-    103, 108, 101, 46, 112, 114, 111, 116, 111, 98, 117, 102, 66, 16, 68, 101,
-    115, 99, 114, 105, 112, 116, 111, 114, 80, 114, 111, 116, 111, 115, 72, 1,
-    90, 62, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 103, 111, 108,
-    97, 110, 103, 47, 112, 114, 111, 116, 111, 98, 117, 102, 47, 112, 114, 111,
-    116, 111, 99, 45, 103, 101, 110, 45, 103, 111, 47, 100, 101, 115, 99, 114,
-    105, 112, 116, 111, 114, 59, 100, 101, 115, 99, 114, 105, 112, 116, 111, 114,
-    248, 1, 1, 162, 2, 3, 71, 80, 66, 170, 2, 26, 71, 111, 111, 103,
-    108, 101, 46, 80, 114, 111, 116, 111, 98, 117, 102, 46, 82, 101, 102, 108,
-    101, 99, 116, 105, 111,
+    98, 117, 102, 66, 143, 1, 10, 19, 99, 111, 109, 46, 103, 111, 111, 103,
+    108, 101, 46, 112, 114, 111, 116, 111, 98, 117, 102, 66, 16, 68, 101, 115,
+    99, 114, 105, 112, 116, 111, 114, 80, 114, 111, 116, 111, 115, 72, 1, 90,
+    62, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 103, 111, 108, 97,
+    110, 103, 47, 112, 114, 111, 116, 111, 98, 117, 102, 47, 112, 114, 111, 116,
+    111, 99, 45, 103, 101, 110, 45, 103, 111, 47, 100, 101, 115, 99, 114, 105,
+    112, 116, 111, 114, 59, 100, 101, 115, 99, 114, 105, 112, 116, 111, 114, 248,
+    1, 1, 162, 2, 3, 71, 80, 66, 170, 2, 26, 71, 111, 111, 103, 108,
+    101, 46, 80, 114, 111, 116, 111, 98, 117, 102, 46, 82, 101, 102, 108, 101,
+    99, 116, 105, 111, 110,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
@@ -243,7 +243,7 @@ impl EnumType for MethodOptionsNestedIdempotencyLevel {
     fn value(&self) -> i32 { self.0 }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct FileDescriptorSet {
     pub file: Vec<FileDescriptorProto>,
     pub cache_size: CacheSize,
@@ -264,9 +264,9 @@ impl Message for FileDescriptorSet {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.file.is_empty() {
-            for m in &self.file {
+            for v in &self.file {
                 s.write_raw_1_byte([10])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -284,7 +284,7 @@ impl Message for FileDescriptorSet {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct FileDescriptorProto {
     pub name: String,
     pub package: String,
@@ -343,9 +343,9 @@ impl Message for FileDescriptorProto {
             s.write_string(&self.package)?;
         }
         if !self.dependency.is_empty() {
-            for m in &self.dependency {
+            for v in &self.dependency {
                 s.write_raw_1_byte([26])?;
-                s.write_string(m)?;
+                s.write_string(v)?;
             }
         }
         if !self.public_dependency.is_empty() {
@@ -357,38 +357,36 @@ impl Message for FileDescriptorProto {
             s.write_var_i32_array(&self.weak_dependency)?;
         }
         if !self.message_type.is_empty() {
-            for m in &self.message_type {
+            for v in &self.message_type {
                 s.write_raw_1_byte([34])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.enum_type.is_empty() {
-            for m in &self.enum_type {
+            for v in &self.enum_type {
                 s.write_raw_1_byte([42])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.service.is_empty() {
-            for m in &self.service {
+            for v in &self.service {
                 s.write_raw_1_byte([50])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.extension.is_empty() {
-            for m in &self.extension {
+            for v in &self.extension {
                 s.write_raw_1_byte([58])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([66])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([66])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
-        if let Some(m) = &self.source_code_info {
-        s.write_raw_1_byte([74])?;
+        if let Some(v) = &self.source_code_info {
             s.write_raw_1_byte([74])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.syntax.is_empty() {
             s.write_raw_1_byte([98])?;
@@ -429,11 +427,11 @@ impl Message for FileDescriptorProto {
         if !self.extension.is_empty() {
             n += encoded::arr_message_len(1, &self.extension);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
-        if let Some(msg) = &self.source_code_info {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.source_code_info {
+            n += 1 + encoded::message_len(v);
         }
         if !self.syntax.is_empty() {
             n += 1 + encoded::string_len(&self.syntax);
@@ -442,7 +440,7 @@ impl Message for FileDescriptorProto {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DescriptorProto {
     pub name: String,
     pub field: Vec<FieldDescriptorProto>,
@@ -488,56 +486,55 @@ impl Message for DescriptorProto {
             s.write_string(&self.name)?;
         }
         if !self.field.is_empty() {
-            for m in &self.field {
+            for v in &self.field {
                 s.write_raw_1_byte([18])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.extension.is_empty() {
-            for m in &self.extension {
+            for v in &self.extension {
                 s.write_raw_1_byte([50])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.nested_type.is_empty() {
-            for m in &self.nested_type {
+            for v in &self.nested_type {
                 s.write_raw_1_byte([26])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.enum_type.is_empty() {
-            for m in &self.enum_type {
+            for v in &self.enum_type {
                 s.write_raw_1_byte([34])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.extension_range.is_empty() {
-            for m in &self.extension_range {
+            for v in &self.extension_range {
                 s.write_raw_1_byte([42])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.oneof_decl.is_empty() {
-            for m in &self.oneof_decl {
+            for v in &self.oneof_decl {
                 s.write_raw_1_byte([66])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([58])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([58])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.reserved_range.is_empty() {
-            for m in &self.reserved_range {
+            for v in &self.reserved_range {
                 s.write_raw_1_byte([74])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.reserved_name.is_empty() {
-            for m in &self.reserved_name {
+            for v in &self.reserved_name {
                 s.write_raw_1_byte([82])?;
-                s.write_string(m)?;
+                s.write_string(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -569,8 +566,8 @@ impl Message for DescriptorProto {
         if !self.oneof_decl.is_empty() {
             n += encoded::arr_message_len(1, &self.oneof_decl);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         if !self.reserved_range.is_empty() {
             n += encoded::arr_message_len(1, &self.reserved_range);
@@ -582,7 +579,7 @@ impl Message for DescriptorProto {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DescriptorProtoNestedExtensionRange {
     pub start: i32,
     pub end: i32,
@@ -609,18 +606,17 @@ impl Message for DescriptorProtoNestedExtensionRange {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.start != 0 {
+        if 0 != self.start {
             s.write_raw_1_byte([8])?;
             s.write_var_i32(self.start)?;
         }
-        if self.end != 0 {
+        if 0 != self.end {
             s.write_raw_1_byte([16])?;
             s.write_var_i32(self.end)?;
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([26])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([26])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -630,20 +626,20 @@ impl Message for DescriptorProtoNestedExtensionRange {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.start != 0 {
+        if 0 != self.start {
             n += 1 + encoded::var_i32_len(self.start);
         }
-        if self.end != 0 {
+        if 0 != self.end {
             n += 1 + encoded::var_i32_len(self.end);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DescriptorProtoNestedReservedRange {
     pub start: i32,
     pub end: i32,
@@ -665,11 +661,11 @@ impl Message for DescriptorProtoNestedReservedRange {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.start != 0 {
+        if 0 != self.start {
             s.write_raw_1_byte([8])?;
             s.write_var_i32(self.start)?;
         }
-        if self.end != 0 {
+        if 0 != self.end {
             s.write_raw_1_byte([16])?;
             s.write_var_i32(self.end)?;
         }
@@ -681,17 +677,17 @@ impl Message for DescriptorProtoNestedReservedRange {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.start != 0 {
+        if 0 != self.start {
             n += 1 + encoded::var_i32_len(self.start);
         }
-        if self.end != 0 {
+        if 0 != self.end {
             n += 1 + encoded::var_i32_len(self.end);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExtensionRangeOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub cache_size: CacheSize,
@@ -712,9 +708,9 @@ impl Message for ExtensionRangeOptions {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -732,7 +728,7 @@ impl Message for ExtensionRangeOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct FieldDescriptorProto {
     pub name: String,
     pub number: i32,
@@ -777,7 +773,7 @@ impl Message for FieldDescriptorProto {
             s.write_raw_1_byte([10])?;
             s.write_string(&self.name)?;
         }
-        if self.number != 0 {
+        if 0 != self.number {
             s.write_raw_1_byte([24])?;
             s.write_var_i32(self.number)?;
         }
@@ -801,7 +797,7 @@ impl Message for FieldDescriptorProto {
             s.write_raw_1_byte([58])?;
             s.write_string(&self.default_value)?;
         }
-        if self.oneof_index != 0 {
+        if 0 != self.oneof_index {
             s.write_raw_1_byte([72])?;
             s.write_var_i32(self.oneof_index)?;
         }
@@ -809,10 +805,9 @@ impl Message for FieldDescriptorProto {
             s.write_raw_1_byte([82])?;
             s.write_string(&self.json_name)?;
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([66])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([66])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -825,14 +820,14 @@ impl Message for FieldDescriptorProto {
         if !self.name.is_empty() {
             n += 1 + encoded::string_len(&self.name);
         }
-        if self.number != 0 {
+        if 0 != self.number {
             n += 1 + encoded::var_i32_len(self.number);
         }
         if self.label.value() != 0 {
-            n += 1 + encoded::var_i32_len(self.label.value());
+            n += 1 + encoded::enum_len(self.label);
         }
         if self.r#type.value() != 0 {
-            n += 1 + encoded::var_i32_len(self.r#type.value());
+            n += 1 + encoded::enum_len(self.r#type);
         }
         if !self.type_name.is_empty() {
             n += 1 + encoded::string_len(&self.type_name);
@@ -843,20 +838,20 @@ impl Message for FieldDescriptorProto {
         if !self.default_value.is_empty() {
             n += 1 + encoded::string_len(&self.default_value);
         }
-        if self.oneof_index != 0 {
+        if 0 != self.oneof_index {
             n += 1 + encoded::var_i32_len(self.oneof_index);
         }
         if !self.json_name.is_empty() {
             n += 1 + encoded::string_len(&self.json_name);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct OneofDescriptorProto {
     pub name: String,
     pub options: Option<OneofOptions>,
@@ -885,10 +880,9 @@ impl Message for OneofDescriptorProto {
             s.write_raw_1_byte([10])?;
             s.write_string(&self.name)?;
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([18])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([18])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -901,14 +895,14 @@ impl Message for OneofDescriptorProto {
         if !self.name.is_empty() {
             n += 1 + encoded::string_len(&self.name);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumDescriptorProto {
     pub name: String,
     pub value: Vec<EnumValueDescriptorProto>,
@@ -944,26 +938,25 @@ impl Message for EnumDescriptorProto {
             s.write_string(&self.name)?;
         }
         if !self.value.is_empty() {
-            for m in &self.value {
+            for v in &self.value {
                 s.write_raw_1_byte([18])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([26])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([26])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.reserved_range.is_empty() {
-            for m in &self.reserved_range {
+            for v in &self.reserved_range {
                 s.write_raw_1_byte([34])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.reserved_name.is_empty() {
-            for m in &self.reserved_name {
+            for v in &self.reserved_name {
                 s.write_raw_1_byte([42])?;
-                s.write_string(m)?;
+                s.write_string(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -980,8 +973,8 @@ impl Message for EnumDescriptorProto {
         if !self.value.is_empty() {
             n += encoded::arr_message_len(1, &self.value);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         if !self.reserved_range.is_empty() {
             n += encoded::arr_message_len(1, &self.reserved_range);
@@ -993,7 +986,7 @@ impl Message for EnumDescriptorProto {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumDescriptorProtoNestedEnumReservedRange {
     pub start: i32,
     pub end: i32,
@@ -1015,11 +1008,11 @@ impl Message for EnumDescriptorProtoNestedEnumReservedRange {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.start != 0 {
+        if 0 != self.start {
             s.write_raw_1_byte([8])?;
             s.write_var_i32(self.start)?;
         }
-        if self.end != 0 {
+        if 0 != self.end {
             s.write_raw_1_byte([16])?;
             s.write_var_i32(self.end)?;
         }
@@ -1031,17 +1024,17 @@ impl Message for EnumDescriptorProtoNestedEnumReservedRange {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.start != 0 {
+        if 0 != self.start {
             n += 1 + encoded::var_i32_len(self.start);
         }
-        if self.end != 0 {
+        if 0 != self.end {
             n += 1 + encoded::var_i32_len(self.end);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumValueDescriptorProto {
     pub name: String,
     pub number: i32,
@@ -1072,14 +1065,13 @@ impl Message for EnumValueDescriptorProto {
             s.write_raw_1_byte([10])?;
             s.write_string(&self.name)?;
         }
-        if self.number != 0 {
+        if 0 != self.number {
             s.write_raw_1_byte([16])?;
             s.write_var_i32(self.number)?;
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([26])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([26])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -1092,17 +1084,17 @@ impl Message for EnumValueDescriptorProto {
         if !self.name.is_empty() {
             n += 1 + encoded::string_len(&self.name);
         }
-        if self.number != 0 {
+        if 0 != self.number {
             n += 1 + encoded::var_i32_len(self.number);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ServiceDescriptorProto {
     pub name: String,
     pub method: Vec<MethodDescriptorProto>,
@@ -1134,15 +1126,14 @@ impl Message for ServiceDescriptorProto {
             s.write_string(&self.name)?;
         }
         if !self.method.is_empty() {
-            for m in &self.method {
+            for v in &self.method {
                 s.write_raw_1_byte([18])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([26])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([26])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -1158,14 +1149,14 @@ impl Message for ServiceDescriptorProto {
         if !self.method.is_empty() {
             n += encoded::arr_message_len(1, &self.method);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         n
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct MethodDescriptorProto {
     pub name: String,
     pub input_type: String,
@@ -1210,10 +1201,9 @@ impl Message for MethodDescriptorProto {
             s.write_raw_1_byte([26])?;
             s.write_string(&self.output_type)?;
         }
-        if let Some(m) = &self.options {
-        s.write_raw_1_byte([34])?;
+        if let Some(v) = &self.options {
             s.write_raw_1_byte([34])?;
-            s.write_message(m)?;
+            s.write_message(v)?;
         }
         if self.client_streaming {
             s.write_raw_1_byte([40])?;
@@ -1240,8 +1230,8 @@ impl Message for MethodDescriptorProto {
         if !self.output_type.is_empty() {
             n += 1 + encoded::string_len(&self.output_type);
         }
-        if let Some(msg) = &self.options {
-            n += 1 + encoded::message_len(msg);
+        if let Some(v) = &self.options {
+            n += 1 + encoded::message_len(v);
         }
         if self.client_streaming {
             n += 2;
@@ -1253,7 +1243,7 @@ impl Message for MethodDescriptorProto {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct FileOptions {
     pub java_package: String,
     pub java_outer_classname: String,
@@ -1394,9 +1384,9 @@ impl Message for FileOptions {
             s.write_string(&self.ruby_package)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1423,7 +1413,7 @@ impl Message for FileOptions {
             n += 3;
         }
         if self.optimize_for.value() != 0 {
-            n += 1 + encoded::var_i32_len(self.optimize_for.value());
+            n += 1 + encoded::enum_len(self.optimize_for);
         }
         if !self.go_package.is_empty() {
             n += 1 + encoded::string_len(&self.go_package);
@@ -1474,7 +1464,7 @@ impl Message for FileOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct MessageOptions {
     pub message_set_wire_format: bool,
     pub no_standard_descriptor_accessor: bool,
@@ -1519,9 +1509,9 @@ impl Message for MessageOptions {
             s.write_bool(self.map_entry)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1551,7 +1541,7 @@ impl Message for MessageOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct FieldOptions {
     pub ctype: FieldOptionsNestedCType,
     pub packed: bool,
@@ -1608,9 +1598,9 @@ impl Message for FieldOptions {
             s.write_bool(self.weak)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1622,13 +1612,13 @@ impl Message for FieldOptions {
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
         if self.ctype.value() != 0 {
-            n += 1 + encoded::var_i32_len(self.ctype.value());
+            n += 1 + encoded::enum_len(self.ctype);
         }
         if self.packed {
             n += 2;
         }
         if self.jstype.value() != 0 {
-            n += 1 + encoded::var_i32_len(self.jstype.value());
+            n += 1 + encoded::enum_len(self.jstype);
         }
         if self.lazy {
             n += 2;
@@ -1646,7 +1636,7 @@ impl Message for FieldOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct OneofOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub cache_size: CacheSize,
@@ -1667,9 +1657,9 @@ impl Message for OneofOptions {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1687,7 +1677,7 @@ impl Message for OneofOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumOptions {
     pub allow_alias: bool,
     pub deprecated: bool,
@@ -1720,9 +1710,9 @@ impl Message for EnumOptions {
             s.write_bool(self.deprecated)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1746,7 +1736,7 @@ impl Message for EnumOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumValueOptions {
     pub deprecated: bool,
     pub uninterpreted_option: Vec<UninterpretedOption>,
@@ -1773,9 +1763,9 @@ impl Message for EnumValueOptions {
             s.write_bool(self.deprecated)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1796,7 +1786,7 @@ impl Message for EnumValueOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ServiceOptions {
     pub deprecated: bool,
     pub uninterpreted_option: Vec<UninterpretedOption>,
@@ -1823,9 +1813,9 @@ impl Message for ServiceOptions {
             s.write_bool(self.deprecated)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1846,7 +1836,7 @@ impl Message for ServiceOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct MethodOptions {
     pub deprecated: bool,
     pub idempotency_level: MethodOptionsNestedIdempotencyLevel,
@@ -1879,9 +1869,9 @@ impl Message for MethodOptions {
             s.write_enum(self.idempotency_level)?;
         }
         if !self.uninterpreted_option.is_empty() {
-            for m in &self.uninterpreted_option {
+            for v in &self.uninterpreted_option {
                 s.write_raw_2_byte([186, 62])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -1896,7 +1886,7 @@ impl Message for MethodOptions {
             n += 3;
         }
         if self.idempotency_level.value() != 0 {
-            n += 2 + encoded::var_i32_len(self.idempotency_level.value());
+            n += 2 + encoded::enum_len(self.idempotency_level);
         }
         if !self.uninterpreted_option.is_empty() {
             n += encoded::arr_message_len(2, &self.uninterpreted_option);
@@ -1905,7 +1895,7 @@ impl Message for MethodOptions {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct UninterpretedOption {
     pub name: Vec<UninterpretedOptionNestedNamePart>,
     pub identifier_value: String,
@@ -1938,24 +1928,24 @@ impl Message for UninterpretedOption {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.name.is_empty() {
-            for m in &self.name {
+            for v in &self.name {
                 s.write_raw_1_byte([18])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.identifier_value.is_empty() {
             s.write_raw_1_byte([26])?;
             s.write_string(&self.identifier_value)?;
         }
-        if self.positive_int_value != 0 {
+        if 0 != self.positive_int_value {
             s.write_raw_1_byte([32])?;
             s.write_var_u64(self.positive_int_value)?;
         }
-        if self.negative_int_value != 0 {
+        if 0 != self.negative_int_value {
             s.write_raw_1_byte([40])?;
             s.write_var_i64(self.negative_int_value)?;
         }
-        if self.double_value != 0f64 {
+        if 0f64 != self.double_value {
             s.write_raw_1_byte([49])?;
             s.write_f64(self.double_value)?;
         }
@@ -1981,13 +1971,13 @@ impl Message for UninterpretedOption {
         if !self.identifier_value.is_empty() {
             n += 1 + encoded::string_len(&self.identifier_value);
         }
-        if self.positive_int_value != 0 {
+        if 0 != self.positive_int_value {
             n += 1 + encoded::var_u64_len(self.positive_int_value);
         }
-        if self.negative_int_value != 0 {
+        if 0 != self.negative_int_value {
             n += 1 + encoded::var_i64_len(self.negative_int_value);
         }
-        if self.double_value != 0f64 {
+        if 0f64 != self.double_value {
             n += 9;
         }
         if !self.string_value.is_empty() {
@@ -2000,7 +1990,7 @@ impl Message for UninterpretedOption {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct UninterpretedOptionNestedNamePart {
     pub name_part: String,
     pub is_extension: bool,
@@ -2048,7 +2038,7 @@ impl Message for UninterpretedOptionNestedNamePart {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SourceCodeInfo {
     pub location: Vec<SourceCodeInfoNestedLocation>,
     pub cache_size: CacheSize,
@@ -2069,9 +2059,9 @@ impl Message for SourceCodeInfo {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.location.is_empty() {
-            for m in &self.location {
+            for v in &self.location {
                 s.write_raw_1_byte([10])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -2089,7 +2079,7 @@ impl Message for SourceCodeInfo {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SourceCodeInfoNestedLocation {
     pub path: Vec<i32>,
     pub span: Vec<i32>,
@@ -2136,9 +2126,9 @@ impl Message for SourceCodeInfoNestedLocation {
             s.write_string(&self.trailing_comments)?;
         }
         if !self.leading_detached_comments.is_empty() {
-            for m in &self.leading_detached_comments {
+            for v in &self.leading_detached_comments {
                 s.write_raw_1_byte([50])?;
-                s.write_string(m)?;
+                s.write_string(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -2168,7 +2158,7 @@ impl Message for SourceCodeInfoNestedLocation {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct GeneratedCodeInfo {
     pub annotation: Vec<GeneratedCodeInfoNestedAnnotation>,
     pub cache_size: CacheSize,
@@ -2189,9 +2179,9 @@ impl Message for GeneratedCodeInfo {
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
         if !self.annotation.is_empty() {
-            for m in &self.annotation {
+            for v in &self.annotation {
                 s.write_raw_1_byte([10])?;
-                s.write_message(m)?;
+                s.write_message(v)?;
             }
         }
         if !self.unknown.is_empty() {
@@ -2209,7 +2199,7 @@ impl Message for GeneratedCodeInfo {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct GeneratedCodeInfoNestedAnnotation {
     pub path: Vec<i32>,
     pub source_file: String,
@@ -2244,11 +2234,11 @@ impl Message for GeneratedCodeInfoNestedAnnotation {
             s.write_raw_1_byte([18])?;
             s.write_string(&self.source_file)?;
         }
-        if self.begin != 0 {
+        if 0 != self.begin {
             s.write_raw_1_byte([24])?;
             s.write_var_i32(self.begin)?;
         }
-        if self.end != 0 {
+        if 0 != self.end {
             s.write_raw_1_byte([32])?;
             s.write_var_i32(self.end)?;
         }
@@ -2266,10 +2256,10 @@ impl Message for GeneratedCodeInfoNestedAnnotation {
         if !self.source_file.is_empty() {
             n += 1 + encoded::string_len(&self.source_file);
         }
-        if self.begin != 0 {
+        if 0 != self.begin {
             n += 1 + encoded::var_i32_len(self.begin);
         }
-        if self.end != 0 {
+        if 0 != self.end {
             n += 1 + encoded::var_i32_len(self.end);
         }
         n

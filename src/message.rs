@@ -10,7 +10,8 @@ pub trait Message {
 
     fn write_to_vec(&self, s: &mut Vec<u8>) -> Result<()> {
         let mut output = CodedOutputStream::new(s);
-        self.write_to(&mut output)
+        self.write_to(&mut output)?;
+        output.flush()
     }
 
     fn write_as_bytes(&self) -> Result<Vec<u8>> {
@@ -33,6 +34,12 @@ impl Default for CacheSize {
         CacheSize {
             size: UnsafeCell::new(0),
         }
+    }
+}
+
+impl PartialEq for CacheSize {
+    fn eq(&self, _: &CacheSize) -> bool {
+        true
     }
 }
 

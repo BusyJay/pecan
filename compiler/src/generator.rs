@@ -5,12 +5,38 @@ use id_arena::Id;
 use pecan::Message;
 use pecan::Result;
 use pecan_utils::naming;
+use std::env;
 use std::fmt::Write;
-use std::{env, result};
+
+struct FieldDecl<'a> {
+    field_name: String,
+    type_name: String,
+    tag1: u32,
+    tag2: u32,
+    copy: bool,
+    default_val: &'static str,
+    method_symbol: &'static str,
+    proto: &'a FieldDescriptorProto,
+}
+
+struct OneOfDecl<'a> {
+    field_name: String,
+    type_name: String,
+    copy: bool,
+    items: Vec<FieldType<'a>>,
+}
+
+enum FieldType<'a> {
+    Optional(FieldDecl<'a>),
+    Singleur(FieldDecl<'a>),
+    Repeated(FieldDecl<'a>),
+    Oneof(OneOfDecl<'a>),
+}
 
 pub struct Generator<'a> {
     printer: Printer<'a>,
     file: Id<FileDescriptor>,
+    proto2: bool,
     file_name: String,
 }
 
@@ -20,13 +46,15 @@ impl Generator<'_> {
         output: &'a mut Output,
         file: Id<FileDescriptor>,
     ) -> Generator<'a> {
-        let input_file_name = ctx.db.files.get(file).unwrap().proto.name.clone();
+        let file_proto = &ctx.db.files.get(file).unwrap().proto;
+        let input_file_name = file_proto.name.clone();
         let module_name = naming::module_name(&input_file_name);
         let output_file_name = naming::file_name(&module_name);
         let printer = output.open(&output_file_name);
         Generator {
             printer,
             file,
+            proto2: file_proto.syntax == "proto2",
             file_name: input_file_name,
         }
     }
@@ -168,351 +196,358 @@ impl Generator<'_> {
         }
     }
 
-    fn search_type(
-        &self,
+    fn build_field<'a>(
+        &mut self,
         ctx: &Context,
-        f: &FieldDescriptorProto,
-    ) -> result::Result<&'static str, String> {
-        let (file, mut type_name) = match f.r#type {
-            FieldDescriptorProtoNestedType::TypeBool => return Ok("bool"),
-            FieldDescriptorProtoNestedType::TypeUint32
-            | FieldDescriptorProtoNestedType::TypeFixed32 => return Ok("u32"),
-            FieldDescriptorProtoNestedType::TypeUint64
-            | FieldDescriptorProtoNestedType::TypeFixed64 => return Ok("u64"),
-            FieldDescriptorProtoNestedType::TypeInt32
-            | FieldDescriptorProtoNestedType::TypeSfixed32
-            | FieldDescriptorProtoNestedType::TypeSint32 => return Ok("i32"),
-            FieldDescriptorProtoNestedType::TypeInt64
-            | FieldDescriptorProtoNestedType::TypeSfixed64
-            | FieldDescriptorProtoNestedType::TypeSint64 => return Ok("i64"),
-            FieldDescriptorProtoNestedType::TypeString => return Ok("String"),
-            FieldDescriptorProtoNestedType::TypeBytes => return Ok("Vec<u8>"),
-            FieldDescriptorProtoNestedType::TypeDouble => return Ok("f64"),
-            FieldDescriptorProtoNestedType::TypeFloat => return Ok("f32"),
-            FieldDescriptorProtoNestedType::TypeMessage
-            | FieldDescriptorProtoNestedType::TypeGroup => {
-                let id = ctx.message_address.get(&f.type_name).expect(&f.type_name);
-                let m = ctx.db.messages.get(*id).expect(&f.type_name);
-                (m.file, naming::type_name(&m.type_name))
+        f: &'a FieldDescriptorProto,
+    ) -> (Option<i32>, FieldType<'a>) {
+        let mut desc = FieldDecl {
+            field_name: naming::field_name(&f.name),
+            type_name: String::new(),
+            tag1: (f.number as u32) << 3,
+            tag2: 0,
+            copy: true,
+            default_val: "0",
+            method_symbol: "",
+            proto: f,
+        };
+        let mut wire_type = 0;
+        match f.r#type {
+            FieldDescriptorProtoNestedType::TypeBool => {
+                desc.method_symbol = "bool";
+                desc.type_name = "bool".to_owned();
+                desc.default_val = "";
+            }
+            FieldDescriptorProtoNestedType::TypeInt32 => {
+                desc.method_symbol = "var_i32";
+                desc.type_name = "i32".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeInt64 => {
+                desc.method_symbol = "var_i64";
+                desc.type_name = "i64".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeUint32 => {
+                desc.method_symbol = "var_u32";
+                desc.type_name = "u32".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeUint64 => {
+                desc.method_symbol = "var_u64";
+                desc.type_name = "u64".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeSint32 => {
+                desc.method_symbol = "var_s32";
+                desc.type_name = "i32".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeSint64 => {
+                desc.method_symbol = "var_s64";
+                desc.type_name = "i64".to_owned();
             }
             FieldDescriptorProtoNestedType::TypeEnum => {
+                desc.method_symbol = "enum";
                 let id = ctx.enum_address.get(&f.type_name).unwrap();
                 let e = ctx.db.enums.get(*id).unwrap();
-                (e.file, naming::type_name(&e.type_name))
+                desc.type_name = naming::type_name(&e.type_name);
+                if e.file != self.file {
+                    let f = ctx.db.files.get(e.file).unwrap();
+                    desc.type_name =
+                        format!("{}::{}", naming::alias_name(&f.proto.name), &desc.type_name);
+                }
+                desc.default_val = "";
+            }
+            FieldDescriptorProtoNestedType::TypeFixed64 => {
+                wire_type = 1;
+                desc.method_symbol = "fixed64";
+                desc.type_name = "u64".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeSfixed64 => {
+                wire_type = 1;
+                desc.method_symbol = "sfixed64";
+                desc.type_name = "i64".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeDouble => {
+                wire_type = 1;
+                desc.method_symbol = "f64";
+                desc.type_name = "f64".to_owned();
+                desc.default_val = "0f64";
+            }
+            FieldDescriptorProtoNestedType::TypeString => {
+                wire_type = 2;
+                desc.method_symbol = "string";
+                desc.type_name = "String".to_owned();
+                desc.default_val = "";
+                desc.copy = false;
+            }
+            FieldDescriptorProtoNestedType::TypeBytes => {
+                wire_type = 2;
+                desc.method_symbol = "bytes";
+                desc.type_name = "Vec<u8>".to_owned();
+                desc.default_val = "";
+                desc.copy = false;
+            }
+            FieldDescriptorProtoNestedType::TypeMessage => {
+                wire_type = 2;
+                desc.method_symbol = "message";
+                let id = ctx.message_address.get(&f.type_name).unwrap();
+                let e = ctx.db.messages.get(*id).unwrap();
+                desc.type_name = naming::type_name(&e.type_name);
+                if e.file != self.file {
+                    let f = ctx.db.files.get(e.file).unwrap();
+                    desc.type_name =
+                        format!("{}::{}", naming::alias_name(&f.proto.name), &desc.type_name);
+                }
+                desc.default_val = "";
+                desc.copy = false;
+            }
+            FieldDescriptorProtoNestedType::TypeGroup => unimplemented!(),
+            FieldDescriptorProtoNestedType::TypeFixed32 => {
+                wire_type = 5;
+                desc.method_symbol = "fixed32";
+                desc.type_name = "u32".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeSfixed32 => {
+                wire_type = 5;
+                desc.method_symbol = "sfixed32";
+                desc.type_name = "i32".to_owned();
+            }
+            FieldDescriptorProtoNestedType::TypeFloat => {
+                wire_type = 5;
+                desc.method_symbol = "f32";
+                desc.type_name = "f32".to_owned();
+                desc.default_val = "0f32";
+            }
+            _ => unimplemented!(),
+        }
+        desc.tag1 |= wire_type;
+        let ft = match desc.proto.label {
+            FieldDescriptorProtoNestedLabel::LabelOptional => {
+                if self.proto2 || f.r#type == FieldDescriptorProtoNestedType::TypeMessage {
+                    FieldType::Optional(desc)
+                } else {
+                    FieldType::Singleur(desc)
+                }
+            }
+            FieldDescriptorProtoNestedLabel::LabelRequired => FieldType::Singleur(desc),
+            FieldDescriptorProtoNestedLabel::LabelRepeated => {
+                if wire_type == 0 || wire_type == 1 || wire_type == 5 {
+                    desc.tag2 = (desc.proto.number as u32) << 3 | 2;
+                }
+                FieldType::Repeated(desc)
             }
             _ => unimplemented!(),
         };
-
-        if file != self.file {
-            let f = ctx.db.files.get(file).unwrap();
-            type_name = format!("{}::{}", naming::alias_name(&f.proto.name), type_name)
-        }
-
-        Err(type_name)
+        (None, ft)
     }
 
-    fn wire_type(&self, f: &FieldDescriptorProto) -> (u32, &'static str) {
-        match f.r#type {
-            FieldDescriptorProtoNestedType::TypeBool => (0, "bool"),
-            FieldDescriptorProtoNestedType::TypeInt32 => (0, "var_i32"),
-            FieldDescriptorProtoNestedType::TypeInt64 => (0, "var_i64"),
-            FieldDescriptorProtoNestedType::TypeUint32 => (0, "var_u32"),
-            FieldDescriptorProtoNestedType::TypeUint64 => (0, "var_u64"),
-            FieldDescriptorProtoNestedType::TypeSint32 => (0, "var_s32"),
-            FieldDescriptorProtoNestedType::TypeSint64 => (0, "var_s64"),
-            FieldDescriptorProtoNestedType::TypeEnum => (0, "enum"),
-            FieldDescriptorProtoNestedType::TypeFixed64 => (1, "fixed64"),
-            FieldDescriptorProtoNestedType::TypeSfixed64 => (1, "sfixed64"),
-            FieldDescriptorProtoNestedType::TypeDouble => (1, "f64"),
-            FieldDescriptorProtoNestedType::TypeString => (2, "string"),
-            FieldDescriptorProtoNestedType::TypeBytes => (2, "bytes"),
-            FieldDescriptorProtoNestedType::TypeMessage => (2, ""),
-            FieldDescriptorProtoNestedType::TypeGroup => unimplemented!(),
-            FieldDescriptorProtoNestedType::TypeFixed32 => (5, "fixed32"),
-            FieldDescriptorProtoNestedType::TypeSfixed32 => (5, "sfixed32"),
-            FieldDescriptorProtoNestedType::TypeFloat => (5, "f32"),
-            _ => unimplemented!(),
+    fn build_field_set<'a>(
+        &mut self,
+        ctx: &Context,
+        m: &'a MessageDescriptor,
+    ) -> Vec<FieldType<'a>> {
+        let mut oneof_decls = vec![];
+        for oneof in &m.proto.oneof_decl {
+            let mut oneof_names = m.type_name.clone();
+            oneof_names.push(oneof.name.clone());
+            oneof_decls.push(OneOfDecl {
+                field_name: naming::field_name(&oneof.name),
+                type_name: naming::type_name(&oneof_names),
+                copy: true,
+                items: vec![],
+            });
+        }
+        let mut fields = vec![];
+        for f in &m.proto.field {
+            let (oneof_index, ft) = self.build_field(ctx, f);
+            if let Some(index) = oneof_index {
+                oneof_decls[index as usize].copy &= match &ft {
+                    FieldType::Optional(d) | FieldType::Singleur(d) => d.copy,
+                    FieldType::Oneof(_) | FieldType::Repeated(_) => unreachable!(),
+                };
+                oneof_decls[index as usize].items.push(ft);
+            } else {
+                fields.push(ft);
+            }
+        }
+        fields.extend(oneof_decls.into_iter().map(FieldType::Oneof));
+        fields
+    }
+
+    fn print_field_decl(&mut self, field_sets: &[FieldType]) {
+        for ft in field_sets {
+            match ft {
+                FieldType::Optional(desc) => {
+                    w!(
+                        self.printer,
+                        "pub {}: Option<{}>,\n",
+                        desc.field_name,
+                        desc.type_name
+                    );
+                }
+                FieldType::Singleur(desc) => {
+                    w!(
+                        self.printer,
+                        "pub {}: {},\n",
+                        desc.field_name,
+                        desc.type_name
+                    );
+                }
+                FieldType::Repeated(desc) => {
+                    w!(
+                        self.printer,
+                        "pub {}: Vec<{}>,\n",
+                        desc.field_name,
+                        desc.type_name
+                    );
+                }
+                FieldType::Oneof(desc) => {
+                    w!(
+                        self.printer,
+                        "pub {}: Option<{}>,\n",
+                        desc.field_name,
+                        desc.type_name
+                    );
+                }
+            }
         }
     }
 
-    fn match_merge_from_repeated(&mut self, number: u32, wire_type: u32, name: &str, ty: &str) {
-        let tag = (number << 3) | wire_type;
-        if !ty.is_empty() {
-            w!(
-                self.printer,
-                "{} => self.{}.push(s.read_{}()?),\n",
-                tag,
-                name,
-                ty
-            );
-        } else {
-            assert_eq!(wire_type, 2);
-            w!(
-                self.printer,
-                "{} => s.read_message_to(&mut self.{})?,\n",
-                tag,
-                name
-            );
-        }
-        if wire_type != 2 && wire_type != 3 && wire_type != 4 {
-            let packed_tag = (number << 3) | 2;
-            w!(
-                self.printer,
-                "{} => s.read_{}_array(&mut self.{})?,\n",
-                packed_tag,
-                ty,
-                name
-            );
-        }
-    }
-
-    fn match_merge_from_single(&mut self, number: u32, wire_type: u32, name: &str, ty: &str) {
-        let tag = (number << 3) | wire_type;
-        if !ty.is_empty() {
-            w!(
-                self.printer,
-                "{} => self.{} = s.read_{}()?,\n",
-                tag,
-                name,
-                ty
-            );
-        } else {
-            assert_eq!(wire_type, 2);
-            w!(self.printer, "{} => {{\n", tag);
+    fn print_oneof_decl(&mut self, field_sets: &[FieldType]) {
+        for ft in field_sets {
+            let desc = match ft {
+                FieldType::Oneof(desc) => desc,
+                _ => continue,
+            };
+            if desc.copy {
+                w!(
+                    self.printer,
+                    "\n#[derive(Clone, Debug, Coppy, PartialEq)]\n"
+                );
+            } else {
+                w!(self.printer, "\n#[derive(Clone, Debug, PartialEq)]\n");
+            }
+            w!(self.printer, "\npub enum {} {{\n", desc.type_name);
             self.printer.indent();
-            w!(
-                self.printer,
-                "let msg = self.{}.get_or_insert_with(Default::default);\n",
-                name
-            );
-            w!(self.printer, "s.read_message(msg)?;\n");
+            for item in &desc.items {
+                let (ty_name, internal_ty) = match item {
+                    FieldType::Oneof(d) => (naming::camel_case(&d.field_name), &d.type_name),
+                    FieldType::Optional(d) => (naming::camel_case(&d.field_name), &d.type_name),
+                    FieldType::Repeated(d) => (naming::camel_case(&d.field_name), &d.type_name),
+                    FieldType::Singleur(d) => (naming::camel_case(&d.field_name), &d.type_name),
+                };
+                w!(self.printer, "{}({}),\n", ty_name, internal_ty);
+            }
             self.printer.outdent();
             w!(self.printer, "}}\n");
         }
     }
 
-    fn match_merge_from(&mut self, f: &FieldDescriptorProto) {
-        let name = naming::field_name(&f.name);
-        let (wire_type, ty) = self.wire_type(f);
-        match f.label {
-            FieldDescriptorProtoNestedLabel::LabelRepeated => {
-                self.match_merge_from_repeated(f.number as u32, wire_type, &name, ty)
-            }
-            _ => self.match_merge_from_single(f.number as u32, wire_type, &name, ty),
-        }
-    }
-
-    fn field_write_to(&mut self, f: &FieldDescriptorProto) {
-        let name = naming::field_name(&f.name);
-        let (wire_type, ty) = self.wire_type(f);
-        if f.label == FieldDescriptorProtoNestedLabel::LabelRepeated
-            || (wire_type == 2 && !ty.is_empty())
-        {
-            w!(self.printer, "if !self.{}.is_empty() {{\n", name);
-            self.printer.indent();
-        } else if f.r#type == FieldDescriptorProtoNestedType::TypeBool {
-            w!(self.printer, "if self.{} {{\n", name);
-            self.printer.indent();
-        } else if f.r#type == FieldDescriptorProtoNestedType::TypeEnum {
-            w!(self.printer, "if self.{}.value() != 0 {{\n", name);
-            self.printer.indent();
-        } else if wire_type == 3 {
-            unimplemented!()
-        } else if !ty.is_empty() {
-            let zero_ty = if ty == "f64" || ty == "f32" { ty } else { "" };
-            w!(self.printer, "if self.{} != 0{} {{\n", name, zero_ty);
-            self.printer.indent();
+    fn print_merge_from_optional(&mut self, d: &FieldDecl) {
+        if d.method_symbol != "message" {
+            w!(
+                self.printer,
+                "{} => self.{} = Some(s.read_{}()?),\n",
+                d.tag1,
+                d.field_name,
+                d.method_symbol
+            );
+            return;
         }
 
-        let tag = if f.label == FieldDescriptorProtoNestedLabel::LabelRepeated {
-            (f.number as u32) << 3 | 2
-        } else {
-            (f.number as u32) << 3 | wire_type as u32
-        };
-        let mut buffer = [0u8; 5];
-        let count =
-            unsafe { pecan_utils::codec::encode_varint_u32_to_array(buffer.as_mut_ptr(), tag) };
-        if f.label == FieldDescriptorProtoNestedLabel::LabelRepeated {
-            if wire_type != 2 {
-                w!(
-                    self.printer,
-                    "s.write_raw_{}_byte({:?})?;\n",
-                    count,
-                    &buffer[..count]
-                );
-                w!(self.printer, "s.write_{}_array(&self.{})?;\n", ty, name);
-            } else {
-                w!(self.printer, "for m in &self.{} {{\n", name);
-                self.printer.indent();
-                w!(
-                    self.printer,
-                    "s.write_raw_{}_byte({:?})?;\n",
-                    count,
-                    &buffer[..count]
-                );
-                if ty.is_empty() {
-                    w!(self.printer, "s.write_message(m)?;\n");
-                } else {
-                    w!(self.printer, "s.write_{}(m)?;\n", ty);
-                }
-                self.printer.outdent();
-                w!(self.printer, "}}\n");
-            }
-        } else if !ty.is_empty() {
-            w!(
-                self.printer,
-                "s.write_raw_{}_byte({:?})?;\n",
-                count,
-                &buffer[..count]
-            );
-            if wire_type == 2 {
-                w!(self.printer, "s.write_{}(&self.{})?;\n", ty, name);
-            } else {
-                w!(self.printer, "s.write_{}(self.{})?;\n", ty, name);
-            }
-        } else {
-            w!(self.printer, "if let Some(m) = &self.{} {{\n", name);
-            w!(
-                self.printer,
-                "s.write_raw_{}_byte({:?})?;\n",
-                count,
-                &buffer[..count]
-            );
-            self.printer.indent();
-            w!(
-                self.printer,
-                "s.write_raw_{}_byte({:?})?;\n",
-                count,
-                &buffer[..count]
-            );
-            w!(self.printer, "s.write_message(m)?;\n");
-        }
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
-    }
-
-    fn field_len(&mut self, f: &FieldDescriptorProto) {
-        let name = naming::field_name(&f.name);
-        let (wire_type, ty) = self.wire_type(f);
-        let tag = ((f.number as u32) << 3) | wire_type as u32;
-        let tag_len = pecan::encoded::var_u32_len(tag);
-        if f.label == FieldDescriptorProtoNestedLabel::LabelRepeated
-            || (wire_type == 2 && !ty.is_empty())
-        {
-            let tag = ((f.number as u32) << 3) | 2;
-            let tag_len = pecan::encoded::var_u32_len(tag);
-            w!(self.printer, "if !self.{}.is_empty() {{\n", name);
-            self.printer.indent();
-            if f.label == FieldDescriptorProtoNestedLabel::LabelRepeated {
-                if wire_type != 2 {
-                    w!(
-                        self.printer,
-                        "n += {} + encoded::arr_{}_len(&self.{});\n",
-                        tag_len,
-                        ty,
-                        name
-                    );
-                } else if !ty.is_empty() {
-                    w!(
-                        self.printer,
-                        "n += encoded::arr_{}_len({}, &self.{});\n",
-                        ty,
-                        tag_len,
-                        name
-                    );
-                } else {
-                    w!(
-                        self.printer,
-                        "n += encoded::arr_message_len({}, &self.{});\n",
-                        tag_len,
-                        name
-                    );
-                }
-            } else {
-                w!(
-                    self.printer,
-                    "n += {} + encoded::{}_len(&self.{});\n",
-                    tag_len,
-                    ty,
-                    name
-                );
-            }
-        } else if f.r#type == FieldDescriptorProtoNestedType::TypeBool {
-            w!(self.printer, "if self.{} {{\n", name);
-            self.printer.indent();
-            w!(self.printer, "n += {};\n", tag_len + 1);
-        } else if f.r#type == FieldDescriptorProtoNestedType::TypeEnum {
-            w!(self.printer, "if self.{}.value() != 0 {{\n", name);
-            self.printer.indent();
-            w!(
-                self.printer,
-                "n += {} + encoded::var_i32_len(self.{}.value());\n",
-                tag_len,
-                name
-            );
-        } else if wire_type == 3 {
-            unimplemented!()
-        } else if ty.is_empty() {
-            w!(self.printer, "if let Some(msg) = &self.{} {{\n", name);
-            self.printer.indent();
-            w!(
-                self.printer,
-                "n += {} + encoded::message_len(msg);\n",
-                tag_len
-            );
-        } else {
-            let zero_ty = if ty == "f64" || ty == "f32" { ty } else { "" };
-            w!(self.printer, "if self.{} != 0{} {{\n", name, zero_ty);
-            self.printer.indent();
-            if wire_type == 1 {
-                w!(self.printer, "n += {};\n", tag_len + 8);
-            } else if wire_type == 5 {
-                w!(self.printer, "n += {};\n", tag_len + 4);
-            } else {
-                w!(
-                    self.printer,
-                    "n += {} + encoded::{}_len(self.{});\n",
-                    tag_len,
-                    ty,
-                    name
-                );
-            }
-        }
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
-    }
-
-    /// If m is nested message, it will be named as `Prefix1NestedPrefix2Nested...Name`.
-    fn print_message(&mut self, ctx: &Context, id: Id<MessageDescriptor>) {
-        w!(self.printer, "\n#[derive(Clone, Debug, Default)]\n");
-        let m = ctx.db.messages.get(id).unwrap();
-        let name = naming::type_name(&m.type_name);
-        w!(self.printer, "pub struct {} {{\n", name);
+        w!(self.printer, "{} => {{\n", d.tag1);
         self.printer.indent();
-        for f in &m.proto.field {
-            let name = naming::field_name(&f.name);
-            let type_name = self.search_type(ctx, f);
-            let type_name_ref = type_name.as_ref().map_or_else(|s| s.as_str(), |s| s);
-            if FieldDescriptorProtoNestedLabel::LabelRepeated == f.label {
-                w!(self.printer, "pub {}: Vec<{}>,\n", name, type_name_ref);
-            } else if FieldDescriptorProtoNestedType::TypeMessage != f.r#type
-                && FieldDescriptorProtoNestedType::TypeGroup != f.r#type
-            {
-                w!(self.printer, "pub {}: {},\n", name, type_name_ref);
-            } else {
-                w!(self.printer, "pub {}: Option<{}>,\n", name, type_name_ref);
-            }
-        }
         w!(
             self.printer,
-            "pub cache_size: CacheSize,\npub unknown: Vec<u8>,\n"
+            "let msg = self.{}.get_or_insert_with(Default::default);\n",
+            d.field_name
         );
+        w!(self.printer, "s.read_message(msg)?;\n");
         self.printer.outdent();
-        w!(self.printer, "}}\n\n");
+        w!(self.printer, "}}\n");
+    }
 
-        w!(self.printer, "impl Message for {} {{\n", name);
-        self.printer.indent();
+    fn print_merge_from_singleur(&mut self, d: &FieldDecl) {
+        w!(
+            self.printer,
+            "{} => self.{} = s.read_{}()?,\n",
+            d.tag1,
+            d.field_name,
+            d.method_symbol
+        );
+    }
 
+    fn print_merge_from_repeated(&mut self, d: &FieldDecl) {
+        if d.method_symbol != "message" {
+            w!(
+                self.printer,
+                "{} => self.{}.push(s.read_{}()?),\n",
+                d.tag1,
+                d.field_name,
+                d.method_symbol
+            );
+        } else {
+            w!(
+                self.printer,
+                "{} => s.read_message_to(&mut self.{})?,\n",
+                d.tag1,
+                d.field_name
+            );
+        }
+        if d.tag1 != d.tag2 && d.tag2 != 0 {
+            w!(
+                self.printer,
+                "{} => s.read_{}_array(&mut self.{})?,\n",
+                d.tag2,
+                d.method_symbol,
+                d.field_name
+            );
+        }
+    }
+
+    fn print_merge_from_oneof(&mut self, o: &OneOfDecl) {
+        for item in &o.items {
+            match item {
+                FieldType::Optional(d) => {
+                    if d.method_symbol != "message" {
+                        w!(
+                            self.printer,
+                            "{} => self.{} = Some({}::{}(s.read_{}()?)),\n",
+                            d.tag1,
+                            o.field_name,
+                            o.type_name,
+                            naming::camel_case(&d.field_name),
+                            d.method_symbol
+                        );
+                        continue;
+                    }
+
+                    w!(self.printer, "{} => {{\n", d.tag1);
+                    self.printer.indent();
+                    w!(
+                        self.printer,
+                        "let msg = self.{}.{}_mut();\n",
+                        o.field_name,
+                        d.field_name
+                    );
+                    w!(self.printer, "s.read_message(msg)?;\n");
+                    self.printer.outdent();
+                    w!(self.printer, "}}\n");
+                }
+                FieldType::Singleur(d) => {
+                    w!(
+                        self.printer,
+                        "{} => self.{} = Some({}::{}(self.read_{}()?)),\n",
+                        d.tag1,
+                        o.field_name,
+                        o.type_name,
+                        naming::camel_case(&d.field_name),
+                        d.method_symbol
+                    );
+                }
+                FieldType::Repeated(_) | FieldType::Oneof(_) => unreachable!(),
+            }
+        }
+    }
+
+    fn print_merge_from(&mut self, field_sets: &[FieldType]) {
         w!(
             self.printer,
             "fn merge_from(&mut self, s: &mut CodedInputStream<impl Buf>) -> Result<()> {{\n"
@@ -522,8 +557,13 @@ impl Generator<'_> {
         self.printer.indent();
         w!(self.printer, "let tag = s.read_tag()?;\nmatch tag {{\n");
         self.printer.indent();
-        for f in &m.proto.field {
-            self.match_merge_from(f);
+        for ft in field_sets {
+            match ft {
+                FieldType::Optional(d) => self.print_merge_from_optional(d),
+                FieldType::Singleur(d) => self.print_merge_from_singleur(d),
+                FieldType::Repeated(d) => self.print_merge_from_repeated(d),
+                FieldType::Oneof(d) => self.print_merge_from_oneof(d),
+            }
         }
         w!(
             self.printer,
@@ -533,14 +573,57 @@ impl Generator<'_> {
             self.printer.outdent();
             w!(self.printer, "}}\n");
         }
+    }
 
+    fn print_write_to_raw(&mut self, d: &FieldDecl, method_symbol: &str, field: &str) {
+        let tag = if d.tag2 == 0 { d.tag1 } else { d.tag2 };
+        let mut buffer = [0u8; 5];
+        let count =
+            unsafe { pecan_utils::codec::encode_varint_u32_to_array(buffer.as_mut_ptr(), tag) };
+        w!(
+            self.printer,
+            "s.write_raw_{}_byte({:?})?;\n",
+            count,
+            &buffer[..count]
+        );
+        if method_symbol != "message" {
+            w!(self.printer, "s.write_{}({})?;\n", method_symbol, field);
+        } else {
+            w!(self.printer, "s.write_message({})?;\n", field);
+        }
+    }
+
+    fn print_write_to_repeated(&mut self, d: &FieldDecl) {
+        w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+        self.printer.indent();
+        if d.copy {
+            let method_symbol = format!("{}_array", d.method_symbol);
+            let field = format!("&self.{}", d.field_name);
+            self.print_write_to_raw(d, &method_symbol, &field);
+        } else {
+            w!(self.printer, "for v in &self.{} {{\n", d.field_name);
+            self.printer.indent();
+            self.print_write_to_raw(d, d.method_symbol, "v");
+            self.printer.outdent();
+            w!(self.printer, "}}\n");
+        }
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+    }
+
+    fn print_write_to(&mut self, field_sets: &[FieldType]) {
         w!(
             self.printer,
             "\nfn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {{\n"
         );
         self.printer.indent();
-        for f in &m.proto.field {
-            self.field_write_to(f);
+        for ft in field_sets {
+            match ft {
+                FieldType::Optional(d) => self.check_print_optional(d, Self::print_write_to_raw),
+                FieldType::Singleur(d) => self.check_print_singleur(d, Self::print_write_to_raw),
+                FieldType::Repeated(d) => self.print_write_to_repeated(d),
+                FieldType::Oneof(d) => self.check_print_oneof(d, Self::print_write_to_raw),
+            }
         }
         w!(self.printer, "if !self.unknown.is_empty() {{\n");
         self.printer.indent();
@@ -549,18 +632,184 @@ impl Generator<'_> {
         w!(self.printer, "}}\nOk(())\n");
         self.printer.outdent();
         w!(self.printer, "}}\n");
+    }
 
-        w!(self.printer, "\nfn len(&self) -> usize {{\n");
-        self.printer.indent();
-        w!(self.printer, "let mut n = self.unknown.len();\n");
-        for f in &m.proto.field {
-            self.field_len(f);
+    fn print_len_raw(&mut self, d: &FieldDecl, method_symbol: &str, field: &str) {
+        let tag = if d.tag2 == 0 { d.tag1 } else { d.tag2 };
+        let tag_len = pecan::encoded::var_u32_len(tag);
+        if method_symbol == "bool" {
+            w!(self.printer, "n += {};\n", tag_len + 1);
+        } else if method_symbol.starts_with("arr_") {
+            if !d.copy {
+                w!(
+                    self.printer,
+                    "n += encoded::{}_len({}, &self.{});\n",
+                    method_symbol,
+                    tag_len,
+                    d.field_name
+                );
+            } else {
+                w!(
+                    self.printer,
+                    "n += {} + encoded::{}_len({});\n",
+                    tag_len,
+                    method_symbol,
+                    field
+                );
+            }
+        } else if method_symbol.ends_with("f64") || method_symbol.ends_with("fixed64") {
+            w!(self.printer, "n += {};\n", tag_len + 8);
+        } else if method_symbol == "f32" || method_symbol.ends_with("fixed32") {
+            w!(self.printer, "n += {};\n", tag_len + 4);
+        } else {
+            w!(
+                self.printer,
+                "n += {} + encoded::{}_len({});\n",
+                tag_len,
+                method_symbol,
+                field
+            );
         }
-        w!(self.printer, "n\n");
+    }
+
+    fn check_print_optional(
+        &mut self,
+        d: &FieldDecl,
+        f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
+    ) {
+        if d.copy {
+            w!(self.printer, "if let Some(v) = self.{} {{\n", d.field_name);
+        } else {
+            w!(self.printer, "if let Some(v) = &self.{} {{\n", d.field_name);
+        }
+        self.printer.indent();
+        f(self, d, d.method_symbol, "v");
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+    }
+
+    fn check_print_singleur(
+        &mut self,
+        d: &FieldDecl,
+        f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
+    ) {
+        if !d.default_val.is_empty() {
+            w!(
+                self.printer,
+                "if {} != self.{} {{\n",
+                d.default_val,
+                d.field_name
+            );
+        } else if d.method_symbol == "bool" {
+            w!(self.printer, "if self.{} {{\n", d.field_name);
+        } else if d.method_symbol == "enum" {
+            w!(self.printer, "if self.{}.value() != 0 {{\n", d.field_name);
+        } else {
+            w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+        }
+        self.printer.indent();
+        let field = if d.copy {
+            format!("self.{}", d.field_name)
+        } else {
+            format!("&self.{}", d.field_name)
+        };
+        f(self, d, d.method_symbol, &field);
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+    }
+
+    fn check_print_repeated(
+        &mut self,
+        d: &FieldDecl,
+        f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
+    ) {
+        w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+        self.printer.indent();
+        let method_symbol = format!("arr_{}", d.method_symbol);
+        let field = format!("&self.{}", d.field_name);
+        f(self, d, &method_symbol, &field);
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+    }
+
+    fn check_print_oneof(&mut self, o: &OneOfDecl, f: impl Fn(&mut Self, &FieldDecl, &str, &str)) {
+        if o.copy {
+            w!(self.printer, "if let Some(v) = self.{} {{\n", o.field_name);
+        } else {
+            w!(self.printer, "if let Some(v) = &self.{} {{\n", o.field_name);
+        }
+        self.printer.indent();
+        w!(self.printer, "match v {{\n");
+        self.printer.indent();
+        for item in &o.items {
+            let d = match item {
+                FieldType::Optional(d) | FieldType::Singleur(d) => d,
+                FieldType::Repeated(_) | FieldType::Oneof(_) => unreachable!(),
+            };
+            w!(
+                self.printer,
+                "{}::{}(v) => {{\n",
+                o.type_name,
+                naming::camel_case(&d.field_name)
+            );
+            self.printer.indent();
+            f(self, d, d.method_symbol, "v");
+            self.printer.outdent();
+            w!(self.printer, "}}\n");
+        }
         for _ in 0..2 {
             self.printer.outdent();
             w!(self.printer, "}}\n");
         }
+    }
+
+    fn print_len(&mut self, field_sets: &[FieldType]) {
+        w!(self.printer, "\nfn len(&self) -> usize {{\n");
+        self.printer.indent();
+        w!(self.printer, "let mut n = self.unknown.len();\n");
+        for ft in field_sets {
+            match ft {
+                FieldType::Optional(d) => self.check_print_optional(d, Self::print_len_raw),
+                FieldType::Singleur(d) => self.check_print_singleur(d, Self::print_len_raw),
+                FieldType::Repeated(d) => self.check_print_repeated(d, Self::print_len_raw),
+                FieldType::Oneof(o) => self.check_print_oneof(o, Self::print_len_raw),
+            }
+        }
+        w!(self.printer, "n\n");
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+    }
+
+    /// If m is nested message, it will be named as `Prefix1NestedPrefix2Nested...Name`.
+    fn print_message(&mut self, ctx: &Context, id: Id<MessageDescriptor>) {
+        w!(
+            self.printer,
+            "\n#[derive(Clone, Debug, Default, PartialEq)]\n"
+        );
+        let m = ctx.db.messages.get(id).unwrap();
+        let name = naming::type_name(&m.type_name);
+        w!(self.printer, "pub struct {} {{\n", name);
+        self.printer.indent();
+        let field_sets = self.build_field_set(ctx, &m);
+        self.print_field_decl(&field_sets);
+        w!(
+            self.printer,
+            "pub cache_size: CacheSize,\npub unknown: Vec<u8>,\n"
+        );
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+
+        self.print_oneof_decl(&field_sets);
+
+        w!(self.printer, "\nimpl Message for {} {{\n", name);
+        self.printer.indent();
+
+        self.print_merge_from(&field_sets);
+        self.print_write_to(&field_sets);
+        self.print_len(&field_sets);
+
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
     }
 
     fn print_messages(&mut self, ctx: &Context) {

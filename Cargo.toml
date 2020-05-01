@@ -7,9 +7,21 @@ edition = "2018"
 [dependencies]
 pecan-utils = { path = "utils" }
 
+[dev-dependencies]
+criterion = "0.3"
+rand = "0.7"
+bytes = "0.5"
+
+[[bench]]
+name = "varint"
+harness = false
+
 [workspace]
 members = [
     "compiler",
     "descriptor",
     "utils",
 ]
+
+[profile.bench]
+codegen-units = 1

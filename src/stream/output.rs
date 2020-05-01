@@ -138,7 +138,7 @@ impl<B: BufMut> CodedOutputStream<B> {
         }
     }
 
-    fn flush(&mut self) -> Result<()> {
+    pub fn flush(&mut self) -> Result<()> {
         if self.cur == self.start {
             return Ok(());
         }
