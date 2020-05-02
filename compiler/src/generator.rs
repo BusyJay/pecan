@@ -338,6 +338,11 @@ impl Generator<'_> {
             _ => unimplemented!(),
         }
         desc.tag1 |= wire_type;
+        let oneof_index = if desc.proto.has_oneof_index() {
+            Some(desc.proto.oneof_index())
+        } else {
+            None
+        };
         let ft = match desc.proto.label() {
             FieldDescriptorProtoNestedLabel::LabelOptional => {
                 if !self.proto3 || f.r#type() == FieldDescriptorProtoNestedType::TypeMessage {
@@ -355,7 +360,7 @@ impl Generator<'_> {
             }
             _ => unimplemented!(),
         };
-        (None, ft)
+        (oneof_index, ft)
     }
 
     fn build_field_set<'a>(
