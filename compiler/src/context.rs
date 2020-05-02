@@ -73,32 +73,32 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(request: plugin_pb::CodeGeneratorRequest) -> Context {
-        let mut db = Database::with_capacity(request.proto_file.len());
-        let mut files = HashMap::with_capacity(request.proto_file.len());
-        let mut message_address = HashMap::with_capacity(request.proto_file.len());
-        let mut enum_address = HashMap::with_capacity(request.proto_file.len());
-        for file in request.proto_file {
-            let name = file.name.clone();
+    pub fn new(mut request: plugin_pb::CodeGeneratorRequest) -> Context {
+        let mut db = Database::with_capacity(request.proto_file().len());
+        let mut files = HashMap::with_capacity(request.proto_file().len());
+        let mut message_address = HashMap::with_capacity(request.proto_file().len());
+        let mut enum_address = HashMap::with_capacity(request.proto_file().len());
+        for file in request.proto_file_mut().drain(..) {
+            let name = file.name().to_owned();
             let fd = FileDescriptor::new(&mut db, file);
             files.insert(name, fd);
             let f = db.files.get(fd).unwrap();
-            let pkg_name = f.proto.package.clone();
+            let pkg_name = f.proto.package();
             for msg_id in &f.messages {
                 let msg = db.messages.get(*msg_id).unwrap();
-                let full_name = naming::full_name(&pkg_name, &msg.type_name);
+                let full_name = naming::full_name(pkg_name, &msg.type_name);
                 eprintln!("register {}", full_name);
                 message_address.insert(full_name, *msg_id);
             }
             for enum_id in &f.enums {
                 let e = db.enums.get(*enum_id).unwrap();
-                let full_name = naming::full_name(&pkg_name, &e.type_name);
+                let full_name = naming::full_name(pkg_name, &e.type_name);
                 eprintln!("register {}", full_name);
                 enum_address.insert(full_name, *enum_id);
             }
         }
-        let mut to_generate = Vec::with_capacity(request.file_to_generate.len());
-        for f in &request.file_to_generate {
+        let mut to_generate = Vec::with_capacity(request.file_to_generate().len());
+        for f in request.file_to_generate() {
             eprintln!("mark {} to generate", f);
             to_generate.push(files.get(f).unwrap().clone());
         }
@@ -120,9 +120,16 @@ pub struct Output {
 impl Output {
     pub fn open(&mut self, file_name: &str) -> Printer {
         let mut f = plugin_pb::CodeGeneratorResponseNestedFile::default();
-        f.name = file_name.to_owned();
-        self.response.file.push(f);
-        Printer::new(unsafe { self.response.file.last_mut().unwrap().content.as_mut_vec() })
+        f.set_name(file_name.to_owned());
+        self.response.file_mut().push(f);
+        Printer::new(unsafe {
+            self.response
+                .file_mut()
+                .last_mut()
+                .unwrap()
+                .content_mut()
+                .as_mut_vec()
+        })
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {

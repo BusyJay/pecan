@@ -32,19 +32,19 @@ impl FileDescriptor {
     pub fn new(db: &mut Database, proto: descriptor_pb::FileDescriptorProto) -> Id<FileDescriptor> {
         let mut comments: HashMap<Vec<i32>, descriptor_pb::SourceCodeInfoNestedLocation> =
             HashMap::default();
-        if let Some(info) = &proto.source_code_info {
-            for loc in &info.location {
-                if loc.leading_comments.is_empty() {
+        if proto.has_source_code_info() {
+            for loc in proto.source_code_info().location() {
+                if loc.leading_comments().is_empty() {
                     continue;
                 }
-                let path = loc.path.clone();
+                let path = loc.path().to_vec();
                 comments.insert(path, loc.clone());
             }
         }
-        let mut messages = Vec::with_capacity(proto.message_type.len() + 10);
-        let mut enums = Vec::with_capacity(proto.enum_type.len() + 10);
+        let mut messages = Vec::with_capacity(proto.message_type().len() + 10);
+        let mut enums = Vec::with_capacity(proto.enum_type().len() + 10);
         let fd = db.files.alloc(FileDescriptor {
-            proto3: proto.syntax == "proto3",
+            proto3: proto.syntax() == "proto3",
             proto,
             messages: Vec::new(),
             enums: Vec::new(),
@@ -79,13 +79,13 @@ impl MessageDescriptor {
         index: usize,
     ) -> Id<MessageDescriptor> {
         let mut type_name = Vec::new();
-        type_name.push(proto.name.clone());
+        type_name.push(proto.name().to_owned());
         let mut group = false;
         if let Some(id) = parent {
             let mut p = parent;
             while let Some(id) = p {
                 let node = db.messages.get(id).unwrap();
-                type_name.push(node.proto.name.clone());
+                type_name.push(node.proto.name().to_owned());
                 p = node.parent;
             }
             type_name.reverse();
@@ -95,9 +95,9 @@ impl MessageDescriptor {
                 s
             });
             let node = db.messages.get(id).unwrap();
-            for f in &node.proto.field {
-                if f.r#type == descriptor_pb::FieldDescriptorProtoNestedType::TypeGroup
-                    && f.type_name == full_name
+            for f in node.proto.field() {
+                if f.r#type() == descriptor_pb::FieldDescriptorProtoNestedType::TypeGroup
+                    && f.type_name() == full_name
                 {
                     group = true;
                     break;
@@ -127,7 +127,7 @@ impl MessageDescriptor {
         let desc = MessageDescriptor::new(db, proto, parent, file, index);
         collector.push(desc);
         let nested_types = mem::replace(
-            &mut db.messages.get_mut(desc).unwrap().proto.nested_type,
+            db.messages.get_mut(desc).unwrap().proto.nested_type_mut(),
             vec![],
         );
         let mut nested_ids = Vec::with_capacity(nested_types.len());
@@ -145,7 +145,7 @@ impl MessageDescriptor {
         file: Id<FileDescriptor>,
     ) {
         let message_type = mem::replace(
-            &mut db.files.get_mut(file).unwrap().proto.message_type,
+            db.files.get_mut(file).unwrap().proto.message_type_mut(),
             Vec::new(),
         );
         for (i, m) in message_type.into_iter().enumerate() {
@@ -171,12 +171,12 @@ impl EnumDescriptor {
         index: usize,
     ) -> Id<EnumDescriptor> {
         let mut type_name = Vec::new();
-        type_name.push(proto.name.clone());
+        type_name.push(proto.name().to_owned());
         if parent.is_some() {
             let mut p = parent;
             while let Some(id) = p {
                 let node = db.messages.get(id).unwrap();
-                type_name.push(node.proto.name.clone());
+                type_name.push(node.proto.name().to_owned());
                 p = node.parent;
             }
             type_name.reverse();
@@ -196,13 +196,16 @@ impl EnumDescriptor {
         file: Id<FileDescriptor>,
         parents: &[Id<MessageDescriptor>],
     ) {
-        let enum_type = mem::replace(&mut db.files.get_mut(file).unwrap().proto.enum_type, vec![]);
+        let enum_type = mem::replace(
+            db.files.get_mut(file).unwrap().proto.enum_type_mut(),
+            vec![],
+        );
         for (i, proto) in enum_type.into_iter().enumerate() {
             collector.push(EnumDescriptor::new(db, proto, None, file, i))
         }
         for nested in parents {
             let enum_type = mem::replace(
-                &mut db.messages.get_mut(*nested).unwrap().proto.enum_type,
+                db.messages.get_mut(*nested).unwrap().proto.enum_type_mut(),
                 vec![],
             );
             let mut enum_ids = Vec::with_capacity(enum_type.len());

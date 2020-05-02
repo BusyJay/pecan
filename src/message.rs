@@ -31,9 +31,7 @@ pub struct CacheSize {
 
 impl Default for CacheSize {
     fn default() -> Self {
-        CacheSize {
-            size: UnsafeCell::new(0),
-        }
+        CacheSize::new(0)
     }
 }
 
@@ -44,6 +42,12 @@ impl PartialEq for CacheSize {
 }
 
 impl CacheSize {
+    pub const fn new(size: u32) -> CacheSize {
+        CacheSize {
+            size: UnsafeCell::new(size),
+        }
+    }
+
     pub unsafe fn set_size(&self, size: u32) {
         *self.size.get() = size;
     }

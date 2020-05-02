@@ -13,7 +13,6 @@ use pecan::{
     BufMut,
     CodedInputStream,
     CodedOutputStream,
-    CacheSize,
     encoded,
 };
 
@@ -37,12 +36,12 @@ pub static DESCRIPTOR: &[u8] = &[
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Version {
-    pub major: i32,
-    pub minor: i32,
-    pub patch: i32,
-    pub suffix: String,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    major: Option<i32>,
+    minor: Option<i32>,
+    patch: Option<i32>,
+    suffix: Option<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for Version {
@@ -50,10 +49,10 @@ impl Message for Version {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.major = s.read_var_i32()?,
-                16 => self.minor = s.read_var_i32()?,
-                24 => self.patch = s.read_var_i32()?,
-                34 => self.suffix = s.read_string()?,
+                8 => self.major = Some(s.read_var_i32()?),
+                16 => self.minor = Some(s.read_var_i32()?),
+                24 => self.patch = Some(s.read_var_i32()?),
+                34 => self.suffix = Some(s.read_string()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -61,21 +60,21 @@ impl Message for Version {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if 0 != self.major {
+        if let Some(v) = self.major {
             s.write_raw_1_byte([8])?;
-            s.write_var_i32(self.major)?;
+            s.write_var_i32(v)?;
         }
-        if 0 != self.minor {
+        if let Some(v) = self.minor {
             s.write_raw_1_byte([16])?;
-            s.write_var_i32(self.minor)?;
+            s.write_var_i32(v)?;
         }
-        if 0 != self.patch {
+        if let Some(v) = self.patch {
             s.write_raw_1_byte([24])?;
-            s.write_var_i32(self.patch)?;
+            s.write_var_i32(v)?;
         }
-        if !self.suffix.is_empty() {
+        if let Some(v) = &self.suffix {
             s.write_raw_1_byte([34])?;
-            s.write_string(&self.suffix)?;
+            s.write_string(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -85,30 +84,92 @@ impl Message for Version {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if 0 != self.major {
-            n += 1 + encoded::var_i32_len(self.major);
+        if let Some(v) = self.major {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if 0 != self.minor {
-            n += 1 + encoded::var_i32_len(self.minor);
+        if let Some(v) = self.minor {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if 0 != self.patch {
-            n += 1 + encoded::var_i32_len(self.patch);
+        if let Some(v) = self.patch {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if !self.suffix.is_empty() {
-            n += 1 + encoded::string_len(&self.suffix);
+        if let Some(v) = &self.suffix {
+            n += 1 + encoded::string_len(v);
         }
         n
     }
 }
 
+impl Version {
+    pub const fn new() -> Version {
+        Version {
+            major: None,
+            minor: None,
+            patch: None,
+            suffix: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static Version {
+        static DEFAULT: Version = Version::new();
+        &DEFAULT
+    }
+
+    pub fn major(&self) -> i32 {
+        self.major.unwrap_or_default()
+    }
+
+    pub fn clear_major(&mut self) { self.major = None; }
+
+    pub fn has_major(&self) -> bool { self.major.is_some() }
+
+    pub fn set_major(&mut self, v: i32) { self.major = Some(v); }
+
+    pub fn minor(&self) -> i32 {
+        self.minor.unwrap_or_default()
+    }
+
+    pub fn clear_minor(&mut self) { self.minor = None; }
+
+    pub fn has_minor(&self) -> bool { self.minor.is_some() }
+
+    pub fn set_minor(&mut self, v: i32) { self.minor = Some(v); }
+
+    pub fn patch(&self) -> i32 {
+        self.patch.unwrap_or_default()
+    }
+
+    pub fn clear_patch(&mut self) { self.patch = None; }
+
+    pub fn has_patch(&self) -> bool { self.patch.is_some() }
+
+    pub fn set_patch(&mut self, v: i32) { self.patch = Some(v); }
+
+    pub fn suffix(&self) -> &str {
+        self.suffix.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_suffix(&mut self) { self.suffix = None; }
+
+    pub fn has_suffix(&self) -> bool { self.suffix.is_some() }
+
+    pub fn set_suffix(&mut self, v: String) { self.suffix = Some(v); }
+
+    pub fn suffix_mut(&mut self) -> &mut String {
+        self.suffix.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CodeGeneratorRequest {
-    pub file_to_generate: Vec<String>,
-    pub parameter: String,
-    pub proto_file: Vec<google__protobuf__descriptor_pb::FileDescriptorProto>,
-    pub compiler_version: Option<Version>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    file_to_generate: Vec<String>,
+    parameter: Option<String>,
+    proto_file: Vec<google__protobuf__descriptor_pb::FileDescriptorProto>,
+    compiler_version: Option<Version>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for CodeGeneratorRequest {
@@ -117,7 +178,7 @@ impl Message for CodeGeneratorRequest {
             let tag = s.read_tag()?;
             match tag {
                 10 => self.file_to_generate.push(s.read_string()?),
-                18 => self.parameter = s.read_string()?,
+                18 => self.parameter = Some(s.read_string()?),
                 122 => s.read_message_to(&mut self.proto_file)?,
                 26 => {
                     let msg = self.compiler_version.get_or_insert_with(Default::default);
@@ -136,9 +197,9 @@ impl Message for CodeGeneratorRequest {
                 s.write_string(v)?;
             }
         }
-        if !self.parameter.is_empty() {
+        if let Some(v) = &self.parameter {
             s.write_raw_1_byte([18])?;
-            s.write_string(&self.parameter)?;
+            s.write_string(v)?;
         }
         if !self.proto_file.is_empty() {
             for v in &self.proto_file {
@@ -161,8 +222,8 @@ impl Message for CodeGeneratorRequest {
         if !self.file_to_generate.is_empty() {
             n += encoded::arr_string_len(1, &self.file_to_generate);
         }
-        if !self.parameter.is_empty() {
-            n += 1 + encoded::string_len(&self.parameter);
+        if let Some(v) = &self.parameter {
+            n += 1 + encoded::string_len(v);
         }
         if !self.proto_file.is_empty() {
             n += encoded::arr_message_len(1, &self.proto_file);
@@ -174,12 +235,74 @@ impl Message for CodeGeneratorRequest {
     }
 }
 
+impl CodeGeneratorRequest {
+    pub const fn new() -> CodeGeneratorRequest {
+        CodeGeneratorRequest {
+            file_to_generate: Vec::new(),
+            parameter: None,
+            proto_file: Vec::new(),
+            compiler_version: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static CodeGeneratorRequest {
+        static DEFAULT: CodeGeneratorRequest = CodeGeneratorRequest::new();
+        &DEFAULT
+    }
+
+    pub fn file_to_generate(&self) -> &[String] { &self.file_to_generate }
+
+    pub fn clear_file_to_generate(&mut self) { self.file_to_generate.clear(); }
+
+    pub fn set_file_to_generate(&mut self, v: impl Into<Vec<String>>) { self.file_to_generate = v.into(); }
+
+    pub fn file_to_generate_mut(&mut self) -> &mut Vec<String> { &mut self.file_to_generate }
+
+    pub fn parameter(&self) -> &str {
+        self.parameter.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_parameter(&mut self) { self.parameter = None; }
+
+    pub fn has_parameter(&self) -> bool { self.parameter.is_some() }
+
+    pub fn set_parameter(&mut self, v: String) { self.parameter = Some(v); }
+
+    pub fn parameter_mut(&mut self) -> &mut String {
+        self.parameter.get_or_insert_with(Default::default)
+    }
+
+    pub fn proto_file(&self) -> &[google__protobuf__descriptor_pb::FileDescriptorProto] { &self.proto_file }
+
+    pub fn clear_proto_file(&mut self) { self.proto_file.clear(); }
+
+    pub fn set_proto_file(&mut self, v: impl Into<Vec<google__protobuf__descriptor_pb::FileDescriptorProto>>) { self.proto_file = v.into(); }
+
+    pub fn proto_file_mut(&mut self) -> &mut Vec<google__protobuf__descriptor_pb::FileDescriptorProto> { &mut self.proto_file }
+
+    pub fn compiler_version(&self) -> &Version {
+        self.compiler_version.as_ref().unwrap_or_else(|| Version::default_instance())
+    }
+
+    pub fn clear_compiler_version(&mut self) { self.compiler_version = None; }
+
+    pub fn has_compiler_version(&self) -> bool { self.compiler_version.is_some() }
+
+    pub fn set_compiler_version(&mut self, v: Version) { self.compiler_version = Some(v); }
+
+    pub fn compiler_version_mut(&mut self) -> &mut Version {
+        self.compiler_version.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CodeGeneratorResponse {
-    pub error: String,
-    pub file: Vec<CodeGeneratorResponseNestedFile>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    error: Option<String>,
+    file: Vec<CodeGeneratorResponseNestedFile>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for CodeGeneratorResponse {
@@ -187,7 +310,7 @@ impl Message for CodeGeneratorResponse {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.error = s.read_string()?,
+                10 => self.error = Some(s.read_string()?),
                 122 => s.read_message_to(&mut self.file)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -196,9 +319,9 @@ impl Message for CodeGeneratorResponse {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.error.is_empty() {
+        if let Some(v) = &self.error {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.error)?;
+            s.write_string(v)?;
         }
         if !self.file.is_empty() {
             for v in &self.file {
@@ -214,8 +337,8 @@ impl Message for CodeGeneratorResponse {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.error.is_empty() {
-            n += 1 + encoded::string_len(&self.error);
+        if let Some(v) = &self.error {
+            n += 1 + encoded::string_len(v);
         }
         if !self.file.is_empty() {
             n += encoded::arr_message_len(1, &self.file);
@@ -224,13 +347,51 @@ impl Message for CodeGeneratorResponse {
     }
 }
 
+impl CodeGeneratorResponse {
+    pub const fn new() -> CodeGeneratorResponse {
+        CodeGeneratorResponse {
+            error: None,
+            file: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static CodeGeneratorResponse {
+        static DEFAULT: CodeGeneratorResponse = CodeGeneratorResponse::new();
+        &DEFAULT
+    }
+
+    pub fn error(&self) -> &str {
+        self.error.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_error(&mut self) { self.error = None; }
+
+    pub fn has_error(&self) -> bool { self.error.is_some() }
+
+    pub fn set_error(&mut self, v: String) { self.error = Some(v); }
+
+    pub fn error_mut(&mut self) -> &mut String {
+        self.error.get_or_insert_with(Default::default)
+    }
+
+    pub fn file(&self) -> &[CodeGeneratorResponseNestedFile] { &self.file }
+
+    pub fn clear_file(&mut self) { self.file.clear(); }
+
+    pub fn set_file(&mut self, v: impl Into<Vec<CodeGeneratorResponseNestedFile>>) { self.file = v.into(); }
+
+    pub fn file_mut(&mut self) -> &mut Vec<CodeGeneratorResponseNestedFile> { &mut self.file }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct CodeGeneratorResponseNestedFile {
-    pub name: String,
-    pub insertion_point: String,
-    pub content: String,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    insertion_point: Option<String>,
+    content: Option<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for CodeGeneratorResponseNestedFile {
@@ -238,9 +399,9 @@ impl Message for CodeGeneratorResponseNestedFile {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
-                18 => self.insertion_point = s.read_string()?,
-                122 => self.content = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
+                18 => self.insertion_point = Some(s.read_string()?),
+                122 => self.content = Some(s.read_string()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -248,17 +409,17 @@ impl Message for CodeGeneratorResponseNestedFile {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
-        if !self.insertion_point.is_empty() {
+        if let Some(v) = &self.insertion_point {
             s.write_raw_1_byte([18])?;
-            s.write_string(&self.insertion_point)?;
+            s.write_string(v)?;
         }
-        if !self.content.is_empty() {
+        if let Some(v) = &self.content {
             s.write_raw_1_byte([122])?;
-            s.write_string(&self.content)?;
+            s.write_string(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -268,15 +429,74 @@ impl Message for CodeGeneratorResponseNestedFile {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.insertion_point.is_empty() {
-            n += 1 + encoded::string_len(&self.insertion_point);
+        if let Some(v) = &self.insertion_point {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.content.is_empty() {
-            n += 1 + encoded::string_len(&self.content);
+        if let Some(v) = &self.content {
+            n += 1 + encoded::string_len(v);
         }
         n
+    }
+}
+
+impl CodeGeneratorResponseNestedFile {
+    pub const fn new() -> CodeGeneratorResponseNestedFile {
+        CodeGeneratorResponseNestedFile {
+            name: None,
+            insertion_point: None,
+            content: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static CodeGeneratorResponseNestedFile {
+        static DEFAULT: CodeGeneratorResponseNestedFile = CodeGeneratorResponseNestedFile::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn insertion_point(&self) -> &str {
+        self.insertion_point.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_insertion_point(&mut self) { self.insertion_point = None; }
+
+    pub fn has_insertion_point(&self) -> bool { self.insertion_point.is_some() }
+
+    pub fn set_insertion_point(&mut self, v: String) { self.insertion_point = Some(v); }
+
+    pub fn insertion_point_mut(&mut self) -> &mut String {
+        self.insertion_point.get_or_insert_with(Default::default)
+    }
+
+    pub fn content(&self) -> &str {
+        self.content.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_content(&mut self) { self.content = None; }
+
+    pub fn has_content(&self) -> bool { self.content.is_some() }
+
+    pub fn set_content(&mut self, v: String) { self.content = Some(v); }
+
+    pub fn content_mut(&mut self) -> &mut String {
+        self.content.get_or_insert_with(Default::default)
     }
 }

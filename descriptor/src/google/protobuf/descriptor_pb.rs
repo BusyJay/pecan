@@ -13,7 +13,6 @@ use pecan::{
     BufMut,
     CodedInputStream,
     CodedOutputStream,
-    CacheSize,
     encoded,
 };
 
@@ -55,6 +54,10 @@ impl FieldDescriptorProtoNestedType {
     pub const TypeSfixed64: FieldDescriptorProtoNestedType = FieldDescriptorProtoNestedType(16);
     pub const TypeSint32: FieldDescriptorProtoNestedType = FieldDescriptorProtoNestedType(17);
     pub const TypeSint64: FieldDescriptorProtoNestedType = FieldDescriptorProtoNestedType(18);
+
+    pub const fn new() -> FieldDescriptorProtoNestedType {
+        FieldDescriptorProtoNestedType(0)
+    }
 }
 
 impl From<i32> for FieldDescriptorProtoNestedType {
@@ -100,6 +103,10 @@ impl FieldDescriptorProtoNestedLabel {
     pub const LabelOptional: FieldDescriptorProtoNestedLabel = FieldDescriptorProtoNestedLabel(1);
     pub const LabelRequired: FieldDescriptorProtoNestedLabel = FieldDescriptorProtoNestedLabel(2);
     pub const LabelRepeated: FieldDescriptorProtoNestedLabel = FieldDescriptorProtoNestedLabel(3);
+
+    pub const fn new() -> FieldDescriptorProtoNestedLabel {
+        FieldDescriptorProtoNestedLabel(0)
+    }
 }
 
 impl From<i32> for FieldDescriptorProtoNestedLabel {
@@ -130,6 +137,10 @@ impl FileOptionsNestedOptimizeMode {
     pub const Speed: FileOptionsNestedOptimizeMode = FileOptionsNestedOptimizeMode(1);
     pub const CodeSize: FileOptionsNestedOptimizeMode = FileOptionsNestedOptimizeMode(2);
     pub const LiteRuntime: FileOptionsNestedOptimizeMode = FileOptionsNestedOptimizeMode(3);
+
+    pub const fn new() -> FileOptionsNestedOptimizeMode {
+        FileOptionsNestedOptimizeMode(0)
+    }
 }
 
 impl From<i32> for FileOptionsNestedOptimizeMode {
@@ -160,6 +171,10 @@ impl FieldOptionsNestedCType {
     pub const String: FieldOptionsNestedCType = FieldOptionsNestedCType(0);
     pub const Cord: FieldOptionsNestedCType = FieldOptionsNestedCType(1);
     pub const StringPiece: FieldOptionsNestedCType = FieldOptionsNestedCType(2);
+
+    pub const fn new() -> FieldOptionsNestedCType {
+        FieldOptionsNestedCType::String
+    }
 }
 
 impl From<i32> for FieldOptionsNestedCType {
@@ -190,6 +205,10 @@ impl FieldOptionsNestedJsType {
     pub const JsNormal: FieldOptionsNestedJsType = FieldOptionsNestedJsType(0);
     pub const JsString: FieldOptionsNestedJsType = FieldOptionsNestedJsType(1);
     pub const JsNumber: FieldOptionsNestedJsType = FieldOptionsNestedJsType(2);
+
+    pub const fn new() -> FieldOptionsNestedJsType {
+        FieldOptionsNestedJsType::JsNormal
+    }
 }
 
 impl From<i32> for FieldOptionsNestedJsType {
@@ -220,6 +239,10 @@ impl MethodOptionsNestedIdempotencyLevel {
     pub const IdempotencyUnknown: MethodOptionsNestedIdempotencyLevel = MethodOptionsNestedIdempotencyLevel(0);
     pub const NoSideEffects: MethodOptionsNestedIdempotencyLevel = MethodOptionsNestedIdempotencyLevel(1);
     pub const Idempotent: MethodOptionsNestedIdempotencyLevel = MethodOptionsNestedIdempotencyLevel(2);
+
+    pub const fn new() -> MethodOptionsNestedIdempotencyLevel {
+        MethodOptionsNestedIdempotencyLevel::IdempotencyUnknown
+    }
 }
 
 impl From<i32> for MethodOptionsNestedIdempotencyLevel {
@@ -245,9 +268,9 @@ impl EnumType for MethodOptionsNestedIdempotencyLevel {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FileDescriptorSet {
-    pub file: Vec<FileDescriptorProto>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    file: Vec<FileDescriptorProto>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for FileDescriptorSet {
@@ -284,22 +307,45 @@ impl Message for FileDescriptorSet {
     }
 }
 
+impl FileDescriptorSet {
+    pub const fn new() -> FileDescriptorSet {
+        FileDescriptorSet {
+            file: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static FileDescriptorSet {
+        static DEFAULT: FileDescriptorSet = FileDescriptorSet::new();
+        &DEFAULT
+    }
+
+    pub fn file(&self) -> &[FileDescriptorProto] { &self.file }
+
+    pub fn clear_file(&mut self) { self.file.clear(); }
+
+    pub fn set_file(&mut self, v: impl Into<Vec<FileDescriptorProto>>) { self.file = v.into(); }
+
+    pub fn file_mut(&mut self) -> &mut Vec<FileDescriptorProto> { &mut self.file }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FileDescriptorProto {
-    pub name: String,
-    pub package: String,
-    pub dependency: Vec<String>,
-    pub public_dependency: Vec<i32>,
-    pub weak_dependency: Vec<i32>,
-    pub message_type: Vec<DescriptorProto>,
-    pub enum_type: Vec<EnumDescriptorProto>,
-    pub service: Vec<ServiceDescriptorProto>,
-    pub extension: Vec<FieldDescriptorProto>,
-    pub options: Option<FileOptions>,
-    pub source_code_info: Option<SourceCodeInfo>,
-    pub syntax: String,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    package: Option<String>,
+    dependency: Vec<String>,
+    public_dependency: Vec<i32>,
+    weak_dependency: Vec<i32>,
+    message_type: Vec<DescriptorProto>,
+    enum_type: Vec<EnumDescriptorProto>,
+    service: Vec<ServiceDescriptorProto>,
+    extension: Vec<FieldDescriptorProto>,
+    options: Option<FileOptions>,
+    source_code_info: Option<SourceCodeInfo>,
+    syntax: Option<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for FileDescriptorProto {
@@ -307,8 +353,8 @@ impl Message for FileDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
-                18 => self.package = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
+                18 => self.package = Some(s.read_string()?),
                 26 => self.dependency.push(s.read_string()?),
                 80 => self.public_dependency.push(s.read_var_i32()?),
                 82 => s.read_var_i32_array(&mut self.public_dependency)?,
@@ -326,7 +372,7 @@ impl Message for FileDescriptorProto {
                     let msg = self.source_code_info.get_or_insert_with(Default::default);
                     s.read_message(msg)?;
                 }
-                98 => self.syntax = s.read_string()?,
+                98 => self.syntax = Some(s.read_string()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -334,13 +380,13 @@ impl Message for FileDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
-        if !self.package.is_empty() {
+        if let Some(v) = &self.package {
             s.write_raw_1_byte([18])?;
-            s.write_string(&self.package)?;
+            s.write_string(v)?;
         }
         if !self.dependency.is_empty() {
             for v in &self.dependency {
@@ -388,9 +434,9 @@ impl Message for FileDescriptorProto {
             s.write_raw_1_byte([74])?;
             s.write_message(v)?;
         }
-        if !self.syntax.is_empty() {
+        if let Some(v) = &self.syntax {
             s.write_raw_1_byte([98])?;
-            s.write_string(&self.syntax)?;
+            s.write_string(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -400,11 +446,11 @@ impl Message for FileDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.package.is_empty() {
-            n += 1 + encoded::string_len(&self.package);
+        if let Some(v) = &self.package {
+            n += 1 + encoded::string_len(v);
         }
         if !self.dependency.is_empty() {
             n += encoded::arr_string_len(1, &self.dependency);
@@ -433,27 +479,179 @@ impl Message for FileDescriptorProto {
         if let Some(v) = &self.source_code_info {
             n += 1 + encoded::message_len(v);
         }
-        if !self.syntax.is_empty() {
-            n += 1 + encoded::string_len(&self.syntax);
+        if let Some(v) = &self.syntax {
+            n += 1 + encoded::string_len(v);
         }
         n
     }
 }
 
+impl FileDescriptorProto {
+    pub const fn new() -> FileDescriptorProto {
+        FileDescriptorProto {
+            name: None,
+            package: None,
+            dependency: Vec::new(),
+            public_dependency: Vec::new(),
+            weak_dependency: Vec::new(),
+            message_type: Vec::new(),
+            enum_type: Vec::new(),
+            service: Vec::new(),
+            extension: Vec::new(),
+            options: None,
+            source_code_info: None,
+            syntax: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static FileDescriptorProto {
+        static DEFAULT: FileDescriptorProto = FileDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn package(&self) -> &str {
+        self.package.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_package(&mut self) { self.package = None; }
+
+    pub fn has_package(&self) -> bool { self.package.is_some() }
+
+    pub fn set_package(&mut self, v: String) { self.package = Some(v); }
+
+    pub fn package_mut(&mut self) -> &mut String {
+        self.package.get_or_insert_with(Default::default)
+    }
+
+    pub fn dependency(&self) -> &[String] { &self.dependency }
+
+    pub fn clear_dependency(&mut self) { self.dependency.clear(); }
+
+    pub fn set_dependency(&mut self, v: impl Into<Vec<String>>) { self.dependency = v.into(); }
+
+    pub fn dependency_mut(&mut self) -> &mut Vec<String> { &mut self.dependency }
+
+    pub fn public_dependency(&self) -> &[i32] { &self.public_dependency }
+
+    pub fn clear_public_dependency(&mut self) { self.public_dependency.clear(); }
+
+    pub fn set_public_dependency(&mut self, v: impl Into<Vec<i32>>) { self.public_dependency = v.into(); }
+
+    pub fn public_dependency_mut(&mut self) -> &mut Vec<i32> { &mut self.public_dependency }
+
+    pub fn weak_dependency(&self) -> &[i32] { &self.weak_dependency }
+
+    pub fn clear_weak_dependency(&mut self) { self.weak_dependency.clear(); }
+
+    pub fn set_weak_dependency(&mut self, v: impl Into<Vec<i32>>) { self.weak_dependency = v.into(); }
+
+    pub fn weak_dependency_mut(&mut self) -> &mut Vec<i32> { &mut self.weak_dependency }
+
+    pub fn message_type(&self) -> &[DescriptorProto] { &self.message_type }
+
+    pub fn clear_message_type(&mut self) { self.message_type.clear(); }
+
+    pub fn set_message_type(&mut self, v: impl Into<Vec<DescriptorProto>>) { self.message_type = v.into(); }
+
+    pub fn message_type_mut(&mut self) -> &mut Vec<DescriptorProto> { &mut self.message_type }
+
+    pub fn enum_type(&self) -> &[EnumDescriptorProto] { &self.enum_type }
+
+    pub fn clear_enum_type(&mut self) { self.enum_type.clear(); }
+
+    pub fn set_enum_type(&mut self, v: impl Into<Vec<EnumDescriptorProto>>) { self.enum_type = v.into(); }
+
+    pub fn enum_type_mut(&mut self) -> &mut Vec<EnumDescriptorProto> { &mut self.enum_type }
+
+    pub fn service(&self) -> &[ServiceDescriptorProto] { &self.service }
+
+    pub fn clear_service(&mut self) { self.service.clear(); }
+
+    pub fn set_service(&mut self, v: impl Into<Vec<ServiceDescriptorProto>>) { self.service = v.into(); }
+
+    pub fn service_mut(&mut self) -> &mut Vec<ServiceDescriptorProto> { &mut self.service }
+
+    pub fn extension(&self) -> &[FieldDescriptorProto] { &self.extension }
+
+    pub fn clear_extension(&mut self) { self.extension.clear(); }
+
+    pub fn set_extension(&mut self, v: impl Into<Vec<FieldDescriptorProto>>) { self.extension = v.into(); }
+
+    pub fn extension_mut(&mut self) -> &mut Vec<FieldDescriptorProto> { &mut self.extension }
+
+    pub fn options(&self) -> &FileOptions {
+        self.options.as_ref().unwrap_or_else(|| FileOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: FileOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut FileOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+
+    pub fn source_code_info(&self) -> &SourceCodeInfo {
+        self.source_code_info.as_ref().unwrap_or_else(|| SourceCodeInfo::default_instance())
+    }
+
+    pub fn clear_source_code_info(&mut self) { self.source_code_info = None; }
+
+    pub fn has_source_code_info(&self) -> bool { self.source_code_info.is_some() }
+
+    pub fn set_source_code_info(&mut self, v: SourceCodeInfo) { self.source_code_info = Some(v); }
+
+    pub fn source_code_info_mut(&mut self) -> &mut SourceCodeInfo {
+        self.source_code_info.get_or_insert_with(Default::default)
+    }
+
+    pub fn syntax(&self) -> &str {
+        self.syntax.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_syntax(&mut self) { self.syntax = None; }
+
+    pub fn has_syntax(&self) -> bool { self.syntax.is_some() }
+
+    pub fn set_syntax(&mut self, v: String) { self.syntax = Some(v); }
+
+    pub fn syntax_mut(&mut self) -> &mut String {
+        self.syntax.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DescriptorProto {
-    pub name: String,
-    pub field: Vec<FieldDescriptorProto>,
-    pub extension: Vec<FieldDescriptorProto>,
-    pub nested_type: Vec<DescriptorProto>,
-    pub enum_type: Vec<EnumDescriptorProto>,
-    pub extension_range: Vec<DescriptorProtoNestedExtensionRange>,
-    pub oneof_decl: Vec<OneofDescriptorProto>,
-    pub options: Option<MessageOptions>,
-    pub reserved_range: Vec<DescriptorProtoNestedReservedRange>,
-    pub reserved_name: Vec<String>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    field: Vec<FieldDescriptorProto>,
+    extension: Vec<FieldDescriptorProto>,
+    nested_type: Vec<DescriptorProto>,
+    enum_type: Vec<EnumDescriptorProto>,
+    extension_range: Vec<DescriptorProtoNestedExtensionRange>,
+    oneof_decl: Vec<OneofDescriptorProto>,
+    options: Option<MessageOptions>,
+    reserved_range: Vec<DescriptorProtoNestedReservedRange>,
+    reserved_name: Vec<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for DescriptorProto {
@@ -461,7 +659,7 @@ impl Message for DescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
                 18 => s.read_message_to(&mut self.field)?,
                 50 => s.read_message_to(&mut self.extension)?,
                 26 => s.read_message_to(&mut self.nested_type)?,
@@ -481,9 +679,9 @@ impl Message for DescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
         if !self.field.is_empty() {
             for v in &self.field {
@@ -545,8 +743,8 @@ impl Message for DescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
         if !self.field.is_empty() {
             n += encoded::arr_message_len(1, &self.field);
@@ -579,13 +777,129 @@ impl Message for DescriptorProto {
     }
 }
 
+impl DescriptorProto {
+    pub const fn new() -> DescriptorProto {
+        DescriptorProto {
+            name: None,
+            field: Vec::new(),
+            extension: Vec::new(),
+            nested_type: Vec::new(),
+            enum_type: Vec::new(),
+            extension_range: Vec::new(),
+            oneof_decl: Vec::new(),
+            options: None,
+            reserved_range: Vec::new(),
+            reserved_name: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static DescriptorProto {
+        static DEFAULT: DescriptorProto = DescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn field(&self) -> &[FieldDescriptorProto] { &self.field }
+
+    pub fn clear_field(&mut self) { self.field.clear(); }
+
+    pub fn set_field(&mut self, v: impl Into<Vec<FieldDescriptorProto>>) { self.field = v.into(); }
+
+    pub fn field_mut(&mut self) -> &mut Vec<FieldDescriptorProto> { &mut self.field }
+
+    pub fn extension(&self) -> &[FieldDescriptorProto] { &self.extension }
+
+    pub fn clear_extension(&mut self) { self.extension.clear(); }
+
+    pub fn set_extension(&mut self, v: impl Into<Vec<FieldDescriptorProto>>) { self.extension = v.into(); }
+
+    pub fn extension_mut(&mut self) -> &mut Vec<FieldDescriptorProto> { &mut self.extension }
+
+    pub fn nested_type(&self) -> &[DescriptorProto] { &self.nested_type }
+
+    pub fn clear_nested_type(&mut self) { self.nested_type.clear(); }
+
+    pub fn set_nested_type(&mut self, v: impl Into<Vec<DescriptorProto>>) { self.nested_type = v.into(); }
+
+    pub fn nested_type_mut(&mut self) -> &mut Vec<DescriptorProto> { &mut self.nested_type }
+
+    pub fn enum_type(&self) -> &[EnumDescriptorProto] { &self.enum_type }
+
+    pub fn clear_enum_type(&mut self) { self.enum_type.clear(); }
+
+    pub fn set_enum_type(&mut self, v: impl Into<Vec<EnumDescriptorProto>>) { self.enum_type = v.into(); }
+
+    pub fn enum_type_mut(&mut self) -> &mut Vec<EnumDescriptorProto> { &mut self.enum_type }
+
+    pub fn extension_range(&self) -> &[DescriptorProtoNestedExtensionRange] { &self.extension_range }
+
+    pub fn clear_extension_range(&mut self) { self.extension_range.clear(); }
+
+    pub fn set_extension_range(&mut self, v: impl Into<Vec<DescriptorProtoNestedExtensionRange>>) { self.extension_range = v.into(); }
+
+    pub fn extension_range_mut(&mut self) -> &mut Vec<DescriptorProtoNestedExtensionRange> { &mut self.extension_range }
+
+    pub fn oneof_decl(&self) -> &[OneofDescriptorProto] { &self.oneof_decl }
+
+    pub fn clear_oneof_decl(&mut self) { self.oneof_decl.clear(); }
+
+    pub fn set_oneof_decl(&mut self, v: impl Into<Vec<OneofDescriptorProto>>) { self.oneof_decl = v.into(); }
+
+    pub fn oneof_decl_mut(&mut self) -> &mut Vec<OneofDescriptorProto> { &mut self.oneof_decl }
+
+    pub fn options(&self) -> &MessageOptions {
+        self.options.as_ref().unwrap_or_else(|| MessageOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: MessageOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut MessageOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+
+    pub fn reserved_range(&self) -> &[DescriptorProtoNestedReservedRange] { &self.reserved_range }
+
+    pub fn clear_reserved_range(&mut self) { self.reserved_range.clear(); }
+
+    pub fn set_reserved_range(&mut self, v: impl Into<Vec<DescriptorProtoNestedReservedRange>>) { self.reserved_range = v.into(); }
+
+    pub fn reserved_range_mut(&mut self) -> &mut Vec<DescriptorProtoNestedReservedRange> { &mut self.reserved_range }
+
+    pub fn reserved_name(&self) -> &[String] { &self.reserved_name }
+
+    pub fn clear_reserved_name(&mut self) { self.reserved_name.clear(); }
+
+    pub fn set_reserved_name(&mut self, v: impl Into<Vec<String>>) { self.reserved_name = v.into(); }
+
+    pub fn reserved_name_mut(&mut self) -> &mut Vec<String> { &mut self.reserved_name }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DescriptorProtoNestedExtensionRange {
-    pub start: i32,
-    pub end: i32,
-    pub options: Option<ExtensionRangeOptions>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    start: Option<i32>,
+    end: Option<i32>,
+    options: Option<ExtensionRangeOptions>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for DescriptorProtoNestedExtensionRange {
@@ -593,8 +907,8 @@ impl Message for DescriptorProtoNestedExtensionRange {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.start = s.read_var_i32()?,
-                16 => self.end = s.read_var_i32()?,
+                8 => self.start = Some(s.read_var_i32()?),
+                16 => self.end = Some(s.read_var_i32()?),
                 26 => {
                     let msg = self.options.get_or_insert_with(Default::default);
                     s.read_message(msg)?;
@@ -606,13 +920,13 @@ impl Message for DescriptorProtoNestedExtensionRange {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if 0 != self.start {
+        if let Some(v) = self.start {
             s.write_raw_1_byte([8])?;
-            s.write_var_i32(self.start)?;
+            s.write_var_i32(v)?;
         }
-        if 0 != self.end {
+        if let Some(v) = self.end {
             s.write_raw_1_byte([16])?;
-            s.write_var_i32(self.end)?;
+            s.write_var_i32(v)?;
         }
         if let Some(v) = &self.options {
             s.write_raw_1_byte([26])?;
@@ -626,11 +940,11 @@ impl Message for DescriptorProtoNestedExtensionRange {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if 0 != self.start {
-            n += 1 + encoded::var_i32_len(self.start);
+        if let Some(v) = self.start {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if 0 != self.end {
-            n += 1 + encoded::var_i32_len(self.end);
+        if let Some(v) = self.end {
+            n += 1 + encoded::var_i32_len(v);
         }
         if let Some(v) = &self.options {
             n += 1 + encoded::message_len(v);
@@ -639,12 +953,63 @@ impl Message for DescriptorProtoNestedExtensionRange {
     }
 }
 
+impl DescriptorProtoNestedExtensionRange {
+    pub const fn new() -> DescriptorProtoNestedExtensionRange {
+        DescriptorProtoNestedExtensionRange {
+            start: None,
+            end: None,
+            options: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static DescriptorProtoNestedExtensionRange {
+        static DEFAULT: DescriptorProtoNestedExtensionRange = DescriptorProtoNestedExtensionRange::new();
+        &DEFAULT
+    }
+
+    pub fn start(&self) -> i32 {
+        self.start.unwrap_or_default()
+    }
+
+    pub fn clear_start(&mut self) { self.start = None; }
+
+    pub fn has_start(&self) -> bool { self.start.is_some() }
+
+    pub fn set_start(&mut self, v: i32) { self.start = Some(v); }
+
+    pub fn end(&self) -> i32 {
+        self.end.unwrap_or_default()
+    }
+
+    pub fn clear_end(&mut self) { self.end = None; }
+
+    pub fn has_end(&self) -> bool { self.end.is_some() }
+
+    pub fn set_end(&mut self, v: i32) { self.end = Some(v); }
+
+    pub fn options(&self) -> &ExtensionRangeOptions {
+        self.options.as_ref().unwrap_or_else(|| ExtensionRangeOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: ExtensionRangeOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut ExtensionRangeOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct DescriptorProtoNestedReservedRange {
-    pub start: i32,
-    pub end: i32,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    start: Option<i32>,
+    end: Option<i32>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for DescriptorProtoNestedReservedRange {
@@ -652,8 +1017,8 @@ impl Message for DescriptorProtoNestedReservedRange {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.start = s.read_var_i32()?,
-                16 => self.end = s.read_var_i32()?,
+                8 => self.start = Some(s.read_var_i32()?),
+                16 => self.end = Some(s.read_var_i32()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -661,13 +1026,13 @@ impl Message for DescriptorProtoNestedReservedRange {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if 0 != self.start {
+        if let Some(v) = self.start {
             s.write_raw_1_byte([8])?;
-            s.write_var_i32(self.start)?;
+            s.write_var_i32(v)?;
         }
-        if 0 != self.end {
+        if let Some(v) = self.end {
             s.write_raw_1_byte([16])?;
-            s.write_var_i32(self.end)?;
+            s.write_var_i32(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -677,21 +1042,57 @@ impl Message for DescriptorProtoNestedReservedRange {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if 0 != self.start {
-            n += 1 + encoded::var_i32_len(self.start);
+        if let Some(v) = self.start {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if 0 != self.end {
-            n += 1 + encoded::var_i32_len(self.end);
+        if let Some(v) = self.end {
+            n += 1 + encoded::var_i32_len(v);
         }
         n
     }
 }
 
+impl DescriptorProtoNestedReservedRange {
+    pub const fn new() -> DescriptorProtoNestedReservedRange {
+        DescriptorProtoNestedReservedRange {
+            start: None,
+            end: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static DescriptorProtoNestedReservedRange {
+        static DEFAULT: DescriptorProtoNestedReservedRange = DescriptorProtoNestedReservedRange::new();
+        &DEFAULT
+    }
+
+    pub fn start(&self) -> i32 {
+        self.start.unwrap_or_default()
+    }
+
+    pub fn clear_start(&mut self) { self.start = None; }
+
+    pub fn has_start(&self) -> bool { self.start.is_some() }
+
+    pub fn set_start(&mut self, v: i32) { self.start = Some(v); }
+
+    pub fn end(&self) -> i32 {
+        self.end.unwrap_or_default()
+    }
+
+    pub fn clear_end(&mut self) { self.end = None; }
+
+    pub fn has_end(&self) -> bool { self.end.is_some() }
+
+    pub fn set_end(&mut self, v: i32) { self.end = Some(v); }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ExtensionRangeOptions {
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for ExtensionRangeOptions {
@@ -728,20 +1129,43 @@ impl Message for ExtensionRangeOptions {
     }
 }
 
+impl ExtensionRangeOptions {
+    pub const fn new() -> ExtensionRangeOptions {
+        ExtensionRangeOptions {
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static ExtensionRangeOptions {
+        static DEFAULT: ExtensionRangeOptions = ExtensionRangeOptions::new();
+        &DEFAULT
+    }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FieldDescriptorProto {
-    pub name: String,
-    pub number: i32,
-    pub label: FieldDescriptorProtoNestedLabel,
-    pub r#type: FieldDescriptorProtoNestedType,
-    pub type_name: String,
-    pub extendee: String,
-    pub default_value: String,
-    pub oneof_index: i32,
-    pub json_name: String,
-    pub options: Option<FieldOptions>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    number: Option<i32>,
+    label: Option<FieldDescriptorProtoNestedLabel>,
+    r#type: Option<FieldDescriptorProtoNestedType>,
+    type_name: Option<String>,
+    extendee: Option<String>,
+    default_value: Option<String>,
+    oneof_index: Option<i32>,
+    json_name: Option<String>,
+    options: Option<FieldOptions>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for FieldDescriptorProto {
@@ -749,15 +1173,15 @@ impl Message for FieldDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
-                24 => self.number = s.read_var_i32()?,
-                32 => self.label = s.read_enum()?,
-                40 => self.r#type = s.read_enum()?,
-                50 => self.type_name = s.read_string()?,
-                18 => self.extendee = s.read_string()?,
-                58 => self.default_value = s.read_string()?,
-                72 => self.oneof_index = s.read_var_i32()?,
-                82 => self.json_name = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
+                24 => self.number = Some(s.read_var_i32()?),
+                32 => self.label = Some(s.read_enum()?),
+                40 => self.r#type = Some(s.read_enum()?),
+                50 => self.type_name = Some(s.read_string()?),
+                18 => self.extendee = Some(s.read_string()?),
+                58 => self.default_value = Some(s.read_string()?),
+                72 => self.oneof_index = Some(s.read_var_i32()?),
+                82 => self.json_name = Some(s.read_string()?),
                 66 => {
                     let msg = self.options.get_or_insert_with(Default::default);
                     s.read_message(msg)?;
@@ -769,41 +1193,41 @@ impl Message for FieldDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
-        if 0 != self.number {
+        if let Some(v) = self.number {
             s.write_raw_1_byte([24])?;
-            s.write_var_i32(self.number)?;
+            s.write_var_i32(v)?;
         }
-        if self.label.value() != 0 {
+        if let Some(v) = self.label {
             s.write_raw_1_byte([32])?;
-            s.write_enum(self.label)?;
+            s.write_enum(v)?;
         }
-        if self.r#type.value() != 0 {
+        if let Some(v) = self.r#type {
             s.write_raw_1_byte([40])?;
-            s.write_enum(self.r#type)?;
+            s.write_enum(v)?;
         }
-        if !self.type_name.is_empty() {
+        if let Some(v) = &self.type_name {
             s.write_raw_1_byte([50])?;
-            s.write_string(&self.type_name)?;
+            s.write_string(v)?;
         }
-        if !self.extendee.is_empty() {
+        if let Some(v) = &self.extendee {
             s.write_raw_1_byte([18])?;
-            s.write_string(&self.extendee)?;
+            s.write_string(v)?;
         }
-        if !self.default_value.is_empty() {
+        if let Some(v) = &self.default_value {
             s.write_raw_1_byte([58])?;
-            s.write_string(&self.default_value)?;
+            s.write_string(v)?;
         }
-        if 0 != self.oneof_index {
+        if let Some(v) = self.oneof_index {
             s.write_raw_1_byte([72])?;
-            s.write_var_i32(self.oneof_index)?;
+            s.write_var_i32(v)?;
         }
-        if !self.json_name.is_empty() {
+        if let Some(v) = &self.json_name {
             s.write_raw_1_byte([82])?;
-            s.write_string(&self.json_name)?;
+            s.write_string(v)?;
         }
         if let Some(v) = &self.options {
             s.write_raw_1_byte([66])?;
@@ -817,32 +1241,32 @@ impl Message for FieldDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
-        if 0 != self.number {
-            n += 1 + encoded::var_i32_len(self.number);
+        if let Some(v) = self.number {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if self.label.value() != 0 {
-            n += 1 + encoded::enum_len(self.label);
+        if let Some(v) = self.label {
+            n += 1 + encoded::enum_len(v);
         }
-        if self.r#type.value() != 0 {
-            n += 1 + encoded::enum_len(self.r#type);
+        if let Some(v) = self.r#type {
+            n += 1 + encoded::enum_len(v);
         }
-        if !self.type_name.is_empty() {
-            n += 1 + encoded::string_len(&self.type_name);
+        if let Some(v) = &self.type_name {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.extendee.is_empty() {
-            n += 1 + encoded::string_len(&self.extendee);
+        if let Some(v) = &self.extendee {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.default_value.is_empty() {
-            n += 1 + encoded::string_len(&self.default_value);
+        if let Some(v) = &self.default_value {
+            n += 1 + encoded::string_len(v);
         }
-        if 0 != self.oneof_index {
-            n += 1 + encoded::var_i32_len(self.oneof_index);
+        if let Some(v) = self.oneof_index {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if !self.json_name.is_empty() {
-            n += 1 + encoded::string_len(&self.json_name);
+        if let Some(v) = &self.json_name {
+            n += 1 + encoded::string_len(v);
         }
         if let Some(v) = &self.options {
             n += 1 + encoded::message_len(v);
@@ -851,12 +1275,160 @@ impl Message for FieldDescriptorProto {
     }
 }
 
+impl FieldDescriptorProto {
+    pub const fn new() -> FieldDescriptorProto {
+        FieldDescriptorProto {
+            name: None,
+            number: None,
+            label: None,
+            r#type: None,
+            type_name: None,
+            extendee: None,
+            default_value: None,
+            oneof_index: None,
+            json_name: None,
+            options: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static FieldDescriptorProto {
+        static DEFAULT: FieldDescriptorProto = FieldDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn number(&self) -> i32 {
+        self.number.unwrap_or_default()
+    }
+
+    pub fn clear_number(&mut self) { self.number = None; }
+
+    pub fn has_number(&self) -> bool { self.number.is_some() }
+
+    pub fn set_number(&mut self, v: i32) { self.number = Some(v); }
+
+    pub fn label(&self) -> FieldDescriptorProtoNestedLabel {
+        self.label.unwrap_or_default()
+    }
+
+    pub fn clear_label(&mut self) { self.label = None; }
+
+    pub fn has_label(&self) -> bool { self.label.is_some() }
+
+    pub fn set_label(&mut self, v: FieldDescriptorProtoNestedLabel) { self.label = Some(v); }
+
+    pub fn r#type(&self) -> FieldDescriptorProtoNestedType {
+        self.r#type.unwrap_or_default()
+    }
+
+    pub fn clear_type(&mut self) { self.r#type = None; }
+
+    pub fn has_type(&self) -> bool { self.r#type.is_some() }
+
+    pub fn set_type(&mut self, v: FieldDescriptorProtoNestedType) { self.r#type = Some(v); }
+
+    pub fn type_name(&self) -> &str {
+        self.type_name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_type_name(&mut self) { self.type_name = None; }
+
+    pub fn has_type_name(&self) -> bool { self.type_name.is_some() }
+
+    pub fn set_type_name(&mut self, v: String) { self.type_name = Some(v); }
+
+    pub fn type_name_mut(&mut self) -> &mut String {
+        self.type_name.get_or_insert_with(Default::default)
+    }
+
+    pub fn extendee(&self) -> &str {
+        self.extendee.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_extendee(&mut self) { self.extendee = None; }
+
+    pub fn has_extendee(&self) -> bool { self.extendee.is_some() }
+
+    pub fn set_extendee(&mut self, v: String) { self.extendee = Some(v); }
+
+    pub fn extendee_mut(&mut self) -> &mut String {
+        self.extendee.get_or_insert_with(Default::default)
+    }
+
+    pub fn default_value(&self) -> &str {
+        self.default_value.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_default_value(&mut self) { self.default_value = None; }
+
+    pub fn has_default_value(&self) -> bool { self.default_value.is_some() }
+
+    pub fn set_default_value(&mut self, v: String) { self.default_value = Some(v); }
+
+    pub fn default_value_mut(&mut self) -> &mut String {
+        self.default_value.get_or_insert_with(Default::default)
+    }
+
+    pub fn oneof_index(&self) -> i32 {
+        self.oneof_index.unwrap_or_default()
+    }
+
+    pub fn clear_oneof_index(&mut self) { self.oneof_index = None; }
+
+    pub fn has_oneof_index(&self) -> bool { self.oneof_index.is_some() }
+
+    pub fn set_oneof_index(&mut self, v: i32) { self.oneof_index = Some(v); }
+
+    pub fn json_name(&self) -> &str {
+        self.json_name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_json_name(&mut self) { self.json_name = None; }
+
+    pub fn has_json_name(&self) -> bool { self.json_name.is_some() }
+
+    pub fn set_json_name(&mut self, v: String) { self.json_name = Some(v); }
+
+    pub fn json_name_mut(&mut self) -> &mut String {
+        self.json_name.get_or_insert_with(Default::default)
+    }
+
+    pub fn options(&self) -> &FieldOptions {
+        self.options.as_ref().unwrap_or_else(|| FieldOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: FieldOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut FieldOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct OneofDescriptorProto {
-    pub name: String,
-    pub options: Option<OneofOptions>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    options: Option<OneofOptions>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for OneofDescriptorProto {
@@ -864,7 +1436,7 @@ impl Message for OneofDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
                 18 => {
                     let msg = self.options.get_or_insert_with(Default::default);
                     s.read_message(msg)?;
@@ -876,9 +1448,9 @@ impl Message for OneofDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
         if let Some(v) = &self.options {
             s.write_raw_1_byte([18])?;
@@ -892,8 +1464,8 @@ impl Message for OneofDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
         if let Some(v) = &self.options {
             n += 1 + encoded::message_len(v);
@@ -902,15 +1474,59 @@ impl Message for OneofDescriptorProto {
     }
 }
 
+impl OneofDescriptorProto {
+    pub const fn new() -> OneofDescriptorProto {
+        OneofDescriptorProto {
+            name: None,
+            options: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static OneofDescriptorProto {
+        static DEFAULT: OneofDescriptorProto = OneofDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn options(&self) -> &OneofOptions {
+        self.options.as_ref().unwrap_or_else(|| OneofOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: OneofOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut OneofOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumDescriptorProto {
-    pub name: String,
-    pub value: Vec<EnumValueDescriptorProto>,
-    pub options: Option<EnumOptions>,
-    pub reserved_range: Vec<EnumDescriptorProtoNestedEnumReservedRange>,
-    pub reserved_name: Vec<String>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    value: Vec<EnumValueDescriptorProto>,
+    options: Option<EnumOptions>,
+    reserved_range: Vec<EnumDescriptorProtoNestedEnumReservedRange>,
+    reserved_name: Vec<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for EnumDescriptorProto {
@@ -918,7 +1534,7 @@ impl Message for EnumDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
                 18 => s.read_message_to(&mut self.value)?,
                 26 => {
                     let msg = self.options.get_or_insert_with(Default::default);
@@ -933,9 +1549,9 @@ impl Message for EnumDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
         if !self.value.is_empty() {
             for v in &self.value {
@@ -967,8 +1583,8 @@ impl Message for EnumDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
         if !self.value.is_empty() {
             n += encoded::arr_message_len(1, &self.value);
@@ -986,12 +1602,83 @@ impl Message for EnumDescriptorProto {
     }
 }
 
+impl EnumDescriptorProto {
+    pub const fn new() -> EnumDescriptorProto {
+        EnumDescriptorProto {
+            name: None,
+            value: Vec::new(),
+            options: None,
+            reserved_range: Vec::new(),
+            reserved_name: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static EnumDescriptorProto {
+        static DEFAULT: EnumDescriptorProto = EnumDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn value(&self) -> &[EnumValueDescriptorProto] { &self.value }
+
+    pub fn clear_value(&mut self) { self.value.clear(); }
+
+    pub fn set_value(&mut self, v: impl Into<Vec<EnumValueDescriptorProto>>) { self.value = v.into(); }
+
+    pub fn value_mut(&mut self) -> &mut Vec<EnumValueDescriptorProto> { &mut self.value }
+
+    pub fn options(&self) -> &EnumOptions {
+        self.options.as_ref().unwrap_or_else(|| EnumOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: EnumOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut EnumOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+
+    pub fn reserved_range(&self) -> &[EnumDescriptorProtoNestedEnumReservedRange] { &self.reserved_range }
+
+    pub fn clear_reserved_range(&mut self) { self.reserved_range.clear(); }
+
+    pub fn set_reserved_range(&mut self, v: impl Into<Vec<EnumDescriptorProtoNestedEnumReservedRange>>) { self.reserved_range = v.into(); }
+
+    pub fn reserved_range_mut(&mut self) -> &mut Vec<EnumDescriptorProtoNestedEnumReservedRange> { &mut self.reserved_range }
+
+    pub fn reserved_name(&self) -> &[String] { &self.reserved_name }
+
+    pub fn clear_reserved_name(&mut self) { self.reserved_name.clear(); }
+
+    pub fn set_reserved_name(&mut self, v: impl Into<Vec<String>>) { self.reserved_name = v.into(); }
+
+    pub fn reserved_name_mut(&mut self) -> &mut Vec<String> { &mut self.reserved_name }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumDescriptorProtoNestedEnumReservedRange {
-    pub start: i32,
-    pub end: i32,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    start: Option<i32>,
+    end: Option<i32>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for EnumDescriptorProtoNestedEnumReservedRange {
@@ -999,8 +1686,8 @@ impl Message for EnumDescriptorProtoNestedEnumReservedRange {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.start = s.read_var_i32()?,
-                16 => self.end = s.read_var_i32()?,
+                8 => self.start = Some(s.read_var_i32()?),
+                16 => self.end = Some(s.read_var_i32()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -1008,13 +1695,13 @@ impl Message for EnumDescriptorProtoNestedEnumReservedRange {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if 0 != self.start {
+        if let Some(v) = self.start {
             s.write_raw_1_byte([8])?;
-            s.write_var_i32(self.start)?;
+            s.write_var_i32(v)?;
         }
-        if 0 != self.end {
+        if let Some(v) = self.end {
             s.write_raw_1_byte([16])?;
-            s.write_var_i32(self.end)?;
+            s.write_var_i32(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -1024,23 +1711,59 @@ impl Message for EnumDescriptorProtoNestedEnumReservedRange {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if 0 != self.start {
-            n += 1 + encoded::var_i32_len(self.start);
+        if let Some(v) = self.start {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if 0 != self.end {
-            n += 1 + encoded::var_i32_len(self.end);
+        if let Some(v) = self.end {
+            n += 1 + encoded::var_i32_len(v);
         }
         n
     }
 }
 
+impl EnumDescriptorProtoNestedEnumReservedRange {
+    pub const fn new() -> EnumDescriptorProtoNestedEnumReservedRange {
+        EnumDescriptorProtoNestedEnumReservedRange {
+            start: None,
+            end: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static EnumDescriptorProtoNestedEnumReservedRange {
+        static DEFAULT: EnumDescriptorProtoNestedEnumReservedRange = EnumDescriptorProtoNestedEnumReservedRange::new();
+        &DEFAULT
+    }
+
+    pub fn start(&self) -> i32 {
+        self.start.unwrap_or_default()
+    }
+
+    pub fn clear_start(&mut self) { self.start = None; }
+
+    pub fn has_start(&self) -> bool { self.start.is_some() }
+
+    pub fn set_start(&mut self, v: i32) { self.start = Some(v); }
+
+    pub fn end(&self) -> i32 {
+        self.end.unwrap_or_default()
+    }
+
+    pub fn clear_end(&mut self) { self.end = None; }
+
+    pub fn has_end(&self) -> bool { self.end.is_some() }
+
+    pub fn set_end(&mut self, v: i32) { self.end = Some(v); }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumValueDescriptorProto {
-    pub name: String,
-    pub number: i32,
-    pub options: Option<EnumValueOptions>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    number: Option<i32>,
+    options: Option<EnumValueOptions>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for EnumValueDescriptorProto {
@@ -1048,8 +1771,8 @@ impl Message for EnumValueDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
-                16 => self.number = s.read_var_i32()?,
+                10 => self.name = Some(s.read_string()?),
+                16 => self.number = Some(s.read_var_i32()?),
                 26 => {
                     let msg = self.options.get_or_insert_with(Default::default);
                     s.read_message(msg)?;
@@ -1061,13 +1784,13 @@ impl Message for EnumValueDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
-        if 0 != self.number {
+        if let Some(v) = self.number {
             s.write_raw_1_byte([16])?;
-            s.write_var_i32(self.number)?;
+            s.write_var_i32(v)?;
         }
         if let Some(v) = &self.options {
             s.write_raw_1_byte([26])?;
@@ -1081,11 +1804,11 @@ impl Message for EnumValueDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
-        if 0 != self.number {
-            n += 1 + encoded::var_i32_len(self.number);
+        if let Some(v) = self.number {
+            n += 1 + encoded::var_i32_len(v);
         }
         if let Some(v) = &self.options {
             n += 1 + encoded::message_len(v);
@@ -1094,13 +1817,68 @@ impl Message for EnumValueDescriptorProto {
     }
 }
 
+impl EnumValueDescriptorProto {
+    pub const fn new() -> EnumValueDescriptorProto {
+        EnumValueDescriptorProto {
+            name: None,
+            number: None,
+            options: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static EnumValueDescriptorProto {
+        static DEFAULT: EnumValueDescriptorProto = EnumValueDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn number(&self) -> i32 {
+        self.number.unwrap_or_default()
+    }
+
+    pub fn clear_number(&mut self) { self.number = None; }
+
+    pub fn has_number(&self) -> bool { self.number.is_some() }
+
+    pub fn set_number(&mut self, v: i32) { self.number = Some(v); }
+
+    pub fn options(&self) -> &EnumValueOptions {
+        self.options.as_ref().unwrap_or_else(|| EnumValueOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: EnumValueOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut EnumValueOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ServiceDescriptorProto {
-    pub name: String,
-    pub method: Vec<MethodDescriptorProto>,
-    pub options: Option<ServiceOptions>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    method: Vec<MethodDescriptorProto>,
+    options: Option<ServiceOptions>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for ServiceDescriptorProto {
@@ -1108,7 +1886,7 @@ impl Message for ServiceDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
                 18 => s.read_message_to(&mut self.method)?,
                 26 => {
                     let msg = self.options.get_or_insert_with(Default::default);
@@ -1121,9 +1899,9 @@ impl Message for ServiceDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
         if !self.method.is_empty() {
             for v in &self.method {
@@ -1143,8 +1921,8 @@ impl Message for ServiceDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
         if !self.method.is_empty() {
             n += encoded::arr_message_len(1, &self.method);
@@ -1156,16 +1934,69 @@ impl Message for ServiceDescriptorProto {
     }
 }
 
+impl ServiceDescriptorProto {
+    pub const fn new() -> ServiceDescriptorProto {
+        ServiceDescriptorProto {
+            name: None,
+            method: Vec::new(),
+            options: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static ServiceDescriptorProto {
+        static DEFAULT: ServiceDescriptorProto = ServiceDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn method(&self) -> &[MethodDescriptorProto] { &self.method }
+
+    pub fn clear_method(&mut self) { self.method.clear(); }
+
+    pub fn set_method(&mut self, v: impl Into<Vec<MethodDescriptorProto>>) { self.method = v.into(); }
+
+    pub fn method_mut(&mut self) -> &mut Vec<MethodDescriptorProto> { &mut self.method }
+
+    pub fn options(&self) -> &ServiceOptions {
+        self.options.as_ref().unwrap_or_else(|| ServiceOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: ServiceOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut ServiceOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MethodDescriptorProto {
-    pub name: String,
-    pub input_type: String,
-    pub output_type: String,
-    pub options: Option<MethodOptions>,
-    pub client_streaming: bool,
-    pub server_streaming: bool,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Option<String>,
+    input_type: Option<String>,
+    output_type: Option<String>,
+    options: Option<MethodOptions>,
+    client_streaming: Option<bool>,
+    server_streaming: Option<bool>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for MethodDescriptorProto {
@@ -1173,15 +2004,15 @@ impl Message for MethodDescriptorProto {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.name = s.read_string()?,
-                18 => self.input_type = s.read_string()?,
-                26 => self.output_type = s.read_string()?,
+                10 => self.name = Some(s.read_string()?),
+                18 => self.input_type = Some(s.read_string()?),
+                26 => self.output_type = Some(s.read_string()?),
                 34 => {
                     let msg = self.options.get_or_insert_with(Default::default);
                     s.read_message(msg)?;
                 }
-                40 => self.client_streaming = s.read_bool()?,
-                48 => self.server_streaming = s.read_bool()?,
+                40 => self.client_streaming = Some(s.read_bool()?),
+                48 => self.server_streaming = Some(s.read_bool()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -1189,29 +2020,29 @@ impl Message for MethodDescriptorProto {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.name.is_empty() {
+        if let Some(v) = &self.name {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.name)?;
+            s.write_string(v)?;
         }
-        if !self.input_type.is_empty() {
+        if let Some(v) = &self.input_type {
             s.write_raw_1_byte([18])?;
-            s.write_string(&self.input_type)?;
+            s.write_string(v)?;
         }
-        if !self.output_type.is_empty() {
+        if let Some(v) = &self.output_type {
             s.write_raw_1_byte([26])?;
-            s.write_string(&self.output_type)?;
+            s.write_string(v)?;
         }
         if let Some(v) = &self.options {
             s.write_raw_1_byte([34])?;
             s.write_message(v)?;
         }
-        if self.client_streaming {
+        if let Some(v) = self.client_streaming {
             s.write_raw_1_byte([40])?;
-            s.write_bool(self.client_streaming)?;
+            s.write_bool(v)?;
         }
-        if self.server_streaming {
+        if let Some(v) = self.server_streaming {
             s.write_raw_1_byte([48])?;
-            s.write_bool(self.server_streaming)?;
+            s.write_bool(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -1221,53 +2052,149 @@ impl Message for MethodDescriptorProto {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.name.is_empty() {
-            n += 1 + encoded::string_len(&self.name);
+        if let Some(v) = &self.name {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.input_type.is_empty() {
-            n += 1 + encoded::string_len(&self.input_type);
+        if let Some(v) = &self.input_type {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.output_type.is_empty() {
-            n += 1 + encoded::string_len(&self.output_type);
+        if let Some(v) = &self.output_type {
+            n += 1 + encoded::string_len(v);
         }
         if let Some(v) = &self.options {
             n += 1 + encoded::message_len(v);
         }
-        if self.client_streaming {
+        if self.client_streaming.is_some() {
             n += 2;
         }
-        if self.server_streaming {
+        if self.server_streaming.is_some() {
             n += 2;
         }
         n
     }
 }
 
+impl MethodDescriptorProto {
+    pub const fn new() -> MethodDescriptorProto {
+        MethodDescriptorProto {
+            name: None,
+            input_type: None,
+            output_type: None,
+            options: None,
+            client_streaming: None,
+            server_streaming: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static MethodDescriptorProto {
+        static DEFAULT: MethodDescriptorProto = MethodDescriptorProto::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_name(&mut self) { self.name = None; }
+
+    pub fn has_name(&self) -> bool { self.name.is_some() }
+
+    pub fn set_name(&mut self, v: String) { self.name = Some(v); }
+
+    pub fn name_mut(&mut self) -> &mut String {
+        self.name.get_or_insert_with(Default::default)
+    }
+
+    pub fn input_type(&self) -> &str {
+        self.input_type.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_input_type(&mut self) { self.input_type = None; }
+
+    pub fn has_input_type(&self) -> bool { self.input_type.is_some() }
+
+    pub fn set_input_type(&mut self, v: String) { self.input_type = Some(v); }
+
+    pub fn input_type_mut(&mut self) -> &mut String {
+        self.input_type.get_or_insert_with(Default::default)
+    }
+
+    pub fn output_type(&self) -> &str {
+        self.output_type.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_output_type(&mut self) { self.output_type = None; }
+
+    pub fn has_output_type(&self) -> bool { self.output_type.is_some() }
+
+    pub fn set_output_type(&mut self, v: String) { self.output_type = Some(v); }
+
+    pub fn output_type_mut(&mut self) -> &mut String {
+        self.output_type.get_or_insert_with(Default::default)
+    }
+
+    pub fn options(&self) -> &MethodOptions {
+        self.options.as_ref().unwrap_or_else(|| MethodOptions::default_instance())
+    }
+
+    pub fn clear_options(&mut self) { self.options = None; }
+
+    pub fn has_options(&self) -> bool { self.options.is_some() }
+
+    pub fn set_options(&mut self, v: MethodOptions) { self.options = Some(v); }
+
+    pub fn options_mut(&mut self) -> &mut MethodOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+
+    pub fn client_streaming(&self) -> bool {
+        self.client_streaming.unwrap_or_default()
+    }
+
+    pub fn clear_client_streaming(&mut self) { self.client_streaming = None; }
+
+    pub fn has_client_streaming(&self) -> bool { self.client_streaming.is_some() }
+
+    pub fn set_client_streaming(&mut self, v: bool) { self.client_streaming = Some(v); }
+
+    pub fn server_streaming(&self) -> bool {
+        self.server_streaming.unwrap_or_default()
+    }
+
+    pub fn clear_server_streaming(&mut self) { self.server_streaming = None; }
+
+    pub fn has_server_streaming(&self) -> bool { self.server_streaming.is_some() }
+
+    pub fn set_server_streaming(&mut self, v: bool) { self.server_streaming = Some(v); }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FileOptions {
-    pub java_package: String,
-    pub java_outer_classname: String,
-    pub java_multiple_files: bool,
-    pub java_generate_equals_and_hash: bool,
-    pub java_string_check_utf8: bool,
-    pub optimize_for: FileOptionsNestedOptimizeMode,
-    pub go_package: String,
-    pub cc_generic_services: bool,
-    pub java_generic_services: bool,
-    pub py_generic_services: bool,
-    pub php_generic_services: bool,
-    pub deprecated: bool,
-    pub cc_enable_arenas: bool,
-    pub objc_class_prefix: String,
-    pub csharp_namespace: String,
-    pub swift_prefix: String,
-    pub php_class_prefix: String,
-    pub php_namespace: String,
-    pub php_metadata_namespace: String,
-    pub ruby_package: String,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    java_package: Option<String>,
+    java_outer_classname: Option<String>,
+    java_multiple_files: Option<bool>,
+    java_generate_equals_and_hash: Option<bool>,
+    java_string_check_utf8: Option<bool>,
+    optimize_for: Option<FileOptionsNestedOptimizeMode>,
+    go_package: Option<String>,
+    cc_generic_services: Option<bool>,
+    java_generic_services: Option<bool>,
+    py_generic_services: Option<bool>,
+    php_generic_services: Option<bool>,
+    deprecated: Option<bool>,
+    cc_enable_arenas: Option<bool>,
+    objc_class_prefix: Option<String>,
+    csharp_namespace: Option<String>,
+    swift_prefix: Option<String>,
+    php_class_prefix: Option<String>,
+    php_namespace: Option<String>,
+    php_metadata_namespace: Option<String>,
+    ruby_package: Option<String>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for FileOptions {
@@ -1275,26 +2202,26 @@ impl Message for FileOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                10 => self.java_package = s.read_string()?,
-                66 => self.java_outer_classname = s.read_string()?,
-                80 => self.java_multiple_files = s.read_bool()?,
-                160 => self.java_generate_equals_and_hash = s.read_bool()?,
-                216 => self.java_string_check_utf8 = s.read_bool()?,
-                72 => self.optimize_for = s.read_enum()?,
-                90 => self.go_package = s.read_string()?,
-                128 => self.cc_generic_services = s.read_bool()?,
-                136 => self.java_generic_services = s.read_bool()?,
-                144 => self.py_generic_services = s.read_bool()?,
-                336 => self.php_generic_services = s.read_bool()?,
-                184 => self.deprecated = s.read_bool()?,
-                248 => self.cc_enable_arenas = s.read_bool()?,
-                290 => self.objc_class_prefix = s.read_string()?,
-                298 => self.csharp_namespace = s.read_string()?,
-                314 => self.swift_prefix = s.read_string()?,
-                322 => self.php_class_prefix = s.read_string()?,
-                330 => self.php_namespace = s.read_string()?,
-                354 => self.php_metadata_namespace = s.read_string()?,
-                362 => self.ruby_package = s.read_string()?,
+                10 => self.java_package = Some(s.read_string()?),
+                66 => self.java_outer_classname = Some(s.read_string()?),
+                80 => self.java_multiple_files = Some(s.read_bool()?),
+                160 => self.java_generate_equals_and_hash = Some(s.read_bool()?),
+                216 => self.java_string_check_utf8 = Some(s.read_bool()?),
+                72 => self.optimize_for = Some(s.read_enum()?),
+                90 => self.go_package = Some(s.read_string()?),
+                128 => self.cc_generic_services = Some(s.read_bool()?),
+                136 => self.java_generic_services = Some(s.read_bool()?),
+                144 => self.py_generic_services = Some(s.read_bool()?),
+                336 => self.php_generic_services = Some(s.read_bool()?),
+                184 => self.deprecated = Some(s.read_bool()?),
+                248 => self.cc_enable_arenas = Some(s.read_bool()?),
+                290 => self.objc_class_prefix = Some(s.read_string()?),
+                298 => self.csharp_namespace = Some(s.read_string()?),
+                314 => self.swift_prefix = Some(s.read_string()?),
+                322 => self.php_class_prefix = Some(s.read_string()?),
+                330 => self.php_namespace = Some(s.read_string()?),
+                354 => self.php_metadata_namespace = Some(s.read_string()?),
+                362 => self.ruby_package = Some(s.read_string()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1303,85 +2230,85 @@ impl Message for FileOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if !self.java_package.is_empty() {
+        if let Some(v) = &self.java_package {
             s.write_raw_1_byte([10])?;
-            s.write_string(&self.java_package)?;
+            s.write_string(v)?;
         }
-        if !self.java_outer_classname.is_empty() {
+        if let Some(v) = &self.java_outer_classname {
             s.write_raw_1_byte([66])?;
-            s.write_string(&self.java_outer_classname)?;
+            s.write_string(v)?;
         }
-        if self.java_multiple_files {
+        if let Some(v) = self.java_multiple_files {
             s.write_raw_1_byte([80])?;
-            s.write_bool(self.java_multiple_files)?;
+            s.write_bool(v)?;
         }
-        if self.java_generate_equals_and_hash {
+        if let Some(v) = self.java_generate_equals_and_hash {
             s.write_raw_2_byte([160, 1])?;
-            s.write_bool(self.java_generate_equals_and_hash)?;
+            s.write_bool(v)?;
         }
-        if self.java_string_check_utf8 {
+        if let Some(v) = self.java_string_check_utf8 {
             s.write_raw_2_byte([216, 1])?;
-            s.write_bool(self.java_string_check_utf8)?;
+            s.write_bool(v)?;
         }
-        if self.optimize_for.value() != 0 {
+        if let Some(v) = self.optimize_for {
             s.write_raw_1_byte([72])?;
-            s.write_enum(self.optimize_for)?;
+            s.write_enum(v)?;
         }
-        if !self.go_package.is_empty() {
+        if let Some(v) = &self.go_package {
             s.write_raw_1_byte([90])?;
-            s.write_string(&self.go_package)?;
+            s.write_string(v)?;
         }
-        if self.cc_generic_services {
+        if let Some(v) = self.cc_generic_services {
             s.write_raw_2_byte([128, 1])?;
-            s.write_bool(self.cc_generic_services)?;
+            s.write_bool(v)?;
         }
-        if self.java_generic_services {
+        if let Some(v) = self.java_generic_services {
             s.write_raw_2_byte([136, 1])?;
-            s.write_bool(self.java_generic_services)?;
+            s.write_bool(v)?;
         }
-        if self.py_generic_services {
+        if let Some(v) = self.py_generic_services {
             s.write_raw_2_byte([144, 1])?;
-            s.write_bool(self.py_generic_services)?;
+            s.write_bool(v)?;
         }
-        if self.php_generic_services {
+        if let Some(v) = self.php_generic_services {
             s.write_raw_2_byte([208, 2])?;
-            s.write_bool(self.php_generic_services)?;
+            s.write_bool(v)?;
         }
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_2_byte([184, 1])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
-        if self.cc_enable_arenas {
+        if let Some(v) = self.cc_enable_arenas {
             s.write_raw_2_byte([248, 1])?;
-            s.write_bool(self.cc_enable_arenas)?;
+            s.write_bool(v)?;
         }
-        if !self.objc_class_prefix.is_empty() {
+        if let Some(v) = &self.objc_class_prefix {
             s.write_raw_2_byte([162, 2])?;
-            s.write_string(&self.objc_class_prefix)?;
+            s.write_string(v)?;
         }
-        if !self.csharp_namespace.is_empty() {
+        if let Some(v) = &self.csharp_namespace {
             s.write_raw_2_byte([170, 2])?;
-            s.write_string(&self.csharp_namespace)?;
+            s.write_string(v)?;
         }
-        if !self.swift_prefix.is_empty() {
+        if let Some(v) = &self.swift_prefix {
             s.write_raw_2_byte([186, 2])?;
-            s.write_string(&self.swift_prefix)?;
+            s.write_string(v)?;
         }
-        if !self.php_class_prefix.is_empty() {
+        if let Some(v) = &self.php_class_prefix {
             s.write_raw_2_byte([194, 2])?;
-            s.write_string(&self.php_class_prefix)?;
+            s.write_string(v)?;
         }
-        if !self.php_namespace.is_empty() {
+        if let Some(v) = &self.php_namespace {
             s.write_raw_2_byte([202, 2])?;
-            s.write_string(&self.php_namespace)?;
+            s.write_string(v)?;
         }
-        if !self.php_metadata_namespace.is_empty() {
+        if let Some(v) = &self.php_metadata_namespace {
             s.write_raw_2_byte([226, 2])?;
-            s.write_string(&self.php_metadata_namespace)?;
+            s.write_string(v)?;
         }
-        if !self.ruby_package.is_empty() {
+        if let Some(v) = &self.ruby_package {
             s.write_raw_2_byte([234, 2])?;
-            s.write_string(&self.ruby_package)?;
+            s.write_string(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1397,65 +2324,65 @@ impl Message for FileOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if !self.java_package.is_empty() {
-            n += 1 + encoded::string_len(&self.java_package);
+        if let Some(v) = &self.java_package {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.java_outer_classname.is_empty() {
-            n += 1 + encoded::string_len(&self.java_outer_classname);
+        if let Some(v) = &self.java_outer_classname {
+            n += 1 + encoded::string_len(v);
         }
-        if self.java_multiple_files {
+        if self.java_multiple_files.is_some() {
             n += 2;
         }
-        if self.java_generate_equals_and_hash {
+        if self.java_generate_equals_and_hash.is_some() {
             n += 3;
         }
-        if self.java_string_check_utf8 {
+        if self.java_string_check_utf8.is_some() {
             n += 3;
         }
-        if self.optimize_for.value() != 0 {
-            n += 1 + encoded::enum_len(self.optimize_for);
+        if let Some(v) = self.optimize_for {
+            n += 1 + encoded::enum_len(v);
         }
-        if !self.go_package.is_empty() {
-            n += 1 + encoded::string_len(&self.go_package);
+        if let Some(v) = &self.go_package {
+            n += 1 + encoded::string_len(v);
         }
-        if self.cc_generic_services {
+        if self.cc_generic_services.is_some() {
             n += 3;
         }
-        if self.java_generic_services {
+        if self.java_generic_services.is_some() {
             n += 3;
         }
-        if self.py_generic_services {
+        if self.py_generic_services.is_some() {
             n += 3;
         }
-        if self.php_generic_services {
+        if self.php_generic_services.is_some() {
             n += 3;
         }
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 3;
         }
-        if self.cc_enable_arenas {
+        if self.cc_enable_arenas.is_some() {
             n += 3;
         }
-        if !self.objc_class_prefix.is_empty() {
-            n += 2 + encoded::string_len(&self.objc_class_prefix);
+        if let Some(v) = &self.objc_class_prefix {
+            n += 2 + encoded::string_len(v);
         }
-        if !self.csharp_namespace.is_empty() {
-            n += 2 + encoded::string_len(&self.csharp_namespace);
+        if let Some(v) = &self.csharp_namespace {
+            n += 2 + encoded::string_len(v);
         }
-        if !self.swift_prefix.is_empty() {
-            n += 2 + encoded::string_len(&self.swift_prefix);
+        if let Some(v) = &self.swift_prefix {
+            n += 2 + encoded::string_len(v);
         }
-        if !self.php_class_prefix.is_empty() {
-            n += 2 + encoded::string_len(&self.php_class_prefix);
+        if let Some(v) = &self.php_class_prefix {
+            n += 2 + encoded::string_len(v);
         }
-        if !self.php_namespace.is_empty() {
-            n += 2 + encoded::string_len(&self.php_namespace);
+        if let Some(v) = &self.php_namespace {
+            n += 2 + encoded::string_len(v);
         }
-        if !self.php_metadata_namespace.is_empty() {
-            n += 2 + encoded::string_len(&self.php_metadata_namespace);
+        if let Some(v) = &self.php_metadata_namespace {
+            n += 2 + encoded::string_len(v);
         }
-        if !self.ruby_package.is_empty() {
-            n += 2 + encoded::string_len(&self.ruby_package);
+        if let Some(v) = &self.ruby_package {
+            n += 2 + encoded::string_len(v);
         }
         if !self.uninterpreted_option.is_empty() {
             n += encoded::arr_message_len(2, &self.uninterpreted_option);
@@ -1464,15 +2391,298 @@ impl Message for FileOptions {
     }
 }
 
+impl FileOptions {
+    pub const fn new() -> FileOptions {
+        FileOptions {
+            java_package: None,
+            java_outer_classname: None,
+            java_multiple_files: None,
+            java_generate_equals_and_hash: None,
+            java_string_check_utf8: None,
+            optimize_for: None,
+            go_package: None,
+            cc_generic_services: None,
+            java_generic_services: None,
+            py_generic_services: None,
+            php_generic_services: None,
+            deprecated: None,
+            cc_enable_arenas: None,
+            objc_class_prefix: None,
+            csharp_namespace: None,
+            swift_prefix: None,
+            php_class_prefix: None,
+            php_namespace: None,
+            php_metadata_namespace: None,
+            ruby_package: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static FileOptions {
+        static DEFAULT: FileOptions = FileOptions::new();
+        &DEFAULT
+    }
+
+    pub fn java_package(&self) -> &str {
+        self.java_package.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_java_package(&mut self) { self.java_package = None; }
+
+    pub fn has_java_package(&self) -> bool { self.java_package.is_some() }
+
+    pub fn set_java_package(&mut self, v: String) { self.java_package = Some(v); }
+
+    pub fn java_package_mut(&mut self) -> &mut String {
+        self.java_package.get_or_insert_with(Default::default)
+    }
+
+    pub fn java_outer_classname(&self) -> &str {
+        self.java_outer_classname.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_java_outer_classname(&mut self) { self.java_outer_classname = None; }
+
+    pub fn has_java_outer_classname(&self) -> bool { self.java_outer_classname.is_some() }
+
+    pub fn set_java_outer_classname(&mut self, v: String) { self.java_outer_classname = Some(v); }
+
+    pub fn java_outer_classname_mut(&mut self) -> &mut String {
+        self.java_outer_classname.get_or_insert_with(Default::default)
+    }
+
+    pub fn java_multiple_files(&self) -> bool {
+        self.java_multiple_files.unwrap_or_default()
+    }
+
+    pub fn clear_java_multiple_files(&mut self) { self.java_multiple_files = None; }
+
+    pub fn has_java_multiple_files(&self) -> bool { self.java_multiple_files.is_some() }
+
+    pub fn set_java_multiple_files(&mut self, v: bool) { self.java_multiple_files = Some(v); }
+
+    pub fn java_generate_equals_and_hash(&self) -> bool {
+        self.java_generate_equals_and_hash.unwrap_or_default()
+    }
+
+    pub fn clear_java_generate_equals_and_hash(&mut self) { self.java_generate_equals_and_hash = None; }
+
+    pub fn has_java_generate_equals_and_hash(&self) -> bool { self.java_generate_equals_and_hash.is_some() }
+
+    pub fn set_java_generate_equals_and_hash(&mut self, v: bool) { self.java_generate_equals_and_hash = Some(v); }
+
+    pub fn java_string_check_utf8(&self) -> bool {
+        self.java_string_check_utf8.unwrap_or_default()
+    }
+
+    pub fn clear_java_string_check_utf8(&mut self) { self.java_string_check_utf8 = None; }
+
+    pub fn has_java_string_check_utf8(&self) -> bool { self.java_string_check_utf8.is_some() }
+
+    pub fn set_java_string_check_utf8(&mut self, v: bool) { self.java_string_check_utf8 = Some(v); }
+
+    pub fn optimize_for(&self) -> FileOptionsNestedOptimizeMode {
+        self.optimize_for.unwrap_or_default()
+    }
+
+    pub fn clear_optimize_for(&mut self) { self.optimize_for = None; }
+
+    pub fn has_optimize_for(&self) -> bool { self.optimize_for.is_some() }
+
+    pub fn set_optimize_for(&mut self, v: FileOptionsNestedOptimizeMode) { self.optimize_for = Some(v); }
+
+    pub fn go_package(&self) -> &str {
+        self.go_package.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_go_package(&mut self) { self.go_package = None; }
+
+    pub fn has_go_package(&self) -> bool { self.go_package.is_some() }
+
+    pub fn set_go_package(&mut self, v: String) { self.go_package = Some(v); }
+
+    pub fn go_package_mut(&mut self) -> &mut String {
+        self.go_package.get_or_insert_with(Default::default)
+    }
+
+    pub fn cc_generic_services(&self) -> bool {
+        self.cc_generic_services.unwrap_or_default()
+    }
+
+    pub fn clear_cc_generic_services(&mut self) { self.cc_generic_services = None; }
+
+    pub fn has_cc_generic_services(&self) -> bool { self.cc_generic_services.is_some() }
+
+    pub fn set_cc_generic_services(&mut self, v: bool) { self.cc_generic_services = Some(v); }
+
+    pub fn java_generic_services(&self) -> bool {
+        self.java_generic_services.unwrap_or_default()
+    }
+
+    pub fn clear_java_generic_services(&mut self) { self.java_generic_services = None; }
+
+    pub fn has_java_generic_services(&self) -> bool { self.java_generic_services.is_some() }
+
+    pub fn set_java_generic_services(&mut self, v: bool) { self.java_generic_services = Some(v); }
+
+    pub fn py_generic_services(&self) -> bool {
+        self.py_generic_services.unwrap_or_default()
+    }
+
+    pub fn clear_py_generic_services(&mut self) { self.py_generic_services = None; }
+
+    pub fn has_py_generic_services(&self) -> bool { self.py_generic_services.is_some() }
+
+    pub fn set_py_generic_services(&mut self, v: bool) { self.py_generic_services = Some(v); }
+
+    pub fn php_generic_services(&self) -> bool {
+        self.php_generic_services.unwrap_or_default()
+    }
+
+    pub fn clear_php_generic_services(&mut self) { self.php_generic_services = None; }
+
+    pub fn has_php_generic_services(&self) -> bool { self.php_generic_services.is_some() }
+
+    pub fn set_php_generic_services(&mut self, v: bool) { self.php_generic_services = Some(v); }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn cc_enable_arenas(&self) -> bool {
+        self.cc_enable_arenas.unwrap_or_default()
+    }
+
+    pub fn clear_cc_enable_arenas(&mut self) { self.cc_enable_arenas = None; }
+
+    pub fn has_cc_enable_arenas(&self) -> bool { self.cc_enable_arenas.is_some() }
+
+    pub fn set_cc_enable_arenas(&mut self, v: bool) { self.cc_enable_arenas = Some(v); }
+
+    pub fn objc_class_prefix(&self) -> &str {
+        self.objc_class_prefix.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_objc_class_prefix(&mut self) { self.objc_class_prefix = None; }
+
+    pub fn has_objc_class_prefix(&self) -> bool { self.objc_class_prefix.is_some() }
+
+    pub fn set_objc_class_prefix(&mut self, v: String) { self.objc_class_prefix = Some(v); }
+
+    pub fn objc_class_prefix_mut(&mut self) -> &mut String {
+        self.objc_class_prefix.get_or_insert_with(Default::default)
+    }
+
+    pub fn csharp_namespace(&self) -> &str {
+        self.csharp_namespace.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_csharp_namespace(&mut self) { self.csharp_namespace = None; }
+
+    pub fn has_csharp_namespace(&self) -> bool { self.csharp_namespace.is_some() }
+
+    pub fn set_csharp_namespace(&mut self, v: String) { self.csharp_namespace = Some(v); }
+
+    pub fn csharp_namespace_mut(&mut self) -> &mut String {
+        self.csharp_namespace.get_or_insert_with(Default::default)
+    }
+
+    pub fn swift_prefix(&self) -> &str {
+        self.swift_prefix.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_swift_prefix(&mut self) { self.swift_prefix = None; }
+
+    pub fn has_swift_prefix(&self) -> bool { self.swift_prefix.is_some() }
+
+    pub fn set_swift_prefix(&mut self, v: String) { self.swift_prefix = Some(v); }
+
+    pub fn swift_prefix_mut(&mut self) -> &mut String {
+        self.swift_prefix.get_or_insert_with(Default::default)
+    }
+
+    pub fn php_class_prefix(&self) -> &str {
+        self.php_class_prefix.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_php_class_prefix(&mut self) { self.php_class_prefix = None; }
+
+    pub fn has_php_class_prefix(&self) -> bool { self.php_class_prefix.is_some() }
+
+    pub fn set_php_class_prefix(&mut self, v: String) { self.php_class_prefix = Some(v); }
+
+    pub fn php_class_prefix_mut(&mut self) -> &mut String {
+        self.php_class_prefix.get_or_insert_with(Default::default)
+    }
+
+    pub fn php_namespace(&self) -> &str {
+        self.php_namespace.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_php_namespace(&mut self) { self.php_namespace = None; }
+
+    pub fn has_php_namespace(&self) -> bool { self.php_namespace.is_some() }
+
+    pub fn set_php_namespace(&mut self, v: String) { self.php_namespace = Some(v); }
+
+    pub fn php_namespace_mut(&mut self) -> &mut String {
+        self.php_namespace.get_or_insert_with(Default::default)
+    }
+
+    pub fn php_metadata_namespace(&self) -> &str {
+        self.php_metadata_namespace.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_php_metadata_namespace(&mut self) { self.php_metadata_namespace = None; }
+
+    pub fn has_php_metadata_namespace(&self) -> bool { self.php_metadata_namespace.is_some() }
+
+    pub fn set_php_metadata_namespace(&mut self, v: String) { self.php_metadata_namespace = Some(v); }
+
+    pub fn php_metadata_namespace_mut(&mut self) -> &mut String {
+        self.php_metadata_namespace.get_or_insert_with(Default::default)
+    }
+
+    pub fn ruby_package(&self) -> &str {
+        self.ruby_package.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_ruby_package(&mut self) { self.ruby_package = None; }
+
+    pub fn has_ruby_package(&self) -> bool { self.ruby_package.is_some() }
+
+    pub fn set_ruby_package(&mut self, v: String) { self.ruby_package = Some(v); }
+
+    pub fn ruby_package_mut(&mut self) -> &mut String {
+        self.ruby_package.get_or_insert_with(Default::default)
+    }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MessageOptions {
-    pub message_set_wire_format: bool,
-    pub no_standard_descriptor_accessor: bool,
-    pub deprecated: bool,
-    pub map_entry: bool,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    message_set_wire_format: Option<bool>,
+    no_standard_descriptor_accessor: Option<bool>,
+    deprecated: Option<bool>,
+    map_entry: Option<bool>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for MessageOptions {
@@ -1480,10 +2690,10 @@ impl Message for MessageOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.message_set_wire_format = s.read_bool()?,
-                16 => self.no_standard_descriptor_accessor = s.read_bool()?,
-                24 => self.deprecated = s.read_bool()?,
-                56 => self.map_entry = s.read_bool()?,
+                8 => self.message_set_wire_format = Some(s.read_bool()?),
+                16 => self.no_standard_descriptor_accessor = Some(s.read_bool()?),
+                24 => self.deprecated = Some(s.read_bool()?),
+                56 => self.map_entry = Some(s.read_bool()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1492,21 +2702,21 @@ impl Message for MessageOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.message_set_wire_format {
+        if let Some(v) = self.message_set_wire_format {
             s.write_raw_1_byte([8])?;
-            s.write_bool(self.message_set_wire_format)?;
+            s.write_bool(v)?;
         }
-        if self.no_standard_descriptor_accessor {
+        if let Some(v) = self.no_standard_descriptor_accessor {
             s.write_raw_1_byte([16])?;
-            s.write_bool(self.no_standard_descriptor_accessor)?;
+            s.write_bool(v)?;
         }
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_1_byte([24])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
-        if self.map_entry {
+        if let Some(v) = self.map_entry {
             s.write_raw_1_byte([56])?;
-            s.write_bool(self.map_entry)?;
+            s.write_bool(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1522,16 +2732,16 @@ impl Message for MessageOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.message_set_wire_format {
+        if self.message_set_wire_format.is_some() {
             n += 2;
         }
-        if self.no_standard_descriptor_accessor {
+        if self.no_standard_descriptor_accessor.is_some() {
             n += 2;
         }
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 2;
         }
-        if self.map_entry {
+        if self.map_entry.is_some() {
             n += 2;
         }
         if !self.uninterpreted_option.is_empty() {
@@ -1541,17 +2751,84 @@ impl Message for MessageOptions {
     }
 }
 
+impl MessageOptions {
+    pub const fn new() -> MessageOptions {
+        MessageOptions {
+            message_set_wire_format: None,
+            no_standard_descriptor_accessor: None,
+            deprecated: None,
+            map_entry: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static MessageOptions {
+        static DEFAULT: MessageOptions = MessageOptions::new();
+        &DEFAULT
+    }
+
+    pub fn message_set_wire_format(&self) -> bool {
+        self.message_set_wire_format.unwrap_or_default()
+    }
+
+    pub fn clear_message_set_wire_format(&mut self) { self.message_set_wire_format = None; }
+
+    pub fn has_message_set_wire_format(&self) -> bool { self.message_set_wire_format.is_some() }
+
+    pub fn set_message_set_wire_format(&mut self, v: bool) { self.message_set_wire_format = Some(v); }
+
+    pub fn no_standard_descriptor_accessor(&self) -> bool {
+        self.no_standard_descriptor_accessor.unwrap_or_default()
+    }
+
+    pub fn clear_no_standard_descriptor_accessor(&mut self) { self.no_standard_descriptor_accessor = None; }
+
+    pub fn has_no_standard_descriptor_accessor(&self) -> bool { self.no_standard_descriptor_accessor.is_some() }
+
+    pub fn set_no_standard_descriptor_accessor(&mut self, v: bool) { self.no_standard_descriptor_accessor = Some(v); }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn map_entry(&self) -> bool {
+        self.map_entry.unwrap_or_default()
+    }
+
+    pub fn clear_map_entry(&mut self) { self.map_entry = None; }
+
+    pub fn has_map_entry(&self) -> bool { self.map_entry.is_some() }
+
+    pub fn set_map_entry(&mut self, v: bool) { self.map_entry = Some(v); }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FieldOptions {
-    pub ctype: FieldOptionsNestedCType,
-    pub packed: bool,
-    pub jstype: FieldOptionsNestedJsType,
-    pub lazy: bool,
-    pub deprecated: bool,
-    pub weak: bool,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    ctype: Option<FieldOptionsNestedCType>,
+    packed: Option<bool>,
+    jstype: Option<FieldOptionsNestedJsType>,
+    lazy: Option<bool>,
+    deprecated: Option<bool>,
+    weak: Option<bool>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for FieldOptions {
@@ -1559,12 +2836,12 @@ impl Message for FieldOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.ctype = s.read_enum()?,
-                16 => self.packed = s.read_bool()?,
-                48 => self.jstype = s.read_enum()?,
-                40 => self.lazy = s.read_bool()?,
-                24 => self.deprecated = s.read_bool()?,
-                80 => self.weak = s.read_bool()?,
+                8 => self.ctype = Some(s.read_enum()?),
+                16 => self.packed = Some(s.read_bool()?),
+                48 => self.jstype = Some(s.read_enum()?),
+                40 => self.lazy = Some(s.read_bool()?),
+                24 => self.deprecated = Some(s.read_bool()?),
+                80 => self.weak = Some(s.read_bool()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1573,29 +2850,29 @@ impl Message for FieldOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.ctype.value() != 0 {
+        if let Some(v) = self.ctype {
             s.write_raw_1_byte([8])?;
-            s.write_enum(self.ctype)?;
+            s.write_enum(v)?;
         }
-        if self.packed {
+        if let Some(v) = self.packed {
             s.write_raw_1_byte([16])?;
-            s.write_bool(self.packed)?;
+            s.write_bool(v)?;
         }
-        if self.jstype.value() != 0 {
+        if let Some(v) = self.jstype {
             s.write_raw_1_byte([48])?;
-            s.write_enum(self.jstype)?;
+            s.write_enum(v)?;
         }
-        if self.lazy {
+        if let Some(v) = self.lazy {
             s.write_raw_1_byte([40])?;
-            s.write_bool(self.lazy)?;
+            s.write_bool(v)?;
         }
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_1_byte([24])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
-        if self.weak {
+        if let Some(v) = self.weak {
             s.write_raw_1_byte([80])?;
-            s.write_bool(self.weak)?;
+            s.write_bool(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1611,22 +2888,22 @@ impl Message for FieldOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.ctype.value() != 0 {
-            n += 1 + encoded::enum_len(self.ctype);
+        if let Some(v) = self.ctype {
+            n += 1 + encoded::enum_len(v);
         }
-        if self.packed {
+        if self.packed.is_some() {
             n += 2;
         }
-        if self.jstype.value() != 0 {
-            n += 1 + encoded::enum_len(self.jstype);
+        if let Some(v) = self.jstype {
+            n += 1 + encoded::enum_len(v);
         }
-        if self.lazy {
+        if self.lazy.is_some() {
             n += 2;
         }
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 2;
         }
-        if self.weak {
+        if self.weak.is_some() {
             n += 2;
         }
         if !self.uninterpreted_option.is_empty() {
@@ -1636,11 +2913,100 @@ impl Message for FieldOptions {
     }
 }
 
+impl FieldOptions {
+    pub const fn new() -> FieldOptions {
+        FieldOptions {
+            ctype: None,
+            packed: None,
+            jstype: None,
+            lazy: None,
+            deprecated: None,
+            weak: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static FieldOptions {
+        static DEFAULT: FieldOptions = FieldOptions::new();
+        &DEFAULT
+    }
+
+    pub fn ctype(&self) -> FieldOptionsNestedCType {
+        self.ctype.unwrap_or_default()
+    }
+
+    pub fn clear_ctype(&mut self) { self.ctype = None; }
+
+    pub fn has_ctype(&self) -> bool { self.ctype.is_some() }
+
+    pub fn set_ctype(&mut self, v: FieldOptionsNestedCType) { self.ctype = Some(v); }
+
+    pub fn packed(&self) -> bool {
+        self.packed.unwrap_or_default()
+    }
+
+    pub fn clear_packed(&mut self) { self.packed = None; }
+
+    pub fn has_packed(&self) -> bool { self.packed.is_some() }
+
+    pub fn set_packed(&mut self, v: bool) { self.packed = Some(v); }
+
+    pub fn jstype(&self) -> FieldOptionsNestedJsType {
+        self.jstype.unwrap_or_default()
+    }
+
+    pub fn clear_jstype(&mut self) { self.jstype = None; }
+
+    pub fn has_jstype(&self) -> bool { self.jstype.is_some() }
+
+    pub fn set_jstype(&mut self, v: FieldOptionsNestedJsType) { self.jstype = Some(v); }
+
+    pub fn lazy(&self) -> bool {
+        self.lazy.unwrap_or_default()
+    }
+
+    pub fn clear_lazy(&mut self) { self.lazy = None; }
+
+    pub fn has_lazy(&self) -> bool { self.lazy.is_some() }
+
+    pub fn set_lazy(&mut self, v: bool) { self.lazy = Some(v); }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn weak(&self) -> bool {
+        self.weak.unwrap_or_default()
+    }
+
+    pub fn clear_weak(&mut self) { self.weak = None; }
+
+    pub fn has_weak(&self) -> bool { self.weak.is_some() }
+
+    pub fn set_weak(&mut self, v: bool) { self.weak = Some(v); }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct OneofOptions {
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for OneofOptions {
@@ -1677,13 +3043,36 @@ impl Message for OneofOptions {
     }
 }
 
+impl OneofOptions {
+    pub const fn new() -> OneofOptions {
+        OneofOptions {
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static OneofOptions {
+        static DEFAULT: OneofOptions = OneofOptions::new();
+        &DEFAULT
+    }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumOptions {
-    pub allow_alias: bool,
-    pub deprecated: bool,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    allow_alias: Option<bool>,
+    deprecated: Option<bool>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for EnumOptions {
@@ -1691,8 +3080,8 @@ impl Message for EnumOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                16 => self.allow_alias = s.read_bool()?,
-                24 => self.deprecated = s.read_bool()?,
+                16 => self.allow_alias = Some(s.read_bool()?),
+                24 => self.deprecated = Some(s.read_bool()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1701,13 +3090,13 @@ impl Message for EnumOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.allow_alias {
+        if let Some(v) = self.allow_alias {
             s.write_raw_1_byte([16])?;
-            s.write_bool(self.allow_alias)?;
+            s.write_bool(v)?;
         }
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_1_byte([24])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1723,10 +3112,10 @@ impl Message for EnumOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.allow_alias {
+        if self.allow_alias.is_some() {
             n += 2;
         }
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 2;
         }
         if !self.uninterpreted_option.is_empty() {
@@ -1736,12 +3125,57 @@ impl Message for EnumOptions {
     }
 }
 
+impl EnumOptions {
+    pub const fn new() -> EnumOptions {
+        EnumOptions {
+            allow_alias: None,
+            deprecated: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static EnumOptions {
+        static DEFAULT: EnumOptions = EnumOptions::new();
+        &DEFAULT
+    }
+
+    pub fn allow_alias(&self) -> bool {
+        self.allow_alias.unwrap_or_default()
+    }
+
+    pub fn clear_allow_alias(&mut self) { self.allow_alias = None; }
+
+    pub fn has_allow_alias(&self) -> bool { self.allow_alias.is_some() }
+
+    pub fn set_allow_alias(&mut self, v: bool) { self.allow_alias = Some(v); }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct EnumValueOptions {
-    pub deprecated: bool,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    deprecated: Option<bool>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for EnumValueOptions {
@@ -1749,7 +3183,7 @@ impl Message for EnumValueOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                8 => self.deprecated = s.read_bool()?,
+                8 => self.deprecated = Some(s.read_bool()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1758,9 +3192,9 @@ impl Message for EnumValueOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_1_byte([8])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1776,7 +3210,7 @@ impl Message for EnumValueOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 2;
         }
         if !self.uninterpreted_option.is_empty() {
@@ -1786,12 +3220,46 @@ impl Message for EnumValueOptions {
     }
 }
 
+impl EnumValueOptions {
+    pub const fn new() -> EnumValueOptions {
+        EnumValueOptions {
+            deprecated: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static EnumValueOptions {
+        static DEFAULT: EnumValueOptions = EnumValueOptions::new();
+        &DEFAULT
+    }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ServiceOptions {
-    pub deprecated: bool,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    deprecated: Option<bool>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for ServiceOptions {
@@ -1799,7 +3267,7 @@ impl Message for ServiceOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                264 => self.deprecated = s.read_bool()?,
+                264 => self.deprecated = Some(s.read_bool()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1808,9 +3276,9 @@ impl Message for ServiceOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_2_byte([136, 2])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1826,7 +3294,7 @@ impl Message for ServiceOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 3;
         }
         if !self.uninterpreted_option.is_empty() {
@@ -1836,13 +3304,47 @@ impl Message for ServiceOptions {
     }
 }
 
+impl ServiceOptions {
+    pub const fn new() -> ServiceOptions {
+        ServiceOptions {
+            deprecated: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static ServiceOptions {
+        static DEFAULT: ServiceOptions = ServiceOptions::new();
+        &DEFAULT
+    }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MethodOptions {
-    pub deprecated: bool,
-    pub idempotency_level: MethodOptionsNestedIdempotencyLevel,
-    pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    deprecated: Option<bool>,
+    idempotency_level: Option<MethodOptionsNestedIdempotencyLevel>,
+    uninterpreted_option: Vec<UninterpretedOption>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for MethodOptions {
@@ -1850,8 +3352,8 @@ impl Message for MethodOptions {
         loop {
             let tag = s.read_tag()?;
             match tag {
-                264 => self.deprecated = s.read_bool()?,
-                272 => self.idempotency_level = s.read_enum()?,
+                264 => self.deprecated = Some(s.read_bool()?),
+                272 => self.idempotency_level = Some(s.read_enum()?),
                 7994 => s.read_message_to(&mut self.uninterpreted_option)?,
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -1860,13 +3362,13 @@ impl Message for MethodOptions {
     }
 
     fn write_to(&self, s: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
-        if self.deprecated {
+        if let Some(v) = self.deprecated {
             s.write_raw_2_byte([136, 2])?;
-            s.write_bool(self.deprecated)?;
+            s.write_bool(v)?;
         }
-        if self.idempotency_level.value() != 0 {
+        if let Some(v) = self.idempotency_level {
             s.write_raw_2_byte([144, 2])?;
-            s.write_enum(self.idempotency_level)?;
+            s.write_enum(v)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for v in &self.uninterpreted_option {
@@ -1882,11 +3384,11 @@ impl Message for MethodOptions {
 
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
-        if self.deprecated {
+        if self.deprecated.is_some() {
             n += 3;
         }
-        if self.idempotency_level.value() != 0 {
-            n += 2 + encoded::enum_len(self.idempotency_level);
+        if let Some(v) = self.idempotency_level {
+            n += 2 + encoded::enum_len(v);
         }
         if !self.uninterpreted_option.is_empty() {
             n += encoded::arr_message_len(2, &self.uninterpreted_option);
@@ -1895,17 +3397,62 @@ impl Message for MethodOptions {
     }
 }
 
+impl MethodOptions {
+    pub const fn new() -> MethodOptions {
+        MethodOptions {
+            deprecated: None,
+            idempotency_level: None,
+            uninterpreted_option: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static MethodOptions {
+        static DEFAULT: MethodOptions = MethodOptions::new();
+        &DEFAULT
+    }
+
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+
+    pub fn clear_deprecated(&mut self) { self.deprecated = None; }
+
+    pub fn has_deprecated(&self) -> bool { self.deprecated.is_some() }
+
+    pub fn set_deprecated(&mut self, v: bool) { self.deprecated = Some(v); }
+
+    pub fn idempotency_level(&self) -> MethodOptionsNestedIdempotencyLevel {
+        self.idempotency_level.unwrap_or_default()
+    }
+
+    pub fn clear_idempotency_level(&mut self) { self.idempotency_level = None; }
+
+    pub fn has_idempotency_level(&self) -> bool { self.idempotency_level.is_some() }
+
+    pub fn set_idempotency_level(&mut self, v: MethodOptionsNestedIdempotencyLevel) { self.idempotency_level = Some(v); }
+
+    pub fn uninterpreted_option(&self) -> &[UninterpretedOption] { &self.uninterpreted_option }
+
+    pub fn clear_uninterpreted_option(&mut self) { self.uninterpreted_option.clear(); }
+
+    pub fn set_uninterpreted_option(&mut self, v: impl Into<Vec<UninterpretedOption>>) { self.uninterpreted_option = v.into(); }
+
+    pub fn uninterpreted_option_mut(&mut self) -> &mut Vec<UninterpretedOption> { &mut self.uninterpreted_option }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct UninterpretedOption {
-    pub name: Vec<UninterpretedOptionNestedNamePart>,
-    pub identifier_value: String,
-    pub positive_int_value: u64,
-    pub negative_int_value: i64,
-    pub double_value: f64,
-    pub string_value: Vec<u8>,
-    pub aggregate_value: String,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    name: Vec<UninterpretedOptionNestedNamePart>,
+    identifier_value: Option<String>,
+    positive_int_value: Option<u64>,
+    negative_int_value: Option<i64>,
+    double_value: Option<f64>,
+    string_value: Option<Vec<u8>>,
+    aggregate_value: Option<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for UninterpretedOption {
@@ -1914,12 +3461,12 @@ impl Message for UninterpretedOption {
             let tag = s.read_tag()?;
             match tag {
                 18 => s.read_message_to(&mut self.name)?,
-                26 => self.identifier_value = s.read_string()?,
-                32 => self.positive_int_value = s.read_var_u64()?,
-                40 => self.negative_int_value = s.read_var_i64()?,
-                49 => self.double_value = s.read_f64()?,
-                58 => self.string_value = s.read_bytes()?,
-                66 => self.aggregate_value = s.read_string()?,
+                26 => self.identifier_value = Some(s.read_string()?),
+                32 => self.positive_int_value = Some(s.read_var_u64()?),
+                40 => self.negative_int_value = Some(s.read_var_i64()?),
+                49 => self.double_value = Some(s.read_f64()?),
+                58 => self.string_value = Some(s.read_bytes()?),
+                66 => self.aggregate_value = Some(s.read_string()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -1933,29 +3480,29 @@ impl Message for UninterpretedOption {
                 s.write_message(v)?;
             }
         }
-        if !self.identifier_value.is_empty() {
+        if let Some(v) = &self.identifier_value {
             s.write_raw_1_byte([26])?;
-            s.write_string(&self.identifier_value)?;
+            s.write_string(v)?;
         }
-        if 0 != self.positive_int_value {
+        if let Some(v) = self.positive_int_value {
             s.write_raw_1_byte([32])?;
-            s.write_var_u64(self.positive_int_value)?;
+            s.write_var_u64(v)?;
         }
-        if 0 != self.negative_int_value {
+        if let Some(v) = self.negative_int_value {
             s.write_raw_1_byte([40])?;
-            s.write_var_i64(self.negative_int_value)?;
+            s.write_var_i64(v)?;
         }
-        if 0f64 != self.double_value {
+        if let Some(v) = self.double_value {
             s.write_raw_1_byte([49])?;
-            s.write_f64(self.double_value)?;
+            s.write_f64(v)?;
         }
-        if !self.string_value.is_empty() {
+        if let Some(v) = &self.string_value {
             s.write_raw_1_byte([58])?;
-            s.write_bytes(&self.string_value)?;
+            s.write_bytes(v)?;
         }
-        if !self.aggregate_value.is_empty() {
+        if let Some(v) = &self.aggregate_value {
             s.write_raw_1_byte([66])?;
-            s.write_string(&self.aggregate_value)?;
+            s.write_string(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -1968,25 +3515,126 @@ impl Message for UninterpretedOption {
         if !self.name.is_empty() {
             n += encoded::arr_message_len(1, &self.name);
         }
-        if !self.identifier_value.is_empty() {
-            n += 1 + encoded::string_len(&self.identifier_value);
+        if let Some(v) = &self.identifier_value {
+            n += 1 + encoded::string_len(v);
         }
-        if 0 != self.positive_int_value {
-            n += 1 + encoded::var_u64_len(self.positive_int_value);
+        if let Some(v) = self.positive_int_value {
+            n += 1 + encoded::var_u64_len(v);
         }
-        if 0 != self.negative_int_value {
-            n += 1 + encoded::var_i64_len(self.negative_int_value);
+        if let Some(v) = self.negative_int_value {
+            n += 1 + encoded::var_i64_len(v);
         }
-        if 0f64 != self.double_value {
+        if self.double_value.is_some() {
             n += 9;
         }
-        if !self.string_value.is_empty() {
-            n += 1 + encoded::bytes_len(&self.string_value);
+        if let Some(v) = &self.string_value {
+            n += 1 + encoded::bytes_len(v);
         }
-        if !self.aggregate_value.is_empty() {
-            n += 1 + encoded::string_len(&self.aggregate_value);
+        if let Some(v) = &self.aggregate_value {
+            n += 1 + encoded::string_len(v);
         }
         n
+    }
+}
+
+impl UninterpretedOption {
+    pub const fn new() -> UninterpretedOption {
+        UninterpretedOption {
+            name: Vec::new(),
+            identifier_value: None,
+            positive_int_value: None,
+            negative_int_value: None,
+            double_value: None,
+            string_value: None,
+            aggregate_value: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static UninterpretedOption {
+        static DEFAULT: UninterpretedOption = UninterpretedOption::new();
+        &DEFAULT
+    }
+
+    pub fn name(&self) -> &[UninterpretedOptionNestedNamePart] { &self.name }
+
+    pub fn clear_name(&mut self) { self.name.clear(); }
+
+    pub fn set_name(&mut self, v: impl Into<Vec<UninterpretedOptionNestedNamePart>>) { self.name = v.into(); }
+
+    pub fn name_mut(&mut self) -> &mut Vec<UninterpretedOptionNestedNamePart> { &mut self.name }
+
+    pub fn identifier_value(&self) -> &str {
+        self.identifier_value.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_identifier_value(&mut self) { self.identifier_value = None; }
+
+    pub fn has_identifier_value(&self) -> bool { self.identifier_value.is_some() }
+
+    pub fn set_identifier_value(&mut self, v: String) { self.identifier_value = Some(v); }
+
+    pub fn identifier_value_mut(&mut self) -> &mut String {
+        self.identifier_value.get_or_insert_with(Default::default)
+    }
+
+    pub fn positive_int_value(&self) -> u64 {
+        self.positive_int_value.unwrap_or_default()
+    }
+
+    pub fn clear_positive_int_value(&mut self) { self.positive_int_value = None; }
+
+    pub fn has_positive_int_value(&self) -> bool { self.positive_int_value.is_some() }
+
+    pub fn set_positive_int_value(&mut self, v: u64) { self.positive_int_value = Some(v); }
+
+    pub fn negative_int_value(&self) -> i64 {
+        self.negative_int_value.unwrap_or_default()
+    }
+
+    pub fn clear_negative_int_value(&mut self) { self.negative_int_value = None; }
+
+    pub fn has_negative_int_value(&self) -> bool { self.negative_int_value.is_some() }
+
+    pub fn set_negative_int_value(&mut self, v: i64) { self.negative_int_value = Some(v); }
+
+    pub fn double_value(&self) -> f64 {
+        self.double_value.unwrap_or_default()
+    }
+
+    pub fn clear_double_value(&mut self) { self.double_value = None; }
+
+    pub fn has_double_value(&self) -> bool { self.double_value.is_some() }
+
+    pub fn set_double_value(&mut self, v: f64) { self.double_value = Some(v); }
+
+    pub fn string_value(&self) -> &[u8] {
+        self.string_value.as_ref().map_or(&[], |s| s.as_slice())
+    }
+
+    pub fn clear_string_value(&mut self) { self.string_value = None; }
+
+    pub fn has_string_value(&self) -> bool { self.string_value.is_some() }
+
+    pub fn set_string_value(&mut self, v: Vec<u8>) { self.string_value = Some(v); }
+
+    pub fn string_value_mut(&mut self) -> &mut Vec<u8> {
+        self.string_value.get_or_insert_with(Default::default)
+    }
+
+    pub fn aggregate_value(&self) -> &str {
+        self.aggregate_value.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_aggregate_value(&mut self) { self.aggregate_value = None; }
+
+    pub fn has_aggregate_value(&self) -> bool { self.aggregate_value.is_some() }
+
+    pub fn set_aggregate_value(&mut self, v: String) { self.aggregate_value = Some(v); }
+
+    pub fn aggregate_value_mut(&mut self) -> &mut String {
+        self.aggregate_value.get_or_insert_with(Default::default)
     }
 }
 
@@ -1994,8 +3642,8 @@ impl Message for UninterpretedOption {
 pub struct UninterpretedOptionNestedNamePart {
     pub name_part: String,
     pub is_extension: bool,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for UninterpretedOptionNestedNamePart {
@@ -2038,11 +3686,41 @@ impl Message for UninterpretedOptionNestedNamePart {
     }
 }
 
+impl UninterpretedOptionNestedNamePart {
+    pub const fn new() -> UninterpretedOptionNestedNamePart {
+        UninterpretedOptionNestedNamePart {
+            name_part: String::new(),
+            is_extension: false,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static UninterpretedOptionNestedNamePart {
+        static DEFAULT: UninterpretedOptionNestedNamePart = UninterpretedOptionNestedNamePart::new();
+        &DEFAULT
+    }
+
+    pub fn name_part(&self) -> &str { &self.name_part }
+
+    pub fn clear_name_part(&mut self) { self.name_part = Default::default(); }
+
+    pub fn set_name_part(&mut self, v: String) { self.name_part = v; }
+
+    pub fn name_part_mut(&mut self) -> &mut String { &mut self.name_part }
+
+    pub fn is_extension(&self) -> bool { self.is_extension }
+
+    pub fn clear_is_extension(&mut self) { self.is_extension = false; }
+
+    pub fn set_is_extension(&mut self, v: bool) { self.is_extension = v; }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SourceCodeInfo {
-    pub location: Vec<SourceCodeInfoNestedLocation>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    location: Vec<SourceCodeInfoNestedLocation>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for SourceCodeInfo {
@@ -2079,15 +3757,38 @@ impl Message for SourceCodeInfo {
     }
 }
 
+impl SourceCodeInfo {
+    pub const fn new() -> SourceCodeInfo {
+        SourceCodeInfo {
+            location: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static SourceCodeInfo {
+        static DEFAULT: SourceCodeInfo = SourceCodeInfo::new();
+        &DEFAULT
+    }
+
+    pub fn location(&self) -> &[SourceCodeInfoNestedLocation] { &self.location }
+
+    pub fn clear_location(&mut self) { self.location.clear(); }
+
+    pub fn set_location(&mut self, v: impl Into<Vec<SourceCodeInfoNestedLocation>>) { self.location = v.into(); }
+
+    pub fn location_mut(&mut self) -> &mut Vec<SourceCodeInfoNestedLocation> { &mut self.location }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SourceCodeInfoNestedLocation {
-    pub path: Vec<i32>,
-    pub span: Vec<i32>,
-    pub leading_comments: String,
-    pub trailing_comments: String,
-    pub leading_detached_comments: Vec<String>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    path: Vec<i32>,
+    span: Vec<i32>,
+    leading_comments: Option<String>,
+    trailing_comments: Option<String>,
+    leading_detached_comments: Vec<String>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for SourceCodeInfoNestedLocation {
@@ -2099,8 +3800,8 @@ impl Message for SourceCodeInfoNestedLocation {
                 10 => s.read_var_i32_array(&mut self.path)?,
                 16 => self.span.push(s.read_var_i32()?),
                 18 => s.read_var_i32_array(&mut self.span)?,
-                26 => self.leading_comments = s.read_string()?,
-                34 => self.trailing_comments = s.read_string()?,
+                26 => self.leading_comments = Some(s.read_string()?),
+                34 => self.trailing_comments = Some(s.read_string()?),
                 50 => self.leading_detached_comments.push(s.read_string()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
@@ -2117,13 +3818,13 @@ impl Message for SourceCodeInfoNestedLocation {
             s.write_raw_1_byte([18])?;
             s.write_var_i32_array(&self.span)?;
         }
-        if !self.leading_comments.is_empty() {
+        if let Some(v) = &self.leading_comments {
             s.write_raw_1_byte([26])?;
-            s.write_string(&self.leading_comments)?;
+            s.write_string(v)?;
         }
-        if !self.trailing_comments.is_empty() {
+        if let Some(v) = &self.trailing_comments {
             s.write_raw_1_byte([34])?;
-            s.write_string(&self.trailing_comments)?;
+            s.write_string(v)?;
         }
         if !self.leading_detached_comments.is_empty() {
             for v in &self.leading_detached_comments {
@@ -2145,11 +3846,11 @@ impl Message for SourceCodeInfoNestedLocation {
         if !self.span.is_empty() {
             n += 1 + encoded::arr_var_i32_len(&self.span);
         }
-        if !self.leading_comments.is_empty() {
-            n += 1 + encoded::string_len(&self.leading_comments);
+        if let Some(v) = &self.leading_comments {
+            n += 1 + encoded::string_len(v);
         }
-        if !self.trailing_comments.is_empty() {
-            n += 1 + encoded::string_len(&self.trailing_comments);
+        if let Some(v) = &self.trailing_comments {
+            n += 1 + encoded::string_len(v);
         }
         if !self.leading_detached_comments.is_empty() {
             n += encoded::arr_string_len(1, &self.leading_detached_comments);
@@ -2158,11 +3859,82 @@ impl Message for SourceCodeInfoNestedLocation {
     }
 }
 
+impl SourceCodeInfoNestedLocation {
+    pub const fn new() -> SourceCodeInfoNestedLocation {
+        SourceCodeInfoNestedLocation {
+            path: Vec::new(),
+            span: Vec::new(),
+            leading_comments: None,
+            trailing_comments: None,
+            leading_detached_comments: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static SourceCodeInfoNestedLocation {
+        static DEFAULT: SourceCodeInfoNestedLocation = SourceCodeInfoNestedLocation::new();
+        &DEFAULT
+    }
+
+    pub fn path(&self) -> &[i32] { &self.path }
+
+    pub fn clear_path(&mut self) { self.path.clear(); }
+
+    pub fn set_path(&mut self, v: impl Into<Vec<i32>>) { self.path = v.into(); }
+
+    pub fn path_mut(&mut self) -> &mut Vec<i32> { &mut self.path }
+
+    pub fn span(&self) -> &[i32] { &self.span }
+
+    pub fn clear_span(&mut self) { self.span.clear(); }
+
+    pub fn set_span(&mut self, v: impl Into<Vec<i32>>) { self.span = v.into(); }
+
+    pub fn span_mut(&mut self) -> &mut Vec<i32> { &mut self.span }
+
+    pub fn leading_comments(&self) -> &str {
+        self.leading_comments.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_leading_comments(&mut self) { self.leading_comments = None; }
+
+    pub fn has_leading_comments(&self) -> bool { self.leading_comments.is_some() }
+
+    pub fn set_leading_comments(&mut self, v: String) { self.leading_comments = Some(v); }
+
+    pub fn leading_comments_mut(&mut self) -> &mut String {
+        self.leading_comments.get_or_insert_with(Default::default)
+    }
+
+    pub fn trailing_comments(&self) -> &str {
+        self.trailing_comments.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_trailing_comments(&mut self) { self.trailing_comments = None; }
+
+    pub fn has_trailing_comments(&self) -> bool { self.trailing_comments.is_some() }
+
+    pub fn set_trailing_comments(&mut self, v: String) { self.trailing_comments = Some(v); }
+
+    pub fn trailing_comments_mut(&mut self) -> &mut String {
+        self.trailing_comments.get_or_insert_with(Default::default)
+    }
+
+    pub fn leading_detached_comments(&self) -> &[String] { &self.leading_detached_comments }
+
+    pub fn clear_leading_detached_comments(&mut self) { self.leading_detached_comments.clear(); }
+
+    pub fn set_leading_detached_comments(&mut self, v: impl Into<Vec<String>>) { self.leading_detached_comments = v.into(); }
+
+    pub fn leading_detached_comments_mut(&mut self) -> &mut Vec<String> { &mut self.leading_detached_comments }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct GeneratedCodeInfo {
-    pub annotation: Vec<GeneratedCodeInfoNestedAnnotation>,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    annotation: Vec<GeneratedCodeInfoNestedAnnotation>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for GeneratedCodeInfo {
@@ -2199,14 +3971,37 @@ impl Message for GeneratedCodeInfo {
     }
 }
 
+impl GeneratedCodeInfo {
+    pub const fn new() -> GeneratedCodeInfo {
+        GeneratedCodeInfo {
+            annotation: Vec::new(),
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static GeneratedCodeInfo {
+        static DEFAULT: GeneratedCodeInfo = GeneratedCodeInfo::new();
+        &DEFAULT
+    }
+
+    pub fn annotation(&self) -> &[GeneratedCodeInfoNestedAnnotation] { &self.annotation }
+
+    pub fn clear_annotation(&mut self) { self.annotation.clear(); }
+
+    pub fn set_annotation(&mut self, v: impl Into<Vec<GeneratedCodeInfoNestedAnnotation>>) { self.annotation = v.into(); }
+
+    pub fn annotation_mut(&mut self) -> &mut Vec<GeneratedCodeInfoNestedAnnotation> { &mut self.annotation }
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct GeneratedCodeInfoNestedAnnotation {
-    pub path: Vec<i32>,
-    pub source_file: String,
-    pub begin: i32,
-    pub end: i32,
-    pub cache_size: CacheSize,
-    pub unknown: Vec<u8>,
+    path: Vec<i32>,
+    source_file: Option<String>,
+    begin: Option<i32>,
+    end: Option<i32>,
+    cache_size: u32,
+    unknown: Vec<u8>,
 }
 
 impl Message for GeneratedCodeInfoNestedAnnotation {
@@ -2216,9 +4011,9 @@ impl Message for GeneratedCodeInfoNestedAnnotation {
             match tag {
                 8 => self.path.push(s.read_var_i32()?),
                 10 => s.read_var_i32_array(&mut self.path)?,
-                18 => self.source_file = s.read_string()?,
-                24 => self.begin = s.read_var_i32()?,
-                32 => self.end = s.read_var_i32()?,
+                18 => self.source_file = Some(s.read_string()?),
+                24 => self.begin = Some(s.read_var_i32()?),
+                32 => self.end = Some(s.read_var_i32()?),
                 0 => return Ok(()),
                 _ => s.skip_field(&mut self.unknown, tag)?,
             }
@@ -2230,17 +4025,17 @@ impl Message for GeneratedCodeInfoNestedAnnotation {
             s.write_raw_1_byte([10])?;
             s.write_var_i32_array(&self.path)?;
         }
-        if !self.source_file.is_empty() {
+        if let Some(v) = &self.source_file {
             s.write_raw_1_byte([18])?;
-            s.write_string(&self.source_file)?;
+            s.write_string(v)?;
         }
-        if 0 != self.begin {
+        if let Some(v) = self.begin {
             s.write_raw_1_byte([24])?;
-            s.write_var_i32(self.begin)?;
+            s.write_var_i32(v)?;
         }
-        if 0 != self.end {
+        if let Some(v) = self.end {
             s.write_raw_1_byte([32])?;
-            s.write_var_i32(self.end)?;
+            s.write_var_i32(v)?;
         }
         if !self.unknown.is_empty() {
             s.write_unknown(&self.unknown)?;
@@ -2253,15 +4048,75 @@ impl Message for GeneratedCodeInfoNestedAnnotation {
         if !self.path.is_empty() {
             n += 1 + encoded::arr_var_i32_len(&self.path);
         }
-        if !self.source_file.is_empty() {
-            n += 1 + encoded::string_len(&self.source_file);
+        if let Some(v) = &self.source_file {
+            n += 1 + encoded::string_len(v);
         }
-        if 0 != self.begin {
-            n += 1 + encoded::var_i32_len(self.begin);
+        if let Some(v) = self.begin {
+            n += 1 + encoded::var_i32_len(v);
         }
-        if 0 != self.end {
-            n += 1 + encoded::var_i32_len(self.end);
+        if let Some(v) = self.end {
+            n += 1 + encoded::var_i32_len(v);
         }
         n
     }
+}
+
+impl GeneratedCodeInfoNestedAnnotation {
+    pub const fn new() -> GeneratedCodeInfoNestedAnnotation {
+        GeneratedCodeInfoNestedAnnotation {
+            path: Vec::new(),
+            source_file: None,
+            begin: None,
+            end: None,
+            cache_size: 0,
+            unknown: Vec::new(),
+        }
+    }
+
+    pub fn default_instance() -> &'static GeneratedCodeInfoNestedAnnotation {
+        static DEFAULT: GeneratedCodeInfoNestedAnnotation = GeneratedCodeInfoNestedAnnotation::new();
+        &DEFAULT
+    }
+
+    pub fn path(&self) -> &[i32] { &self.path }
+
+    pub fn clear_path(&mut self) { self.path.clear(); }
+
+    pub fn set_path(&mut self, v: impl Into<Vec<i32>>) { self.path = v.into(); }
+
+    pub fn path_mut(&mut self) -> &mut Vec<i32> { &mut self.path }
+
+    pub fn source_file(&self) -> &str {
+        self.source_file.as_ref().map_or("", |s| s.as_str())
+    }
+
+    pub fn clear_source_file(&mut self) { self.source_file = None; }
+
+    pub fn has_source_file(&self) -> bool { self.source_file.is_some() }
+
+    pub fn set_source_file(&mut self, v: String) { self.source_file = Some(v); }
+
+    pub fn source_file_mut(&mut self) -> &mut String {
+        self.source_file.get_or_insert_with(Default::default)
+    }
+
+    pub fn begin(&self) -> i32 {
+        self.begin.unwrap_or_default()
+    }
+
+    pub fn clear_begin(&mut self) { self.begin = None; }
+
+    pub fn has_begin(&self) -> bool { self.begin.is_some() }
+
+    pub fn set_begin(&mut self, v: i32) { self.begin = Some(v); }
+
+    pub fn end(&self) -> i32 {
+        self.end.unwrap_or_default()
+    }
+
+    pub fn clear_end(&mut self) { self.end = None; }
+
+    pub fn has_end(&self) -> bool { self.end.is_some() }
+
+    pub fn set_end(&mut self, v: i32) { self.end = Some(v); }
 }

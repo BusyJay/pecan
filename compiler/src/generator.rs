@@ -19,6 +19,16 @@ struct FieldDecl<'a> {
     proto: &'a FieldDescriptorProto,
 }
 
+impl FieldDecl<'_> {
+    fn strip_field_name(&self) -> &str {
+        if !self.field_name.starts_with("r#") {
+            &self.field_name
+        } else {
+            &self.field_name[2..]
+        }
+    }
+}
+
 struct OneOfDecl<'a> {
     field_name: String,
     type_name: String,
@@ -28,7 +38,7 @@ struct OneOfDecl<'a> {
 
 enum FieldType<'a> {
     Optional(FieldDecl<'a>),
-    Singleur(FieldDecl<'a>),
+    Singlular(FieldDecl<'a>),
     Repeated(FieldDecl<'a>),
     Oneof(OneOfDecl<'a>),
 }
@@ -36,7 +46,7 @@ enum FieldType<'a> {
 pub struct Generator<'a> {
     printer: Printer<'a>,
     file: Id<FileDescriptor>,
-    proto2: bool,
+    proto3: bool,
     file_name: String,
 }
 
@@ -46,15 +56,15 @@ impl Generator<'_> {
         output: &'a mut Output,
         file: Id<FileDescriptor>,
     ) -> Generator<'a> {
-        let file_proto = &ctx.db.files.get(file).unwrap().proto;
-        let input_file_name = file_proto.name.clone();
+        let file_descriptor = &ctx.db.files.get(file).unwrap();
+        let input_file_name = file_descriptor.proto.name().to_owned();
         let module_name = naming::module_name(&input_file_name);
         let output_file_name = naming::file_name(&module_name);
         let printer = output.open(&output_file_name);
         Generator {
             printer,
             file,
-            proto2: file_proto.syntax == "proto2",
+            proto3: file_descriptor.proto3,
             file_name: input_file_name,
         }
     }
@@ -88,21 +98,20 @@ impl Generator<'_> {
     BufMut,
     CodedInputStream,
     CodedOutputStream,
-    CacheSize,
     encoded,
 }};\n"
         );
         let f = ctx.db.files.get(self.file).unwrap();
-        if f.proto.dependency.is_empty() {
+        if f.proto.dependency().is_empty() {
             return;
         }
 
         w!(self.printer, "\n");
-        for dependency in &f.proto.dependency {
+        for dependency in f.proto.dependency() {
             let id = *ctx.files.get(dependency).unwrap();
             let dep = &ctx.db.files.get(id).unwrap();
-            let module_name = naming::module_name(&dep.proto.name);
-            let module_alias = naming::alias_name(&dep.proto.name);
+            let module_name = naming::module_name(dep.proto.name());
+            let module_alias = naming::alias_name(dep.proto.name());
             w!(
                 self.printer,
                 "use crate::{module_name} as {module_alias};\n",
@@ -114,7 +123,7 @@ impl Generator<'_> {
 
     fn print_file_descriptor(&mut self, ctx: &Context) -> Result<()> {
         let mut proto = ctx.db.files.get(self.file).unwrap().proto.clone();
-        proto.source_code_info.take();
+        proto.clear_source_code_info();
         let bytes = proto.write_as_bytes()?;
         w!(self.printer, "\npub static DESCRIPTOR: &[u8] = &[\n");
         self.printer.indent();
@@ -138,21 +147,26 @@ impl Generator<'_> {
         let name = naming::type_name(&e.type_name);
         w!(self.printer, "pub struct {}(i32);\n\n", name);
 
-        w!(self.printer, "impl {} {{\n", name);
-        self.printer.indent();
-        for v in &e.proto.value {
-            let enum_name = naming::camel_case(&v.name);
+        w_scope!(self.printer, "impl {} {{\n", name);
+        let mut zero_value = format!("{}(0)", name);
+        for v in e.proto.value() {
+            let enum_name = naming::camel_case(v.name());
+            if v.number() == 0 {
+                zero_value = format!("{}::{}", name, enum_name);
+            }
             w!(
                 self.printer,
                 "pub const {}: {} = {}({});\n",
                 enum_name,
                 name,
                 name,
-                v.number
+                v.number()
             );
         }
-        self.printer.outdent();
-        w!(self.printer, "}}\n\n");
+        w_scope!(self.printer, "\npub const fn new() -> {} {{\n", name);
+        w!(self.printer, "{}\n", zero_value);
+        w_end_scope!(self.printer, "}}\n");
+        w_end_scope!(self.printer, "}}\n\n");
 
         w!(self.printer, "impl From<i32> for {} {{\n", name);
         self.printer.indent();
@@ -174,8 +188,8 @@ impl Generator<'_> {
         self.printer.indent();
         w!(self.printer, "&[\n");
         self.printer.indent();
-        for v in &e.proto.value {
-            let enum_name = naming::camel_case(&v.name);
+        for v in e.proto.value() {
+            let enum_name = naming::camel_case(v.name());
             w!(self.printer, "{}::{},\n", name, enum_name);
         }
         self.printer.outdent();
@@ -202,9 +216,9 @@ impl Generator<'_> {
         f: &'a FieldDescriptorProto,
     ) -> (Option<i32>, FieldType<'a>) {
         let mut desc = FieldDecl {
-            field_name: naming::field_name(&f.name),
+            field_name: naming::field_name(f.name()),
             type_name: String::new(),
-            tag1: (f.number as u32) << 3,
+            tag1: (f.number() as u32) << 3,
             tag2: 0,
             copy: true,
             default_val: "0",
@@ -212,7 +226,7 @@ impl Generator<'_> {
             proto: f,
         };
         let mut wire_type = 0;
-        match f.r#type {
+        match f.r#type() {
             FieldDescriptorProtoNestedType::TypeBool => {
                 desc.method_symbol = "bool";
                 desc.type_name = "bool".to_owned();
@@ -244,13 +258,16 @@ impl Generator<'_> {
             }
             FieldDescriptorProtoNestedType::TypeEnum => {
                 desc.method_symbol = "enum";
-                let id = ctx.enum_address.get(&f.type_name).unwrap();
+                let id = ctx.enum_address.get(f.type_name()).unwrap();
                 let e = ctx.db.enums.get(*id).unwrap();
                 desc.type_name = naming::type_name(&e.type_name);
                 if e.file != self.file {
                     let f = ctx.db.files.get(e.file).unwrap();
-                    desc.type_name =
-                        format!("{}::{}", naming::alias_name(&f.proto.name), &desc.type_name);
+                    desc.type_name = format!(
+                        "{}::{}",
+                        naming::alias_name(f.proto.name()),
+                        &desc.type_name
+                    );
                 }
                 desc.default_val = "";
             }
@@ -287,13 +304,16 @@ impl Generator<'_> {
             FieldDescriptorProtoNestedType::TypeMessage => {
                 wire_type = 2;
                 desc.method_symbol = "message";
-                let id = ctx.message_address.get(&f.type_name).unwrap();
+                let id = ctx.message_address.get(f.type_name()).unwrap();
                 let e = ctx.db.messages.get(*id).unwrap();
                 desc.type_name = naming::type_name(&e.type_name);
                 if e.file != self.file {
                     let f = ctx.db.files.get(e.file).unwrap();
-                    desc.type_name =
-                        format!("{}::{}", naming::alias_name(&f.proto.name), &desc.type_name);
+                    desc.type_name = format!(
+                        "{}::{}",
+                        naming::alias_name(f.proto.name()),
+                        &desc.type_name
+                    );
                 }
                 desc.default_val = "";
                 desc.copy = false;
@@ -318,18 +338,18 @@ impl Generator<'_> {
             _ => unimplemented!(),
         }
         desc.tag1 |= wire_type;
-        let ft = match desc.proto.label {
+        let ft = match desc.proto.label() {
             FieldDescriptorProtoNestedLabel::LabelOptional => {
-                if self.proto2 || f.r#type == FieldDescriptorProtoNestedType::TypeMessage {
+                if !self.proto3 || f.r#type() == FieldDescriptorProtoNestedType::TypeMessage {
                     FieldType::Optional(desc)
                 } else {
-                    FieldType::Singleur(desc)
+                    FieldType::Singlular(desc)
                 }
             }
-            FieldDescriptorProtoNestedLabel::LabelRequired => FieldType::Singleur(desc),
+            FieldDescriptorProtoNestedLabel::LabelRequired => FieldType::Singlular(desc),
             FieldDescriptorProtoNestedLabel::LabelRepeated => {
                 if wire_type == 0 || wire_type == 1 || wire_type == 5 {
-                    desc.tag2 = (desc.proto.number as u32) << 3 | 2;
+                    desc.tag2 = (desc.proto.number() as u32) << 3 | 2;
                 }
                 FieldType::Repeated(desc)
             }
@@ -344,22 +364,22 @@ impl Generator<'_> {
         m: &'a MessageDescriptor,
     ) -> Vec<FieldType<'a>> {
         let mut oneof_decls = vec![];
-        for oneof in &m.proto.oneof_decl {
+        for oneof in m.proto.oneof_decl() {
             let mut oneof_names = m.type_name.clone();
-            oneof_names.push(oneof.name.clone());
+            oneof_names.push(oneof.name().to_owned());
             oneof_decls.push(OneOfDecl {
-                field_name: naming::field_name(&oneof.name),
+                field_name: naming::field_name(oneof.name()),
                 type_name: naming::type_name(&oneof_names),
                 copy: true,
                 items: vec![],
             });
         }
         let mut fields = vec![];
-        for f in &m.proto.field {
+        for f in m.proto.field() {
             let (oneof_index, ft) = self.build_field(ctx, f);
             if let Some(index) = oneof_index {
                 oneof_decls[index as usize].copy &= match &ft {
-                    FieldType::Optional(d) | FieldType::Singleur(d) => d.copy,
+                    FieldType::Optional(d) | FieldType::Singlular(d) => d.copy,
                     FieldType::Oneof(_) | FieldType::Repeated(_) => unreachable!(),
                 };
                 oneof_decls[index as usize].items.push(ft);
@@ -377,12 +397,12 @@ impl Generator<'_> {
                 FieldType::Optional(desc) => {
                     w!(
                         self.printer,
-                        "pub {}: Option<{}>,\n",
+                        "{}: Option<{}>,\n",
                         desc.field_name,
                         desc.type_name
                     );
                 }
-                FieldType::Singleur(desc) => {
+                FieldType::Singlular(desc) => {
                     w!(
                         self.printer,
                         "pub {}: {},\n",
@@ -393,7 +413,7 @@ impl Generator<'_> {
                 FieldType::Repeated(desc) => {
                     w!(
                         self.printer,
-                        "pub {}: Vec<{}>,\n",
+                        "{}: Vec<{}>,\n",
                         desc.field_name,
                         desc.type_name
                     );
@@ -431,7 +451,7 @@ impl Generator<'_> {
                     FieldType::Oneof(d) => (naming::camel_case(&d.field_name), &d.type_name),
                     FieldType::Optional(d) => (naming::camel_case(&d.field_name), &d.type_name),
                     FieldType::Repeated(d) => (naming::camel_case(&d.field_name), &d.type_name),
-                    FieldType::Singleur(d) => (naming::camel_case(&d.field_name), &d.type_name),
+                    FieldType::Singlular(d) => (naming::camel_case(&d.field_name), &d.type_name),
                 };
                 w!(self.printer, "{}({}),\n", ty_name, internal_ty);
             }
@@ -464,7 +484,7 @@ impl Generator<'_> {
         w!(self.printer, "}}\n");
     }
 
-    fn print_merge_from_singleur(&mut self, d: &FieldDecl) {
+    fn print_merge_from_singlular(&mut self, d: &FieldDecl) {
         w!(
             self.printer,
             "{} => self.{} = s.read_{}()?,\n",
@@ -531,7 +551,7 @@ impl Generator<'_> {
                     self.printer.outdent();
                     w!(self.printer, "}}\n");
                 }
-                FieldType::Singleur(d) => {
+                FieldType::Singlular(d) => {
                     w!(
                         self.printer,
                         "{} => self.{} = Some({}::{}(self.read_{}()?)),\n",
@@ -560,7 +580,7 @@ impl Generator<'_> {
         for ft in field_sets {
             match ft {
                 FieldType::Optional(d) => self.print_merge_from_optional(d),
-                FieldType::Singleur(d) => self.print_merge_from_singleur(d),
+                FieldType::Singlular(d) => self.print_merge_from_singlular(d),
                 FieldType::Repeated(d) => self.print_merge_from_repeated(d),
                 FieldType::Oneof(d) => self.print_merge_from_oneof(d),
             }
@@ -619,8 +639,8 @@ impl Generator<'_> {
         self.printer.indent();
         for ft in field_sets {
             match ft {
-                FieldType::Optional(d) => self.check_print_optional(d, Self::print_write_to_raw),
-                FieldType::Singleur(d) => self.check_print_singleur(d, Self::print_write_to_raw),
+                FieldType::Optional(d) => self.print_write_to_optional(d),
+                FieldType::Singlular(d) => self.check_print_singlular(d, Self::print_write_to_raw),
                 FieldType::Repeated(d) => self.print_write_to_repeated(d),
                 FieldType::Oneof(d) => self.check_print_oneof(d, Self::print_write_to_raw),
             }
@@ -672,23 +692,34 @@ impl Generator<'_> {
         }
     }
 
-    fn check_print_optional(
-        &mut self,
-        d: &FieldDecl,
-        f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
-    ) {
+    fn print_write_to_optional(&mut self, d: &FieldDecl) {
         if d.copy {
-            w!(self.printer, "if let Some(v) = self.{} {{\n", d.field_name);
+            w_scope!(self.printer, "if let Some(v) = self.{} {{\n", d.field_name);
         } else {
-            w!(self.printer, "if let Some(v) = &self.{} {{\n", d.field_name);
+            w_scope!(self.printer, "if let Some(v) = &self.{} {{\n", d.field_name);
         }
-        self.printer.indent();
-        f(self, d, d.method_symbol, "v");
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
+        self.print_write_to_raw(d, d.method_symbol, "v");
+        w_end_scope!(self.printer, "}}\n");
     }
 
-    fn check_print_singleur(
+    fn print_len_optional(&mut self, d: &FieldDecl) {
+        if d.copy {
+            if d.method_symbol.contains("fixed")
+                || d.method_symbol.starts_with('f')
+                || d.method_symbol == "bool"
+            {
+                w_scope!(self.printer, "if self.{}.is_some() {{\n", d.field_name);
+            } else {
+                w_scope!(self.printer, "if let Some(v) = self.{} {{\n", d.field_name);
+            }
+        } else {
+            w_scope!(self.printer, "if let Some(v) = &self.{} {{\n", d.field_name);
+        }
+        self.print_len_raw(d, d.method_symbol, "v");
+        w_end_scope!(self.printer, "}}\n");
+    }
+
+    fn check_print_singlular(
         &mut self,
         d: &FieldDecl,
         f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
@@ -743,7 +774,7 @@ impl Generator<'_> {
         self.printer.indent();
         for item in &o.items {
             let d = match item {
-                FieldType::Optional(d) | FieldType::Singleur(d) => d,
+                FieldType::Optional(d) | FieldType::Singlular(d) => d,
                 FieldType::Repeated(_) | FieldType::Oneof(_) => unreachable!(),
             };
             w!(
@@ -769,15 +800,378 @@ impl Generator<'_> {
         w!(self.printer, "let mut n = self.unknown.len();\n");
         for ft in field_sets {
             match ft {
-                FieldType::Optional(d) => self.check_print_optional(d, Self::print_len_raw),
-                FieldType::Singleur(d) => self.check_print_singleur(d, Self::print_len_raw),
+                FieldType::Optional(d) => self.print_len_optional(d),
+                FieldType::Singlular(d) => self.check_print_singlular(d, Self::print_len_raw),
                 FieldType::Repeated(d) => self.check_print_repeated(d, Self::print_len_raw),
                 FieldType::Oneof(o) => self.check_print_oneof(o, Self::print_len_raw),
             }
         }
         w!(self.printer, "n\n");
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
+        w_end_scope!(self.printer, "}}\n");
+    }
+
+    fn print_default_instance(&mut self, type_name: &str, field_sets: &[FieldType]) {
+        w_scope!(self.printer, "pub const fn new() -> {} {{\n", type_name);
+        w_scope!(self.printer, "{} {{\n", type_name);
+        for ft in field_sets {
+            match ft {
+                FieldType::Optional(d) => {
+                    w!(self.printer, "{}: None,\n", d.field_name);
+                }
+                FieldType::Singlular(d) => {
+                    if !d.default_val.is_empty() {
+                        w!(self.printer, "{}: {},\n", d.field_name, d.default_val);
+                    } else if d.method_symbol == "bool" {
+                        w!(self.printer, "{}: false,\n", d.field_name);
+                    } else if d.method_symbol == "string" {
+                        w!(self.printer, "{}: String::new(),\n", d.field_name);
+                    } else if d.method_symbol == "bytes" {
+                        w!(self.printer, "{}: Vec::new(),\n", d.field_name);
+                    } else {
+                        w!(self.printer, "{}: {}::new(),\n", d.field_name, d.type_name);
+                    }
+                }
+                FieldType::Repeated(d) => {
+                    w!(self.printer, "{}: Vec::new(),\n", d.field_name);
+                }
+                FieldType::Oneof(o) => {
+                    w!(self.printer, "{}: None,\n", o.field_name);
+                }
+            }
+        }
+        w!(self.printer, "cache_size: 0,\nunknown: Vec::new(),\n");
+        w_end_scope!(self.printer, "}}\n");
+        w_end_scope!(self.printer, "}}\n");
+        w_scope!(
+            self.printer,
+            "\npub fn default_instance() -> &'static {} {{\n",
+            type_name
+        );
+        w!(
+            self.printer,
+            "static DEFAULT: {} = {}::new();\n",
+            type_name,
+            type_name
+        );
+        w!(self.printer, "&DEFAULT\n");
+        w_end_scope!(self.printer, "}}\n");
+    }
+
+    fn print_field_accessors_optional(&mut self, d: &FieldDecl) {
+        if d.copy {
+            w_scope!(
+                self.printer,
+                "\npub fn {}(&self) -> {} {{\n",
+                d.field_name,
+                d.type_name
+            );
+        } else if d.method_symbol == "bytes" {
+            w_scope!(
+                self.printer,
+                "\npub fn {}(&self) -> &[u8] {{\n",
+                d.field_name
+            );
+        } else if d.method_symbol == "string" {
+            w_scope!(
+                self.printer,
+                "\npub fn {}(&self) -> &str {{\n",
+                d.field_name
+            );
+        } else {
+            w_scope!(
+                self.printer,
+                "\npub fn {}(&self) -> &{} {{\n",
+                d.field_name,
+                d.type_name
+            );
+        }
+        if d.copy {
+            w!(self.printer, "self.{}.unwrap_or_default()\n", d.field_name);
+        } else if d.method_symbol == "bytes" {
+            w!(
+                self.printer,
+                "self.{}.as_ref().map_or(&[], |s| s.as_slice())\n",
+                d.field_name
+            );
+        } else if d.method_symbol == "string" {
+            w!(
+                self.printer,
+                "self.{}.as_ref().map_or(\"\", |s| s.as_str())\n",
+                d.field_name
+            );
+        } else {
+            w!(
+                self.printer,
+                "self.{}.as_ref().unwrap_or_else(|| {}::default_instance())\n",
+                d.field_name,
+                d.type_name
+            );
+        }
+        w_end_scope!(self.printer, "}}\n");
+        w!(
+            self.printer,
+            "\npub fn clear_{}(&mut self) {{ self.{} = None; }}\n",
+            d.strip_field_name(),
+            d.field_name
+        );
+        w!(
+            self.printer,
+            "\npub fn has_{}(&self) -> bool {{ self.{}.is_some() }}\n",
+            d.strip_field_name(),
+            d.field_name
+        );
+        w!(
+            self.printer,
+            "\npub fn set_{}(&mut self, v: {}) {{ self.{} = Some(v); }}\n",
+            d.strip_field_name(),
+            d.type_name,
+            d.field_name
+        );
+        if d.copy {
+            return;
+        }
+
+        w_scope!(
+            self.printer,
+            "\npub fn {}_mut(&mut self) -> &mut {} {{\n",
+            d.strip_field_name(),
+            d.type_name
+        );
+        w!(
+            self.printer,
+            "self.{}.get_or_insert_with(Default::default)\n",
+            d.field_name
+        );
+        w_end_scope!(self.printer, "}}\n");
+    }
+
+    fn print_field_accessors_singlular(&mut self, d: &FieldDecl) {
+        if d.copy {
+            w!(
+                self.printer,
+                "\npub fn {}(&self) -> {} {{ self.{} }}\n",
+                d.field_name,
+                d.type_name,
+                d.field_name
+            );
+        } else if d.method_symbol == "bytes" {
+            w!(
+                self.printer,
+                "\npub fn {}(&self) -> &[u8] {{ &self.{} }}\n",
+                d.field_name,
+                d.field_name
+            );
+        } else if d.method_symbol == "string" {
+            w!(
+                self.printer,
+                "\npub fn {}(&self) -> &str {{ &self.{} }}\n",
+                d.field_name,
+                d.field_name
+            );
+        }
+        if !d.default_val.is_empty() {
+            w!(
+                self.printer,
+                "\npub fn clear_{}(&mut self) {{ self.{} = {}; }}\n",
+                d.strip_field_name(),
+                d.field_name,
+                d.default_val
+            );
+        } else if d.method_symbol == "bool" {
+            w!(
+                self.printer,
+                "\npub fn clear_{}(&mut self) {{ self.{} = false; }}\n",
+                d.strip_field_name(),
+                d.field_name
+            );
+        } else {
+            w!(
+                self.printer,
+                "\npub fn clear_{}(&mut self) {{ self.{} = Default::default(); }}\n",
+                d.strip_field_name(),
+                d.field_name
+            );
+        }
+        w!(
+            self.printer,
+            "\npub fn set_{}(&mut self, v: {}) {{ self.{} = v; }}\n",
+            d.strip_field_name(),
+            d.type_name,
+            d.field_name
+        );
+        if d.copy {
+            return;
+        }
+        w!(
+            self.printer,
+            "\npub fn {}_mut(&mut self) -> &mut {} {{ &mut self.{} }}\n",
+            d.strip_field_name(),
+            d.type_name,
+            d.field_name
+        );
+    }
+
+    fn print_field_accessors_repeated(&mut self, d: &FieldDecl) {
+        w!(
+            self.printer,
+            "\npub fn {}(&self) -> &[{}] {{ &self.{} }}\n",
+            d.field_name,
+            d.type_name,
+            d.field_name
+        );
+        w!(
+            self.printer,
+            "\npub fn clear_{}(&mut self) {{ self.{}.clear(); }}\n",
+            d.strip_field_name(),
+            d.field_name
+        );
+        w!(
+            self.printer,
+            "\npub fn set_{}(&mut self, v: impl Into<Vec<{}>>) {{ self.{} = v.into(); }}\n",
+            d.strip_field_name(),
+            d.type_name,
+            d.field_name
+        );
+        w!(
+            self.printer,
+            "\npub fn {}_mut(&mut self) -> &mut Vec<{}> {{ &mut self.{} }}\n",
+            d.strip_field_name(),
+            d.type_name,
+            d.field_name
+        );
+    }
+
+    fn print_field_accessors_oneof(&mut self, o: &OneOfDecl) {
+        for ft in &o.items {
+            let d = match ft {
+                FieldType::Optional(d) | FieldType::Singlular(d) => d,
+                FieldType::Repeated(_) | FieldType::Oneof(_) => unreachable!(),
+            };
+            if d.copy {
+                w_scope!(
+                    self.printer,
+                    "\npub fn {}(&self) -> {} {{\n",
+                    d.field_name,
+                    d.type_name
+                );
+            } else if d.method_symbol == "bytes" {
+                w_scope!(
+                    self.printer,
+                    "\npub fn {}(&self) -> &[u8] {{\n",
+                    d.field_name
+                );
+            } else if d.method_symbol == "string" {
+                w_scope!(
+                    self.printer,
+                    "\npub fn {}(&self) -> &str {{\n",
+                    d.field_name
+                );
+            } else {
+                w_scope!(
+                    self.printer,
+                    "\npub fn {}(&self) -> &{} {{\n",
+                    d.field_name,
+                    d.type_name
+                );
+            }
+            if d.copy {
+                w_scope!(self.printer, "match self.{} {{\n", o.field_name);
+            } else {
+                w_scope!(self.printer, "match &self.{} {{\n", o.field_name);
+            }
+            w!(
+                self.printer,
+                "Some({}::{}(v)) => v\n",
+                o.type_name,
+                naming::camel_case(&d.field_name)
+            );
+            if d.copy {
+                w!(self.printer, "_ => Default::default(),\n");
+            } else if d.method_symbol == "bytes" {
+                w!(self.printer, "_ => &[],\n");
+            } else if d.method_symbol == "string" {
+                w!(self.printer, "_ => \"\",\n");
+            } else {
+                w!(self.printer, "_ => {}::default_instance(),\n", d.type_name);
+            }
+            w_end_scope!(self.printer, "}}\n");
+            w_end_scope!(self.printer, "}}\n");
+            w_scope!(
+                self.printer,
+                "\npub fn clear_{}(&mut self) {{\n",
+                d.strip_field_name()
+            );
+            w_scope!(
+                self.printer,
+                "if let Some({}::{}(_)) = self.{} {{\n",
+                o.type_name,
+                naming::camel_case(&d.field_name),
+                o.field_name
+            );
+            w!(self.printer, "self.{} = None;\n", o.field_name);
+            w_end_scope!(self.printer, "}}\n");
+            w_end_scope!(self.printer, "}}\n");
+            w_scope!(
+                self.printer,
+                "\npub fn set_{}(&mut self, v: {}) {{\n",
+                d.strip_field_name(),
+                d.type_name
+            );
+            w!(
+                self.printer,
+                "self.{} = Some({}::{}(v));\n",
+                o.field_name,
+                o.type_name,
+                naming::camel_case(&d.field_name)
+            );
+            w_end_scope!(self.printer, "}}\n");
+            if d.copy {
+                return;
+            }
+            w_scope!(
+                self.printer,
+                "\npub fn {}_mut(&mut self) -> &mut {} {{\n",
+                d.strip_field_name(),
+                d.type_name
+            );
+            w_scope!(
+                self.printer,
+                "if let Some({}::{}(v)) = &mut self.{} {{\n",
+                o.type_name,
+                naming::camel_case(&d.field_name),
+                o.field_name
+            );
+            w!(self.printer, "return v;\n");
+            w_end_scope!(self.printer, "}}\n");
+            w!(
+                self.printer,
+                "self.{} = Some({}::{}(Default::default());\n",
+                o.field_name,
+                o.type_name,
+                naming::camel_case(&d.field_name)
+            );
+            w_scope!(
+                self.printer,
+                "if let Some({}::{}(v)) = &mut self.{} {{\n",
+                o.type_name,
+                naming::camel_case(&d.field_name),
+                o.field_name
+            );
+            w!(self.printer, "return v;\n");
+            w_end_scope!(self.printer, "}} else {{ unreachable!() }}\n");
+            w_end_scope!(self.printer, "}}\n");
+        }
+    }
+
+    fn print_field_accessors(&mut self, field_sets: &[FieldType]) {
+        for ft in field_sets {
+            match ft {
+                FieldType::Optional(d) => self.print_field_accessors_optional(d),
+                FieldType::Singlular(d) => self.print_field_accessors_singlular(d),
+                FieldType::Repeated(d) => self.print_field_accessors_repeated(d),
+                FieldType::Oneof(d) => self.print_field_accessors_oneof(d),
+            }
+        }
     }
 
     /// If m is nested message, it will be named as `Prefix1NestedPrefix2Nested...Name`.
@@ -792,10 +1186,7 @@ impl Generator<'_> {
         self.printer.indent();
         let field_sets = self.build_field_set(ctx, &m);
         self.print_field_decl(&field_sets);
-        w!(
-            self.printer,
-            "pub cache_size: CacheSize,\npub unknown: Vec<u8>,\n"
-        );
+        w!(self.printer, "cache_size: u32,\nunknown: Vec<u8>,\n");
         self.printer.outdent();
         w!(self.printer, "}}\n");
 
@@ -808,6 +1199,13 @@ impl Generator<'_> {
         self.print_write_to(&field_sets);
         self.print_len(&field_sets);
 
+        self.printer.outdent();
+        w!(self.printer, "}}\n");
+
+        w!(self.printer, "\nimpl {} {{\n", name);
+        self.printer.indent();
+        self.print_default_instance(&name, &field_sets);
+        self.print_field_accessors(&field_sets);
         self.printer.outdent();
         w!(self.printer, "}}\n");
     }
