@@ -209,14 +209,12 @@ impl<B: Buf> CodedInputStream<B> {
 
     #[inline]
     pub fn read_var_s32(&mut self) -> Result<i32> {
-        let u = self.read_raw_varint32()?;
-        Ok(codec::unzig_zag_32(u))
+        self.read_raw_varint32().map(codec::unzig_zag_32)
     }
 
     #[inline]
     pub fn read_var_s64(&mut self) -> Result<i64> {
-        let u = self.read_raw_varint64()?;
-        Ok(codec::unzig_zag_64(u))
+        self.read_raw_varint64().map(codec::unzig_zag_64)
     }
 
     #[inline]
@@ -246,20 +244,24 @@ impl<B: Buf> CodedInputStream<B> {
         Ok(E::from(value))
     }
 
-    pub fn read_message(&mut self, msg: &mut impl Message) -> Result<()> {
+    pub fn read_message_like(&mut self, f: impl FnOnce(&mut Self) -> Result<()>) -> Result<()> {
         let len = self.read_raw_varint32()? as usize;
         if self.depth == self.recursive_limit {
             return Err(Error::ExceedRecursiveLimit(self.depth));
         }
         let old_limit = self.push_limit(len)?;
         self.depth += 1;
-        msg.merge_from(self)?;
+        f(self)?;
         if self.read != self.len_limit {
             return Err(Error::corrupted());
         }
         self.depth -= 1;
         self.pop_limit(old_limit);
         Ok(())
+    }
+
+    pub fn read_message(&mut self, msg: &mut impl Message) -> Result<()> {
+        self.read_message_like(|s| msg.merge_from(s))
     }
 
     pub fn read_message_to(&mut self, msgs: &mut Vec<impl Message + Default>) -> Result<()> {
@@ -293,13 +295,13 @@ impl<B: Buf> CodedInputStream<B> {
         self.len_limit = old_limit;
     }
 
-    fn skip_varint(&mut self, unknown: &mut Vec<u8>) -> Result<()> {
+    fn skip_varint(&mut self, unknown: &mut impl Discard) -> Result<()> {
         let u = self.read_raw_varint64()?;
-        codec::encode_varint_u64(unknown, u);
+        unknown.discard_varint(u);
         Ok(())
     }
 
-    fn skip_group(&mut self, unknown: &mut Vec<u8>, tag: u32) -> Result<()> {
+    fn skip_group(&mut self, unknown: &mut impl Discard, tag: u32) -> Result<()> {
         self.depth += 1;
         loop {
             let next_tag = self.read_tag()?;
@@ -309,7 +311,7 @@ impl<B: Buf> CodedInputStream<B> {
             }
             if next_tag & 0x07 == 4 {
                 if next_tag >> 3 == tag >> 3 {
-                    codec::encode_varint_u32(unknown, next_tag);
+                    unknown.discard_varint(next_tag as u64);
                     self.depth -= 1;
                     return Ok(());
                 } else {
@@ -317,18 +319,18 @@ impl<B: Buf> CodedInputStream<B> {
                     return Err(Error::corrupted());
                 }
             }
-            self.skip_field(unknown, next_tag)?;
+            self.skip_field_impl(unknown, next_tag)?;
         }
     }
 
-    pub fn skip_field(&mut self, unknown: &mut Vec<u8>, tag: u32) -> Result<()> {
-        codec::encode_varint_u32(unknown, tag);
+    fn skip_field_impl(&mut self, unknown: &mut impl Discard, tag: u32) -> Result<()> {
+        unknown.discard_varint(tag as u64);
         let mut to_skip = match tag & 0x07 {
             0 => return self.skip_varint(unknown),
             1 => 8,
             2 => {
                 let len = self.read_raw_varint32()?;
-                codec::encode_varint_u32(unknown, len);
+                unknown.discard_varint(len as u64);
                 len as usize
             }
             3 => return self.skip_group(unknown, tag),
@@ -346,10 +348,10 @@ impl<B: Buf> CodedInputStream<B> {
                     return Err(Error::truncated());
                 }
                 if bytes.len() > to_skip {
-                    unknown.extend_from_slice(unsafe { bytes.get_unchecked(..to_skip) });
+                    unknown.discard_slice(unsafe { bytes.get_unchecked(..to_skip) });
                     to_skip
                 } else {
-                    unknown.extend_from_slice(bytes);
+                    unknown.discard_slice(bytes);
                     bytes.len()
                 }
             };
@@ -357,6 +359,16 @@ impl<B: Buf> CodedInputStream<B> {
             to_skip -= l;
         }
         Ok(())
+    }
+
+    #[inline]
+    pub fn skip_field(&mut self, unknown: &mut Vec<u8>, tag: u32) -> Result<()> {
+        self.skip_field_impl(unknown, tag)
+    }
+
+    #[inline]
+    pub fn discard_field(&mut self, tag: u32) -> Result<()> {
+        self.skip_field_impl(&mut BlackHole, tag)
     }
 }
 
@@ -435,6 +447,33 @@ macro_rules! impl_varint {
             }
         }
     };
+}
+
+trait Discard {
+    fn discard_varint(&mut self, tag: u64);
+    fn discard_slice(&mut self, bytes: &[u8]);
+}
+
+impl Discard for Vec<u8> {
+    #[inline]
+    fn discard_varint(&mut self, tag: u64) {
+        codec::encode_varint_u64(self, tag)
+    }
+
+    #[inline]
+    fn discard_slice(&mut self, bytes: &[u8]) {
+        self.extend_from_slice(bytes)
+    }
+}
+
+struct BlackHole;
+
+impl Discard for BlackHole {
+    #[inline]
+    fn discard_varint(&mut self, _: u64) {}
+
+    #[inline]
+    fn discard_slice(&mut self, _: &[u8]) {}
 }
 
 impl_varint!(

@@ -16,6 +16,7 @@ struct FieldDecl<'a> {
     copy: bool,
     default_val: &'static str,
     method_symbol: &'static str,
+    map_fields: Vec<FieldDecl<'a>>,
     proto: &'a FieldDescriptorProto,
 }
 
@@ -41,6 +42,22 @@ enum FieldType<'a> {
     Singlular(FieldDecl<'a>),
     Repeated(FieldDecl<'a>),
     Oneof(OneOfDecl<'a>),
+}
+
+impl<'a> FieldType<'a> {
+    fn singlular(&self) -> &FieldDecl<'_> {
+        match self {
+            FieldType::Optional(fd) | FieldType::Singlular(fd) => fd,
+            _ => unreachable!(),
+        }
+    }
+
+    fn unwrap_singlular(self) -> FieldDecl<'a> {
+        match self {
+            FieldType::Optional(fd) | FieldType::Singlular(fd) => fd,
+            _ => unreachable!(),
+        }
+    }
 }
 
 pub struct Generator<'a> {
@@ -212,7 +229,7 @@ impl Generator<'_> {
 
     fn build_field<'a>(
         &mut self,
-        ctx: &Context,
+        ctx: &'a Context,
         f: &'a FieldDescriptorProto,
     ) -> (Option<i32>, FieldType<'a>) {
         let mut desc = FieldDecl {
@@ -223,6 +240,7 @@ impl Generator<'_> {
             copy: true,
             default_val: "0",
             method_symbol: "",
+            map_fields: vec![],
             proto: f,
         };
         let mut wire_type = 0;
@@ -306,14 +324,28 @@ impl Generator<'_> {
                 desc.method_symbol = "message";
                 let id = ctx.message_address.get(f.type_name()).unwrap();
                 let e = ctx.db.messages.get(*id).unwrap();
-                desc.type_name = naming::type_name(&e.type_name);
-                if e.file != self.file {
-                    let f = ctx.db.files.get(e.file).unwrap();
-                    desc.type_name = format!(
-                        "{}::{}",
-                        naming::alias_name(f.proto.name()),
-                        &desc.type_name
-                    );
+                if !e.proto.options().map_entry() {
+                    desc.type_name = naming::type_name(&e.type_name);
+                    if e.file != self.file {
+                        let f = ctx.db.files.get(e.file).unwrap();
+                        desc.type_name = format!(
+                            "{}::{}",
+                            naming::alias_name(f.proto.name()),
+                            &desc.type_name
+                        );
+                    }
+                } else {
+                    let key_fd = self
+                        .build_field(ctx, &e.proto.field()[0])
+                        .1
+                        .unwrap_singlular();
+                    let val_fd = self
+                        .build_field(ctx, &e.proto.field()[1])
+                        .1
+                        .unwrap_singlular();
+                    desc.type_name = format!("HashMap<{}, {}>", key_fd.type_name, val_fd.type_name);
+                    desc.map_fields.push(key_fd);
+                    desc.map_fields.push(val_fd);
                 }
                 desc.default_val = "";
                 desc.copy = false;
@@ -365,7 +397,7 @@ impl Generator<'_> {
 
     fn build_field_set<'a>(
         &mut self,
-        ctx: &Context,
+        ctx: &'a Context,
         m: &'a MessageDescriptor,
     ) -> Vec<FieldType<'a>> {
         let mut oneof_decls = vec![];
@@ -383,10 +415,7 @@ impl Generator<'_> {
         for f in m.proto.field() {
             let (oneof_index, ft) = self.build_field(ctx, f);
             if let Some(index) = oneof_index {
-                oneof_decls[index as usize].copy &= match &ft {
-                    FieldType::Optional(d) | FieldType::Singlular(d) => d.copy,
-                    FieldType::Oneof(_) | FieldType::Repeated(_) => unreachable!(),
-                };
+                oneof_decls[index as usize].copy &= ft.singlular().copy;
                 oneof_decls[index as usize].items.push(ft);
             } else {
                 fields.push(ft);
@@ -416,12 +445,16 @@ impl Generator<'_> {
                     );
                 }
                 FieldType::Repeated(desc) => {
-                    w!(
-                        self.printer,
-                        "{}: Vec<{}>,\n",
-                        desc.field_name,
-                        desc.type_name
-                    );
+                    if desc.map_fields.is_empty() {
+                        w!(
+                            self.printer,
+                            "{}: Vec<{}>,\n",
+                            desc.field_name,
+                            desc.type_name
+                        );
+                    } else {
+                        w!(self.printer, "{}: {},\n", desc.field_name, desc.type_name)
+                    }
                 }
                 FieldType::Oneof(desc) => {
                     w!(
@@ -477,16 +510,14 @@ impl Generator<'_> {
             return;
         }
 
-        w!(self.printer, "{} => {{\n", d.tag1);
-        self.printer.indent();
+        w_scope!(self.printer, "{} => {{\n", d.tag1);
         w!(
             self.printer,
             "let msg = self.{}.get_or_insert_with(Default::default);\n",
             d.field_name
         );
         w!(self.printer, "s.read_message(msg)?;\n");
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
+        w_end_scope!(self.printer, "}}\n");
     }
 
     fn print_merge_from_singlular(&mut self, d: &FieldDecl) {
@@ -500,31 +531,70 @@ impl Generator<'_> {
     }
 
     fn print_merge_from_repeated(&mut self, d: &FieldDecl) {
-        if d.method_symbol != "message" {
+        w!(self.printer, "{} => ", d.tag1);
+        if d.map_fields.is_empty() {
+            if d.method_symbol != "message" {
+                w!(
+                    self.printer,
+                    "self.{}.push(s.read_{}()?),\n",
+                    d.field_name,
+                    d.method_symbol
+                );
+            } else {
+                w!(
+                    self.printer,
+                    "s.read_message_to(&mut self.{})?,\n",
+                    d.field_name
+                );
+            }
+            if d.tag1 != d.tag2 && d.tag2 != 0 {
+                w!(
+                    self.printer,
+                    "{} => s.read_{}_array(&mut self.{})?,\n",
+                    d.tag2,
+                    d.method_symbol,
+                    d.field_name
+                );
+            }
+            return;
+        }
+
+        let (k_fd, v_fd) = (&d.map_fields[0], &d.map_fields[1]);
+        w_scope!(self.printer, "s.read_message_like(|s| {{\n");
+        w!(self.printer, "let tag = s.read_tag()?;\n");
+        w!(
+            self.printer,
+            "let (mut key, mut value) = ({}::default(), {}::default());\n",
+            k_fd.type_name,
+            v_fd.type_name
+        );
+        w_scope!(self.printer, "loop {{\n");
+        w_scope!(self.printer, "match tag {{\n");
+        w!(
+            self.printer,
+            "{} => key = s.read_{}()?,\n",
+            k_fd.tag1,
+            k_fd.method_symbol
+        );
+        if v_fd.method_symbol != "message" {
             w!(
                 self.printer,
-                "{} => self.{}.push(s.read_{}()?),\n",
-                d.tag1,
-                d.field_name,
-                d.method_symbol
+                "{} => value = s.read_{}()?,\n",
+                v_fd.tag1,
+                v_fd.method_symbol
             );
         } else {
             w!(
                 self.printer,
-                "{} => s.read_message_to(&mut self.{})?,\n",
-                d.tag1,
-                d.field_name
+                "{} => s.read_message(&mut value)?,\n",
+                v_fd.tag1
             );
         }
-        if d.tag1 != d.tag2 && d.tag2 != 0 {
-            w!(
-                self.printer,
-                "{} => s.read_{}_array(&mut self.{})?,\n",
-                d.tag2,
-                d.method_symbol,
-                d.field_name
-            );
-        }
+        w!(self.printer, "0 => break,\ntag => s.discard_field(tag)?,\n");
+        w_end_scope!(self.printer, "}}\n");
+        w_end_scope!(self.printer, "}}\n");
+        w!(self.printer, "self.{}.insert(key, value);\n", d.field_name);
+        w_end_scope!(self.printer, "}}),\n");
     }
 
     fn print_merge_from_oneof(&mut self, o: &OneOfDecl) {
@@ -578,10 +648,8 @@ impl Generator<'_> {
             "fn merge_from(&mut self, s: &mut CodedInputStream<impl Buf>) -> Result<()> {{\n"
         );
         self.printer.indent();
-        w!(self.printer, "loop {{\n");
-        self.printer.indent();
-        w!(self.printer, "let tag = s.read_tag()?;\nmatch tag {{\n");
-        self.printer.indent();
+        w_scope!(self.printer, "loop {{\n");
+        w_scope!(self.printer, "let tag = s.read_tag()?;\nmatch tag {{\n");
         for ft in field_sets {
             match ft {
                 FieldType::Optional(d) => self.print_merge_from_optional(d),
@@ -595,13 +663,11 @@ impl Generator<'_> {
             "0 => return Ok(()),\n_ => s.skip_field(&mut self.unknown, tag)?,\n"
         );
         for _ in 0..3 {
-            self.printer.outdent();
-            w!(self.printer, "}}\n");
+            w_end_scope!(self.printer, "}}\n");
         }
     }
 
-    fn print_write_to_raw(&mut self, d: &FieldDecl, method_symbol: &str, field: &str) {
-        let tag = if d.tag2 == 0 { d.tag1 } else { d.tag2 };
+    fn print_write_to_tag(&mut self, tag: u32) {
         let mut buffer = [0u8; 5];
         let count =
             unsafe { pecan_utils::codec::encode_varint_u32_to_array(buffer.as_mut_ptr(), tag) };
@@ -611,6 +677,11 @@ impl Generator<'_> {
             count,
             &buffer[..count]
         );
+    }
+
+    fn print_write_to_raw(&mut self, d: &FieldDecl, method_symbol: &str, field: &str) {
+        let tag = if d.tag2 == 0 { d.tag1 } else { d.tag2 };
+        self.print_write_to_tag(tag);
         if method_symbol != "message" {
             w!(self.printer, "s.write_{}({})?;\n", method_symbol, field);
         } else {
@@ -625,12 +696,27 @@ impl Generator<'_> {
             let method_symbol = format!("{}_array", d.method_symbol);
             let field = format!("&self.{}", d.field_name);
             self.print_write_to_raw(d, &method_symbol, &field);
-        } else {
+        } else if d.map_fields.is_empty() {
             w!(self.printer, "for v in &self.{} {{\n", d.field_name);
             self.printer.indent();
             self.print_write_to_raw(d, d.method_symbol, "v");
             self.printer.outdent();
             w!(self.printer, "}}\n");
+        } else {
+            let (key_fd, val_fd) = (&d.map_fields[0], &d.map_fields[1]);
+            if val_fd.copy {
+                w_scope!(self.printer, "for (&k, &v) in &self.{} {{\n", d.field_name);
+            } else {
+                w_scope!(self.printer, "for (&k, v) in &self.{} {{\n", d.field_name);
+            }
+            self.print_write_to_tag(d.tag1);
+            w!(self.printer, "let mut n = 0;\n");
+            self.check_print_singlular(key_fd, "k", Self::print_len_raw);
+            self.check_print_singlular(val_fd, "v", Self::print_len_raw);
+            w!(self.printer, "s.write_var_u32(n as u32)?;\n");
+            self.check_print_singlular(key_fd, "k", Self::print_write_to_raw);
+            self.check_print_singlular(val_fd, "v", Self::print_write_to_raw);
+            w_end_scope!(self.printer, "}}\n");
         }
         self.printer.outdent();
         w!(self.printer, "}}\n");
@@ -645,7 +731,11 @@ impl Generator<'_> {
         for ft in field_sets {
             match ft {
                 FieldType::Optional(d) => self.print_write_to_optional(d),
-                FieldType::Singlular(d) => self.check_print_singlular(d, Self::print_write_to_raw),
+                FieldType::Singlular(d) => self.check_print_singlular(
+                    d,
+                    &format!("self.{}", d.field_name),
+                    Self::print_write_to_raw,
+                ),
                 FieldType::Repeated(d) => self.print_write_to_repeated(d),
                 FieldType::Oneof(d) => self.check_print_oneof(d, Self::print_write_to_raw),
             }
@@ -727,45 +817,49 @@ impl Generator<'_> {
     fn check_print_singlular(
         &mut self,
         d: &FieldDecl,
+        field: &str,
         f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
     ) {
         if !d.default_val.is_empty() {
-            w!(
-                self.printer,
-                "if {} != self.{} {{\n",
-                d.default_val,
-                d.field_name
-            );
+            w_scope!(self.printer, "if {} != {} {{\n", d.default_val, field);
         } else if d.method_symbol == "bool" {
-            w!(self.printer, "if self.{} {{\n", d.field_name);
+            w_scope!(self.printer, "if {} {{\n", field);
         } else if d.method_symbol == "enum" {
-            w!(self.printer, "if self.{}.value() != 0 {{\n", d.field_name);
-        } else {
-            w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+            w_scope!(self.printer, "if {}.value() != 0 {{\n", field);
+        } else if d.method_symbol != "message" {
+            w_scope!(self.printer, "if !{}.is_empty() {{\n", field);
         }
-        self.printer.indent();
-        let field = if d.copy {
-            format!("self.{}", d.field_name)
+        if d.copy || !field.starts_with("self") {
+            f(self, d, d.method_symbol, field)
         } else {
-            format!("&self.{}", d.field_name)
+            let field = format!("&{}", field);
+            f(self, d, d.method_symbol, &field)
         };
-        f(self, d, d.method_symbol, &field);
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
+        if d.method_symbol != "message" {
+            w_end_scope!(self.printer, "}}\n");
+        }
     }
 
-    fn check_print_repeated(
-        &mut self,
-        d: &FieldDecl,
-        f: impl FnOnce(&mut Self, &FieldDecl, &str, &str),
-    ) {
-        w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
-        self.printer.indent();
-        let method_symbol = format!("arr_{}", d.method_symbol);
-        let field = format!("&self.{}", d.field_name);
-        f(self, d, &method_symbol, &field);
-        self.printer.outdent();
-        w!(self.printer, "}}\n");
+    fn print_len_repeated(&mut self, d: &FieldDecl) {
+        w_scope!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+        if d.map_fields.is_empty() {
+            let method_symbol = format!("arr_{}", d.method_symbol);
+            let field = format!("&self.{}", d.field_name);
+            self.print_len_raw(d, &method_symbol, &field);
+        } else {
+            let (key_fd, val_fd) = (&d.map_fields[0], &d.map_fields[1]);
+            if val_fd.copy {
+                w_scope!(self.printer, "for (&k, &v) in &self.{} {{\n", d.field_name);
+            } else {
+                w_scope!(self.printer, "for (&k, v) in &self.{} {{\n", d.field_name);
+            }
+            let tag_len = pecan::encoded::var_u32_len(d.tag1);
+            w!(self.printer, "n += {}\n", tag_len);
+            self.check_print_singlular(key_fd, "k", Self::print_len_raw);
+            self.check_print_singlular(val_fd, "v", Self::print_len_raw);
+            w_end_scope!(self.printer, "}}\n");
+        }
+        w_end_scope!(self.printer, "}}\n");
     }
 
     fn check_print_oneof(&mut self, o: &OneOfDecl, f: impl Fn(&mut Self, &FieldDecl, &str, &str)) {
@@ -778,10 +872,7 @@ impl Generator<'_> {
         w!(self.printer, "match v {{\n");
         self.printer.indent();
         for item in &o.items {
-            let d = match item {
-                FieldType::Optional(d) | FieldType::Singlular(d) => d,
-                FieldType::Repeated(_) | FieldType::Oneof(_) => unreachable!(),
-            };
+            let d = item.singlular();
             w!(
                 self.printer,
                 "{}::{}(v) => {{\n",
@@ -806,8 +897,12 @@ impl Generator<'_> {
         for ft in field_sets {
             match ft {
                 FieldType::Optional(d) => self.print_len_optional(d),
-                FieldType::Singlular(d) => self.check_print_singlular(d, Self::print_len_raw),
-                FieldType::Repeated(d) => self.check_print_repeated(d, Self::print_len_raw),
+                FieldType::Singlular(d) => self.check_print_singlular(
+                    d,
+                    &format!("self.{}", d.field_name),
+                    Self::print_len_raw,
+                ),
+                FieldType::Repeated(d) => self.print_len_repeated(d),
                 FieldType::Oneof(o) => self.check_print_oneof(o, Self::print_len_raw),
             }
         }
@@ -1017,11 +1112,19 @@ impl Generator<'_> {
     }
 
     fn print_field_accessors_repeated(&mut self, d: &FieldDecl) {
+        let (ref_ty, owned_ty) = if d.map_fields.is_empty() {
+            (
+                format!("&[{}]", d.type_name),
+                format!("Vec<{}>", d.type_name),
+            )
+        } else {
+            (format!("&{}", d.type_name), d.type_name.clone())
+        };
         w!(
             self.printer,
-            "\npub fn {}(&self) -> &[{}] {{ &self.{} }}\n",
+            "\npub fn {}(&self) -> {} {{ &self.{} }}\n",
             d.field_name,
-            d.type_name,
+            ref_ty,
             d.field_name
         );
         w!(
@@ -1032,26 +1135,23 @@ impl Generator<'_> {
         );
         w!(
             self.printer,
-            "\npub fn set_{}(&mut self, v: impl Into<Vec<{}>>) {{ self.{} = v.into(); }}\n",
+            "\npub fn set_{}(&mut self, v: impl Into<{}>) {{ self.{} = v.into(); }}\n",
             d.strip_field_name(),
-            d.type_name,
+            owned_ty,
             d.field_name
         );
         w!(
             self.printer,
-            "\npub fn {}_mut(&mut self) -> &mut Vec<{}> {{ &mut self.{} }}\n",
+            "\npub fn {}_mut(&mut self) -> &mut {} {{ &mut self.{} }}\n",
             d.strip_field_name(),
-            d.type_name,
+            owned_ty,
             d.field_name
         );
     }
 
     fn print_field_accessors_oneof(&mut self, o: &OneOfDecl) {
         for ft in &o.items {
-            let d = match ft {
-                FieldType::Optional(d) | FieldType::Singlular(d) => d,
-                FieldType::Repeated(_) | FieldType::Oneof(_) => unreachable!(),
-            };
+            let d = ft.singlular();
             if d.copy {
                 w_scope!(
                     self.printer,

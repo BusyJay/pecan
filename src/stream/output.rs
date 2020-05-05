@@ -2,6 +2,7 @@ use crate::enumerate::EnumType;
 use crate::message::Message;
 use crate::stream::BufMut;
 use crate::{Error, Result};
+use pecan_utils::codec;
 use std::mem::MaybeUninit;
 use std::ptr;
 
@@ -65,14 +66,12 @@ pub mod encoded {
 
     #[inline]
     pub fn arr_message_len(tag_len: usize, arr: &[impl Message]) -> usize {
-        arr.iter()
-            .fold(tag_len * arr.len(), |n, s| n + message_len(s))
+        arr.iter().fold(0, |n, s| n + tag_len + message_len(s))
     }
 
     #[inline]
     pub fn arr_string_len(tag_len: usize, arr: &[String]) -> usize {
-        arr.iter()
-            .fold(tag_len * arr.len(), |n, s| n + string_len(s))
+        arr.iter().fold(0, |n, s| n + tag_len + string_len(s))
     }
 }
 
@@ -218,6 +217,10 @@ impl<B: BufMut> CodedOutputStream<B> {
         self.write_raw_5_byte([b1, b2, b3, b4, n as u8])
     }
 
+    pub fn write_var_s32(&mut self, n: i32) -> Result<()> {
+        self.write_var_u32(codec::zig_zag_32(n))
+    }
+
     pub fn write_var_i32_array(&mut self, arr: &[i32]) -> Result<()> {
         let l: usize = arr.iter().map(|i| encoded::var_i32_len(*i)).sum();
         self.write_var_u32(l as u32)?;
@@ -279,6 +282,11 @@ impl<B: BufMut> CodedOutputStream<B> {
     #[inline]
     pub fn write_var_i64(&mut self, i: i64) -> Result<()> {
         self.write_var_u64(i as u64)
+    }
+
+    #[inline]
+    pub fn write_var_s64(&mut self, n: i64) -> Result<()> {
+        self.write_var_u64(codec::zig_zag_64(n))
     }
 
     #[inline]
