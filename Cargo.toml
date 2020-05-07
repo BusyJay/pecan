@@ -12,16 +12,16 @@ criterion = "0.3"
 rand = "0.7"
 bytes = "0.5"
 
-[[bench]]
-name = "varint"
-harness = false
-
 [workspace]
 members = [
+    "benchmark",
     "compiler",
     "descriptor",
     "utils",
 ]
+
+[profile.release]
+codegen-units = 1
 
 [profile.bench]
 codegen-units = 1

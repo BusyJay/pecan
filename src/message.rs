@@ -8,6 +8,11 @@ pub trait Message {
     fn write_to(&self, output: &mut CodedOutputStream<impl BufMut>) -> Result<()>;
     fn len(&self) -> usize;
 
+    fn merge_from_bytes(&mut self, s: &[u8]) -> Result<()> {
+        let mut input = CodedInputStream::new(s);
+        self.merge_from(&mut input)
+    }
+
     fn write_to_vec(&self, s: &mut Vec<u8>) -> Result<()> {
         let mut output = CodedOutputStream::new(s);
         self.write_to(&mut output)?;

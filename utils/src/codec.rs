@@ -8,56 +8,80 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-macro_rules! slow_var_decode {
-    ($t:ty, $fallback_func:ident, $max:expr, $last:expr, $slow_func:ident) => {
-        fn $slow_func(data: &[u8]) -> Result<($t, u8)> {
-            let mut res = 0;
-            for i in 0..data.len() {
-                let b = data[i];
-                res |= (b as $t & 0x7f) << (i * 7);
-                if b < 0x80 {
-                    return Ok((res, i as u8 + 1));
-                }
-            }
-            Err(Error::Truncated)
-        }
-
-        fn $fallback_func(data: &[u8]) -> Result<($t, u8)> {
-            if data.len() >= $max || *data.last().unwrap() < 0x80 {
-                let mut res = 0;
-                for i in 0..$max - 1 {
-                    let b = unsafe { *data.get_unchecked(i) };
-                    res |= (b & 0x7f) as $t << (i * 7);
-                    if b < 0x80 {
-                        return Ok((res, i as u8 + 1));
-                    }
-                }
-                let b = unsafe { *data.get_unchecked($max - 1) };
-                if b <= $last {
-                    res |= b as $t << (($max - 1) * 7);
-                    return Ok((res, $max));
-                }
-                return Err(Error::Corrupted);
-            }
-            $slow_func(data)
+fn decode_varint_u32_slow(data: &[u8]) -> Result<(u32, u8)> {
+    let mut res = 0;
+    for i in 0..data.len() {
+        let b = data[i];
+        res |= (b as u32 & 0x7f) << (i * 7);
+        if b < 0x80 {
+            return Ok((res, i as u8 + 1));
         }
     }
+    Err(Error::Truncated)
 }
 
-slow_var_decode!(
-    u32,
-    decode_varint_u32_fallback,
-    5,
-    15,
-    decode_varint_u32_slow
-);
-slow_var_decode!(
-    u64,
-    decode_varint_u64_fallback,
-    10,
-    1,
-    decode_varint_u64_slow
-);
+fn decode_varint_u32_fallback(data: &[u8]) -> Result<(u32, u8)> {
+    if data.len() >= 5 || *data.last().unwrap() < 0x80 {
+        let mut res = 0;
+        for i in 0..4 {
+            let b = unsafe { *data.get_unchecked(i) };
+            res |= ((b & 0x7f) as u32) << (i * 7);
+            if b < 0x80 {
+                return Ok((res, i as u8 + 1));
+            }
+        }
+        let b = unsafe { *data.get_unchecked(4) };
+        res |= (b as u32) << (4 * 7);
+        if b <= 15 {
+            return Ok((res, 5));
+        }
+        // It's possible to excceed 5 bytes, because protobuf encodes negative number as i64.
+        if (b & 0x80) > 0 {
+            if data.len() >= 10 {
+                let b = unsafe { *data.get_unchecked(9) };
+                if b == 1 {
+                    return Ok((res, 10));
+                }
+            } else {
+                return Err(Error::Truncated);
+            }
+        }
+        return Err(Error::Corrupted);
+    }
+    decode_varint_u32_slow(data)
+}
+
+fn decode_varint_u64_slow(data: &[u8]) -> Result<(u64, u8)> {
+    let mut res = 0;
+    for i in 0..data.len() {
+        let b = data[i];
+        res |= (b as u64 & 0x7f) << (i * 7);
+        if b < 0x80 {
+            return Ok((res, i as u8 + 1));
+        }
+    }
+    Err(Error::Truncated)
+}
+
+fn decode_varint_u64_fallback(data: &[u8]) -> Result<(u64, u8)> {
+    if data.len() >= 10 || *data.last().unwrap() < 0x80 {
+        let mut res = 0;
+        for i in 0..9 {
+            let b = unsafe { *data.get_unchecked(i) };
+            res |= ((b & 0x7f) as u64) << (i * 7);
+            if b < 0x80 {
+                return Ok((res, i as u8 + 1));
+            }
+        }
+        let b = unsafe { *data.get_unchecked(9) };
+        if b <= 1 {
+            res |= (b as u64) << (9 * 7);
+            return Ok((res, 10));
+        }
+        return Err(Error::Corrupted);
+    }
+    decode_varint_u64_slow(data)
+}
 
 #[inline]
 pub fn decode_varint_s32(data: &[u8]) -> Result<(i32, u8)> {
@@ -118,14 +142,14 @@ pub fn decode_varint_u64(data: &[u8]) -> Result<(u64, u8)> {
 macro_rules! var_encode {
     ($t:ty, $arr_func:ident, $enc_func:ident, $max:expr) => {
         pub unsafe fn $arr_func(start: *mut u8, mut n: $t) -> usize {
-            let mut counter = 0;
+            let mut cur = start;
             while n >= 0x80 {
-                ptr::write(start.add(counter), 0x80 | (n as u8 & 0x7f));
+                ptr::write(cur, 0x80 | n as u8);
                 n >>= 7;
-                counter += 1;
+                cur = cur.add(1);
             }
-            ptr::write(start.add(counter), n as u8);
-            counter + 1
+            ptr::write(cur, n as u8);
+            cur as usize - start as usize + 1
         }
 
         pub fn $enc_func(data: &mut Vec<u8>, n: $t) {
@@ -163,8 +187,11 @@ pub fn encode_varint_s32(data: &mut Vec<u8>, n: i32) {
 
 #[inline]
 pub fn encode_varint_i32(data: &mut Vec<u8>, n: i32) {
-    let n = n as u32;
-    encode_varint_u32(data, n);
+    if n >= 0 {
+        encode_varint_u32(data, n as u32)
+    } else {
+        encode_varint_i64(data, n as i64)
+    }
 }
 
 #[inline]
@@ -187,7 +214,7 @@ pub fn varint_u32_bytes_len(mut n: u32) -> u32 {
 
 #[inline]
 pub fn varint_i32_bytes_len(i: i32) -> u32 {
-    varint_u32_bytes_len(i as u32)
+    varint_i64_bytes_len(i as i64)
 }
 
 #[inline]
@@ -410,6 +437,8 @@ mod test {
             (vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1], -1),
             (vec![2], 2),
             (vec![254, 255, 255, 255, 255, 255, 255, 255, 255, 1], -2),
+            (vec![255, 255, 255, 255, 7], 2147483647),
+            (vec![128, 128, 128, 128, 248, 255, 255, 255, 255, 1], -2147483648),
             (vec![0], 0),
             (vec![128, 1], 128),
             (vec![150, 1], 150),
@@ -497,11 +526,13 @@ mod test {
         test_varint_i32,
         vec![
             (vec![1], 1),
-            (vec![255, 255, 255, 255, 15], -1),
-            (vec![254, 255, 255, 255, 15], -2),
+            (vec![255, 255, 255, 255, 255, 255, 255, 255, 255, 1], -1),
+            (vec![254, 255, 255, 255, 255, 255, 255, 255, 255, 1], -2),
             (vec![0], 0),
             (vec![128, 1], 128),
             (vec![150, 1], 150),
+            (vec![255, 255, 255, 255, 7], 2147483647),
+            (vec![128, 128, 128, 128, 248, 255, 255, 255, 255, 1], -2147483648),
         ],
         encode_varint_i32,
         decode_varint_i32,

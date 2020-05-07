@@ -18,7 +18,12 @@ pub mod encoded {
 
     #[inline]
     pub fn var_i32_len(i: i32) -> usize {
-        var_u32_len(i as u32)
+        var_i64_len(i as i64)
+    }
+
+    #[inline]
+    pub fn var_s32_len(i: i32) -> usize {
+        codec::varint_s32_bytes_len(i) as usize
     }
 
     #[inline]
@@ -29,6 +34,11 @@ pub mod encoded {
     #[inline]
     pub fn var_i64_len(i: i64) -> usize {
         var_u64_len(i as u64)
+    }
+
+    #[inline]
+    pub fn var_s64_len(i: i64) -> usize {
+        codec::varint_s64_bytes_len(i) as usize
     }
 
     #[inline]
@@ -50,6 +60,30 @@ pub mod encoded {
     #[inline]
     pub fn arr_var_i32_len(arr: &[i32]) -> usize {
         let sum: usize = arr.iter().map(|u| var_i32_len(*u)).sum();
+        var_u32_len(sum as u32) + sum
+    }
+
+    #[inline]
+    pub fn arr_var_s32_len(arr: &[i32]) -> usize {
+        let sum: usize = arr.iter().map(|u| var_s32_len(*u)).sum();
+        var_u32_len(sum as u32) + sum
+    }
+
+    #[inline]
+    pub fn arr_var_u64_len(arr: &[u64]) -> usize {
+        let sum: usize = arr.iter().map(|u| var_u64_len(*u)).sum();
+        var_u32_len(sum as u32) + sum
+    }
+
+    #[inline]
+    pub fn arr_var_i64_len(arr: &[i64]) -> usize {
+        let sum: usize = arr.iter().map(|u| var_i64_len(*u)).sum();
+        var_u32_len(sum as u32) + sum
+    }
+
+    #[inline]
+    pub fn arr_var_s64_len(arr: &[i64]) -> usize {
+        let sum: usize = arr.iter().map(|u| var_s64_len(*u)).sum();
         var_u32_len(sum as u32) + sum
     }
 
@@ -87,7 +121,7 @@ macro_rules! write_n_bytes {
     ($func:ident, $n:expr) => {
         #[inline]
         pub fn $func(&mut self, arr: [u8; $n]) -> Result<()> {
-            if self.remaining()? > $n {
+            if self.remaining()? >= $n {
                 self.cur = unsafe {
                     arr.as_ptr().copy_to_nonoverlapping(self.cur, $n);
                     self.cur.add($n)
@@ -133,10 +167,15 @@ impl<B: BufMut> CodedOutputStream<B> {
             Err(Error::OutOfSpace)
         } else {
             self.flush()?;
-            self.remaining()
+            if self.cur < self.end {
+                Ok(self.end as usize - self.cur as usize)
+            } else {
+                Err(Error::OutOfSpace)
+            }
         }
     }
 
+    #[inline]
     pub fn flush(&mut self) -> Result<()> {
         if self.cur == self.start {
             return Ok(());
@@ -193,28 +232,28 @@ impl<B: BufMut> CodedOutputStream<B> {
         }
     }
 
+    #[inline]
     pub fn write_var_u32(&mut self, mut n: u32) -> Result<()> {
         if n < 0x80 {
             return self.write_raw_1_byte([n as u8]);
         }
-        let b1 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_2_byte([b1, n as u8]);
+        if self.remaining()? >= 5 {
+            unsafe {
+                let cnt = codec::encode_varint_u32_to_array(self.cur, n);
+                self.cur = self.cur.add(cnt);
+            }
+            return Ok(());
         }
-        let b2 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_3_byte([b1, b2, n as u8]);
+        while n > 0x7f && self.cur != self.end {
+            unsafe { *self.cur = n as u8 | 0x80;
+            self.cur = self.cur.add(1); }
+            n >>= 7;
         }
-        let b3 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_4_byte([b1, b2, b3, n as u8]);
+        while n > 0x7f {
+            self.write_raw_1_byte([n as u8 | 0x80])?;
+            n >>= 7;
         }
-        let b4 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        self.write_raw_5_byte([b1, b2, b3, b4, n as u8])
+        self.write_raw_1_byte([n as u8])
     }
 
     pub fn write_var_s32(&mut self, n: i32) -> Result<()> {
@@ -230,53 +269,37 @@ impl<B: BufMut> CodedOutputStream<B> {
         Ok(())
     }
 
+    pub fn write_fixed64_array(&mut self, arr: &[u64]) -> Result<()> {
+        let l: usize = arr.len() * 8;
+        self.write_var_u32(l as u32)?;
+        for i in arr {
+            self.write_fixed64(*i)?;
+        }
+        Ok(())
+    }
+
+    #[inline]
     pub fn write_var_u64(&mut self, mut n: u64) -> Result<()> {
         if n < 0x80 {
             return self.write_raw_1_byte([n as u8]);
         }
-        let b1 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_2_byte([b1, n as u8]);
+        if self.remaining()? >= 10 {
+            unsafe {
+                let cnt = codec::encode_varint_u64_to_array(self.cur, n);
+                self.cur = self.cur.add(cnt);
+            }
+            return Ok(());
         }
-        let b2 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_3_byte([b1, b2, n as u8]);
+        while n > 0x7f && self.cur != self.end {
+            unsafe { *self.cur = n as u8 | 0x80;
+            self.cur = self.cur.add(1); }
+            n >>= 7;
         }
-        let b3 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_4_byte([b1, b2, b3, n as u8]);
+        while n > 0x7f {
+            self.write_raw_1_byte([n as u8 | 0x80])?;
+            n >>= 7;
         }
-        let b4 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_5_byte([b1, b2, b3, b4, n as u8]);
-        }
-        let b5 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_6_byte([b1, b2, b3, b4, b5, n as u8]);
-        }
-        let b6 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_7_byte([b1, b2, b3, b4, b5, b6, n as u8]);
-        }
-        let b7 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_8_byte([b1, b2, b3, b4, b5, b6, b7, n as u8]);
-        }
-        let b8 = (n as u8 & 0x7f) | 0x80;
-        n >>= 7;
-        if n < 0x80 {
-            return self.write_raw_9_byte([b1, b2, b3, b4, b5, b6, b7, b8, n as u8]);
-        }
-        let b9 = (n as u8) & 0x7f | 0x80;
-        n >>= 7;
-        self.write_raw_10_byte([b1, b2, b3, b4, b5, b6, b7, b8, b9, n as u8])
+        self.write_raw_1_byte([n as u8])
     }
 
     #[inline]
@@ -303,7 +326,11 @@ impl<B: BufMut> CodedOutputStream<B> {
 
     #[inline]
     pub fn write_var_i32(&mut self, i: i32) -> Result<()> {
-        self.write_var_u32(i as u32)
+        if i > 0 {
+            self.write_var_u32(i as u32)
+        } else {
+            self.write_var_i64(i as i64)
+        }
     }
 
     #[inline]
@@ -312,7 +339,7 @@ impl<B: BufMut> CodedOutputStream<B> {
     }
 
     #[inline]
-    pub fn write_fixed_u64(&mut self, u: u64) -> Result<()> {
+    pub fn write_fixed64(&mut self, u: u64) -> Result<()> {
         let bytes = u64::to_le_bytes(u);
         self.write_raw_8_byte(bytes)
     }
@@ -320,7 +347,19 @@ impl<B: BufMut> CodedOutputStream<B> {
     #[inline]
     pub fn write_f64(&mut self, f: f64) -> Result<()> {
         let u = f64::to_bits(f);
-        self.write_fixed_u64(u)
+        self.write_fixed64(u)
+    }
+
+    #[inline]
+    pub fn write_fixed32(&mut self, u: u32) -> Result<()> {
+        let bytes = u32::to_le_bytes(u);
+        self.write_raw_4_byte(bytes)
+    }
+
+    #[inline]
+    pub fn write_f32(&mut self, f: f32) -> Result<()> {
+        let u = f32::to_bits(f);
+        self.write_fixed32(u)
     }
 
     #[inline]

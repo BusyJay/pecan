@@ -12,3 +12,4 @@ pub use enumerate::EnumType;
 pub use error::{Error, Result};
 pub use message::{CacheSize, Message};
 pub use stream::{encoded, Buf, BufMut, CodedInputStream, CodedOutputStream};
+pub use pecan_utils::{codec, naming};

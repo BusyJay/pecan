@@ -98,11 +98,7 @@ impl<B: Buf> CodedInputStream<B> {
                 match std::str::from_utf8(&bytes[..l]) {
                     Ok(s) => Some(s.to_owned()),
                     Err(_) => {
-                        return Err(Error::InvalidData {
-                            index: 0,
-                            wire: 0,
-                            reason: codec::Error::Corrupted,
-                        })
+                        return Err(Error::corrupted())
                     }
                 }
             } else {
@@ -120,11 +116,7 @@ impl<B: Buf> CodedInputStream<B> {
                 match String::from_utf8(bytes) {
                     Ok(s) => s,
                     Err(_) => {
-                        return Err(Error::InvalidData {
-                            index: 0,
-                            wire: 0,
-                            reason: codec::Error::Corrupted,
-                        })
+                        return Err(Error::corrupted())
                     }
                 }
             }
@@ -167,6 +159,7 @@ impl<B: Buf> CodedInputStream<B> {
             read += to_copy;
         }
         self.read += read;
+        unsafe { buf.set_len(l); }
         Ok(buf)
     }
 
@@ -281,6 +274,16 @@ impl<B: Buf> CodedInputStream<B> {
         Ok(())
     }
 
+    pub fn read_fixed64_array(&mut self, dst: &mut Vec<u64>) -> Result<()> {
+        let len = self.read_raw_varint32()? as usize;
+        let old_limit = self.push_limit(len)?;
+        while self.read < self.len_limit {
+            dst.push(self.read_fixed64()?);
+        }
+        self.pop_limit(old_limit);
+        Ok(())
+    }
+
     fn push_limit(&mut self, new_limit: usize) -> Result<usize> {
         let new_len_limit = self.read + new_limit;
         if new_len_limit > self.len_limit {
@@ -370,83 +373,168 @@ impl<B: Buf> CodedInputStream<B> {
     pub fn discard_field(&mut self, tag: u32) -> Result<()> {
         self.skip_field_impl(&mut BlackHole, tag)
     }
-}
 
-macro_rules! impl_varint {
-    ($t:ty, $func:ident, $quick_func:ident, $max:expr, $last:expr, $slow_func:ident) => {
-        impl<B: Buf> CodedInputStream<B> {
-            #[inline]
-            fn $func(&mut self) -> Result<$t> {
-                match codec::$quick_func(self.buf.bytes()) {
-                    Ok((u, n)) => {
-                        if self.read + n as usize <= self.len_limit {
-                            self.read += n as usize;
-                            self.buf.advance(n as usize);
-                            Ok(u)
-                        } else {
-                            Err(Error::truncated())
-                        }
-                    }
-                    Err(codec::Error::Truncated) => self.$slow_func(),
-                    Err(codec::Error::Corrupted) => Err(Error::InvalidData {
-                        wire: 0,
-                        index: 0,
-                        reason: codec::Error::Corrupted,
-                    }),
-                }
-            }
-
-            #[inline]
-            fn $slow_func(&mut self) -> Result<$t> {
-                let mut data: $t = 0;
-                let mut read: usize = 0;
-                'outer: loop {
-                    let l = {
-                        let buf = self.buf.bytes();
-                        for i in 0..std::cmp::min(buf.len(), $max - read) {
-                            let b = unsafe { *buf.get_unchecked(i) };
-                            data |= ((b & 0x7f) as $t) << 7;
-                            if b <= 0x80 {
-                                read = i + 1;
-                                break 'outer;
-                            }
-                        }
-                        if buf.len() > $max - read {
-                            let b = unsafe { *buf.get_unchecked($max - read) };
-                            if b <= $last {
-                                data |= (b as $t) << 7;
-                                read = $max - read + 1;
-                                break 'outer;
-                            } else {
-                                return Err(Error::InvalidData {
-                                    wire: 0,
-                                    index: 0,
-                                    reason: codec::Error::Corrupted,
-                                });
-                            }
-                        } else if buf.is_empty() {
-                            return Err(Error::truncated());
-                        }
-                        buf.len()
-                    };
-                    read += l;
-                    if l + self.read <= self.len_limit {
-                        self.read += l;
-                        self.buf.advance(l);
-                    } else {
-                        return Err(Error::truncated());
-                    }
-                }
-                if read + self.read <= self.len_limit {
-                    self.read += read;
-                    self.buf.advance(read);
-                    Ok(data)
+    #[inline]
+    fn read_raw_varint32(&mut self) -> Result<u32> {
+        match codec::decode_varint_u32(self.buf.bytes()) {
+            Ok((u, n)) => {
+                if self.read + n as usize <= self.len_limit {
+                    self.read += n as usize;
+                    self.buf.advance(n as usize);
+                    Ok(u)
                 } else {
                     Err(Error::truncated())
                 }
             }
+            Err(codec::Error::Truncated) => self.slow_read_raw_varint32(),
+            Err(codec::Error::Corrupted) => Err(Error::corrupted()),
         }
-    };
+    }
+
+    fn slow_read_raw_varint32(&mut self) -> Result<u32> {
+        let mut data: u32 = 0;
+        let mut read: usize = 0;
+        'outer: loop {
+            let l = {
+                let buf = self.buf.bytes();
+                for i in 0..std::cmp::min(buf.len(), 4 - read) {
+                    let b = unsafe { *buf.get_unchecked(i) };
+                    data |= ((b & 0x7f) as u32) << ((i + read) * 7);
+                    if b <= 0x80 {
+                        read = i + 1;
+                        break 'outer;
+                    }
+                }
+                if buf.len() > 4 - read {
+                    let b = unsafe { *buf.get_unchecked(4 - read) };
+                    if b <= 15 {
+                        data |= (b as u32) << 28;
+                        read = 4 - read + 1;
+                        break 'outer;
+                    }
+                    if (b & 0x80) > 0 {
+                        if buf.len() >= 10 - read {
+                            let b = unsafe { *buf.get_unchecked(9 - read) };
+                            if b == 1 {
+                                read = 10 - read;
+                                break 'outer;
+                            } else {
+                                return Err(Error::corrupted());
+                            }
+                        }
+                    } else {
+                        return Err(Error::corrupted());
+                    }
+                } else if buf.is_empty() {
+                    return Err(Error::truncated());
+                }
+                buf.len()
+            };
+            read += l;
+            if l + self.read <= self.len_limit {
+                self.read += l;
+                self.buf.advance(l);
+            } else {
+                return Err(Error::truncated());
+            }
+            if read < 5 {
+                continue;
+            }
+            loop {
+                let l = {
+                    let buf = self.buf.bytes();
+                    if buf.len() >= 10 - read {
+                        let b = unsafe { *buf.get_unchecked(9 - read) };
+                        if b == 1 {
+                            read = 10 - read;
+                            break 'outer;
+                        } else {
+                            return Err(Error::corrupted());
+                        }
+                    } else if buf.is_empty() {
+                        return Err(Error::truncated());
+                    }
+                    buf.len()
+                };
+                read += l;
+                if l + self.read <= self.len_limit {
+                    self.read += l;
+                    self.buf.advance(l);
+                } else {
+                    return Err(Error::truncated());
+                }
+            }
+        }
+        if read + self.read <= self.len_limit {
+            self.read += read;
+            self.buf.advance(read);
+            Ok(data)
+        } else {
+            Err(Error::truncated())
+        }
+    }
+
+    #[inline]
+    fn read_raw_varint64(&mut self) -> Result<u64> {
+        match codec::decode_varint_u64(self.buf.bytes()) {
+            Ok((u, n)) => {
+                if self.read + n as usize <= self.len_limit {
+                    self.read += n as usize;
+                    self.buf.advance(n as usize);
+                    Ok(u)
+                } else {
+                    Err(Error::truncated())
+                }
+            },
+            Err(codec::Error::Truncated) => self.slow_read_raw_varint64(),
+            Err(codec::Error::Corrupted) => Err(Error::corrupted()),
+        }
+    }
+
+    fn slow_read_raw_varint64(&mut self) -> Result<u64> {
+        let mut data = 0;
+        let mut read: usize = 0;
+        'outer: loop {
+            let l = {
+                let buf = self.buf.bytes();
+                for i in 0..std::cmp::min(buf.len(), 9 - read) {
+                    let b = unsafe { *buf.get_unchecked(i) };
+                    data |= ((b & 0x7f) as u64) << ((read + i) * 7);
+                    if b <= 0x80 {
+                        read = i + 1;
+                        break 'outer;
+                    }
+                }
+                if buf.len() > 9 - read {
+                    let b = unsafe { *buf.get_unchecked(9 - read) };
+                    if b <= 1 {
+                        data |= (b as u64) << 63;
+                        read = 10 - read;
+                        break 'outer;
+                    } else {
+                        return Err(Error::corrupted());
+                    }
+                } else if buf.is_empty() {
+                    return Err(Error::truncated());
+                }
+                buf.len()
+            };
+            read += l;
+            if l + self.read <= self.len_limit {
+                self.read += l;
+                self.buf.advance(l);
+            } else {
+                return Err(Error::truncated());
+            }
+        }
+        if read + self.read <= self.len_limit {
+            self.read += read;
+            self.buf.advance(read);
+            Ok(data)
+        } else {
+            Err(Error::truncated())
+        }
+    }
 }
 
 trait Discard {
@@ -475,20 +563,3 @@ impl Discard for BlackHole {
     #[inline]
     fn discard_slice(&mut self, _: &[u8]) {}
 }
-
-impl_varint!(
-    u32,
-    read_raw_varint32,
-    decode_varint_u32,
-    4,
-    15,
-    slow_read_raw_varint32
-);
-impl_varint!(
-    u64,
-    read_raw_varint64,
-    decode_varint_u64,
-    9,
-    1,
-    slow_read_raw_varint64
-);

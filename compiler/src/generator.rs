@@ -7,6 +7,7 @@ use pecan::Result;
 use pecan_utils::naming;
 use std::env;
 use std::fmt::Write;
+use std::collections::HashMap;
 
 struct FieldDecl<'a> {
     field_name: String,
@@ -108,6 +109,7 @@ impl Generator<'_> {
         w!(
             self.printer,
             "use pecan::{{
+    codec,
     EnumType,
     Message,
     Result,
@@ -116,7 +118,8 @@ impl Generator<'_> {
     CodedInputStream,
     CodedOutputStream,
     encoded,
-}};\n"
+}};
+use std::collections::HashMap;\n"
         );
         let f = ctx.db.files.get(self.file).unwrap();
         if f.proto.dependency().is_empty() {
@@ -166,10 +169,17 @@ impl Generator<'_> {
 
         w_scope!(self.printer, "impl {} {{\n", name);
         let mut zero_value = format!("{}(0)", name);
+        let mut visited_enums = HashMap::new();
         for v in e.proto.value() {
             let enum_name = naming::camel_case(v.name());
             if v.number() == 0 {
                 zero_value = format!("{}::{}", name, enum_name);
+            }
+            if let Some(value) = visited_enums.get(&enum_name) {
+                if v.number() != *value {
+                    panic!("there is already enum named {} with value {} != {}", enum_name, value, v.number());
+                }
+                continue;
             }
             w!(
                 self.printer,
@@ -179,6 +189,7 @@ impl Generator<'_> {
                 name,
                 v.number()
             );
+            visited_enums.insert(enum_name, v.number());
         }
         w_scope!(self.printer, "\npub const fn new() -> {} {{\n", name);
         w!(self.printer, "{}\n", zero_value);
@@ -403,7 +414,7 @@ impl Generator<'_> {
         let mut oneof_decls = vec![];
         for oneof in m.proto.oneof_decl() {
             let mut oneof_names = m.type_name.clone();
-            oneof_names.push(oneof.name().to_owned());
+            oneof_names.push(naming::camel_case(oneof.name()));
             oneof_decls.push(OneOfDecl {
                 field_name: naming::field_name(oneof.name()),
                 type_name: naming::type_name(&oneof_names),
@@ -482,7 +493,7 @@ impl Generator<'_> {
             } else {
                 w!(self.printer, "\n#[derive(Clone, Debug, PartialEq)]\n");
             }
-            w!(self.printer, "\npub enum {} {{\n", desc.type_name);
+            w!(self.printer, "pub enum {} {{\n", desc.type_name);
             self.printer.indent();
             for item in &desc.items {
                 let (ty_name, internal_ty) = match item {
@@ -564,9 +575,7 @@ impl Generator<'_> {
         w!(self.printer, "let tag = s.read_tag()?;\n");
         w!(
             self.printer,
-            "let (mut key, mut value) = ({}::default(), {}::default());\n",
-            k_fd.type_name,
-            v_fd.type_name
+            "let (mut key, mut value) = Default::default();\n"
         );
         w_scope!(self.printer, "loop {{\n");
         w_scope!(self.printer, "match tag {{\n");
@@ -594,7 +603,8 @@ impl Generator<'_> {
         w_end_scope!(self.printer, "}}\n");
         w_end_scope!(self.printer, "}}\n");
         w!(self.printer, "self.{}.insert(key, value);\n", d.field_name);
-        w_end_scope!(self.printer, "}}),\n");
+        w!(self.printer, "Ok(())\n");
+        w_end_scope!(self.printer, "}})?,\n");
     }
 
     fn print_merge_from_oneof(&mut self, o: &OneOfDecl) {
@@ -618,8 +628,7 @@ impl Generator<'_> {
                     self.printer.indent();
                     w!(
                         self.printer,
-                        "let msg = self.{}.{}_mut();\n",
-                        o.field_name,
+                        "let msg = self.{}_mut();\n",
                         d.field_name
                     );
                     w!(self.printer, "s.read_message(msg)?;\n");
@@ -629,7 +638,7 @@ impl Generator<'_> {
                 FieldType::Singlular(d) => {
                     w!(
                         self.printer,
-                        "{} => self.{} = Some({}::{}(self.read_{}()?)),\n",
+                        "{} => self.{} = Some({}::{}(s.read_{}()?)),\n",
                         d.tag1,
                         o.field_name,
                         o.type_name,
@@ -704,11 +713,9 @@ impl Generator<'_> {
             w!(self.printer, "}}\n");
         } else {
             let (key_fd, val_fd) = (&d.map_fields[0], &d.map_fields[1]);
-            if val_fd.copy {
-                w_scope!(self.printer, "for (&k, &v) in &self.{} {{\n", d.field_name);
-            } else {
-                w_scope!(self.printer, "for (&k, v) in &self.{} {{\n", d.field_name);
-            }
+            let key_mat = if key_fd.copy { "&k" } else { "k" };
+            let val_mat = if val_fd.copy { "&v" } else { "v" };
+            w_scope!(self.printer, "for ({}, {}) in &self.{} {{\n", key_mat, val_mat, d.field_name);
             self.print_write_to_tag(d.tag1);
             w!(self.printer, "let mut n = 0;\n");
             self.check_print_singlular(key_fd, "k", Self::print_len_raw);
@@ -731,11 +738,18 @@ impl Generator<'_> {
         for ft in field_sets {
             match ft {
                 FieldType::Optional(d) => self.print_write_to_optional(d),
-                FieldType::Singlular(d) => self.check_print_singlular(
-                    d,
-                    &format!("self.{}", d.field_name),
-                    Self::print_write_to_raw,
-                ),
+                FieldType::Singlular(d) => {
+                    let field = if d.copy {
+                        format!("self.{}", d.field_name)
+                    } else {
+                        format!("&self.{}", d.field_name)
+                    };
+                    self.check_print_singlular(
+                        d,
+                        &field,
+                        Self::print_write_to_raw,
+                    )
+                },
                 FieldType::Repeated(d) => self.print_write_to_repeated(d),
                 FieldType::Oneof(d) => self.check_print_oneof(d, Self::print_write_to_raw),
             }
@@ -749,42 +763,63 @@ impl Generator<'_> {
         w!(self.printer, "}}\n");
     }
 
-    fn print_len_raw(&mut self, d: &FieldDecl, method_symbol: &str, field: &str) {
+    fn print_len_raw(&mut self, d: &FieldDecl, symbol: &str, field: &str) {
         let tag = if d.tag2 == 0 { d.tag1 } else { d.tag2 };
         let tag_len = pecan::encoded::var_u32_len(tag);
-        if method_symbol == "bool" {
-            w!(self.printer, "n += {};\n", tag_len + 1);
-        } else if method_symbol.starts_with("arr_") {
+        w!(self.printer, "n += ");
+        if symbol == "bool" {
+            w!(self.printer, "{}", tag_len + 1);
+        } else if symbol.starts_with("arr_") {
             if !d.copy {
-                w!(
-                    self.printer,
-                    "n += encoded::{}_len({}, &self.{});\n",
-                    method_symbol,
-                    tag_len,
-                    d.field_name
-                );
+                w_scope!(self.printer, "{}.iter().fold(0, |n, m| {{\n", field);
+                w!(self.printer, "let l = m.len();\n");
+                w!(self.printer, "n + {} + codec::varint_u32_bytes_len(l as u32) as usize + l\n", tag_len);
+                w_end_scope!(self.printer, "}})");
             } else {
-                w!(
-                    self.printer,
-                    "n += {} + encoded::{}_len({});\n",
-                    tag_len,
-                    method_symbol,
-                    field
-                );
+                w_scope!(self.printer, "{{\n");
+                if symbol == "arr_bool" {
+                    w!(self.printer, "let l = {}.len();\n", field);
+                } else if symbol.ends_with("fixed64") || symbol.ends_with("f64") {
+                    w!(self.printer, "let l = {}.len() * 8;\n", field);
+                } else if symbol.ends_with("fixed32") || symbol.ends_with("f32") {
+                    w!(self.printer, "let l = {}.len() * 4;\n", field);
+                } else {
+                    w!(self.printer, "let l = {}.iter().map(|v| ", field);
+                    if symbol == "arr_enum" {
+                        w!(self.printer, "codec::varint_i64_bytes_len(v.value() as i64) as usize");
+                    } else if symbol == "arr_var_i32" {
+                        w!(self.printer, "codec::varint_i64_bytes_len(*v as i64) as usize");
+                    } else {
+                        w!(self.printer, "codec::varint_{}_bytes_len(*v) as usize", &symbol[symbol.len() - 3..])
+                    }
+                    w!(self.printer, ").sum() as usize;\n");
+                }
+                w!(self.printer, "n + {} + codec::varint_u32_bytes_len(l as u32) as usize + l\n", tag_len);
+                w_end_scope!(self.printer, "}}");
             }
-        } else if method_symbol.ends_with("f64") || method_symbol.ends_with("fixed64") {
-            w!(self.printer, "n += {};\n", tag_len + 8);
-        } else if method_symbol == "f32" || method_symbol.ends_with("fixed32") {
-            w!(self.printer, "n += {};\n", tag_len + 4);
         } else {
-            w!(
-                self.printer,
-                "n += {} + encoded::{}_len({});\n",
-                tag_len,
-                method_symbol,
-                field
-            );
+            if !d.copy {
+                w_scope!(self.printer, "{{\n");
+                w!(self.printer, "let l = {}.len();\n", field);
+                w!(self.printer, "{} + codec::varint_u32_bytes_len(l as u32) as usize + l\n", tag_len);
+                w_end_scope!(self.printer, "}}");
+            } else {
+                if symbol.ends_with("fixed64") || symbol.ends_with("f64") {
+                    w!(self.printer, "{}", tag_len + 8);
+                } else if symbol.ends_with("fixed32") || symbol.ends_with("f32") {
+                    w!(self.printer, "{}", tag_len + 4);
+                } else {
+                    if symbol == "enum" {
+                        w!(self.printer, "codec::varint_i64_bytes_len({}.value() as i64) as usize", field);
+                    } else if symbol == "var_i32" {
+                        w!(self.printer, "codec::varint_i64_bytes_len({} as i64) as usize", field);
+                    } else {
+                        w!(self.printer, "codec::varint_{}_bytes_len({}) as usize", &symbol[symbol.len() - 3..], field)
+                    }
+                }
+            }
         }
+        w!(self.printer, ";\n");
     }
 
     fn print_write_to_optional(&mut self, d: &FieldDecl) {
@@ -829,12 +864,7 @@ impl Generator<'_> {
         } else if d.method_symbol != "message" {
             w_scope!(self.printer, "if !{}.is_empty() {{\n", field);
         }
-        if d.copy || !field.starts_with("self") {
-            f(self, d, d.method_symbol, field)
-        } else {
-            let field = format!("&{}", field);
-            f(self, d, d.method_symbol, &field)
-        };
+        f(self, d, d.method_symbol, &field);
         if d.method_symbol != "message" {
             w_end_scope!(self.printer, "}}\n");
         }
@@ -844,7 +874,7 @@ impl Generator<'_> {
         w_scope!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
         if d.map_fields.is_empty() {
             let method_symbol = format!("arr_{}", d.method_symbol);
-            let field = format!("&self.{}", d.field_name);
+            let field = format!("self.{}", d.field_name);
             self.print_len_raw(d, &method_symbol, &field);
         } else {
             let (key_fd, val_fd) = (&d.map_fields[0], &d.map_fields[1]);
@@ -854,7 +884,7 @@ impl Generator<'_> {
                 w_scope!(self.printer, "for (&k, v) in &self.{} {{\n", d.field_name);
             }
             let tag_len = pecan::encoded::var_u32_len(d.tag1);
-            w!(self.printer, "n += {}\n", tag_len);
+            w!(self.printer, "n += {};\n", tag_len);
             self.check_print_singlular(key_fd, "k", Self::print_len_raw);
             self.check_print_singlular(val_fd, "v", Self::print_len_raw);
             w_end_scope!(self.printer, "}}\n");
@@ -880,7 +910,12 @@ impl Generator<'_> {
                 naming::camel_case(&d.field_name)
             );
             self.printer.indent();
-            f(self, d, d.method_symbol, "v");
+            let field = if d.copy {
+                "(*v)"
+            } else {
+                "v"
+            };
+            f(self, d, d.method_symbol, field);
             self.printer.outdent();
             w!(self.printer, "}}\n");
         }
@@ -932,7 +967,11 @@ impl Generator<'_> {
                     }
                 }
                 FieldType::Repeated(d) => {
-                    w!(self.printer, "{}: Vec::new(),\n", d.field_name);
+                    if d.map_fields.is_empty() {
+                        w!(self.printer, "{}: Vec::new(),\n", d.field_name);
+                    } else {
+                        w!(self.printer, "{}: HashMap::new(),\n", d.field_name);
+                    }
                 }
                 FieldType::Oneof(o) => {
                     w!(self.printer, "{}: None,\n", o.field_name);
@@ -1186,7 +1225,7 @@ impl Generator<'_> {
             }
             w!(
                 self.printer,
-                "Some({}::{}(v)) => v\n",
+                "Some({}::{}(v)) => v,\n",
                 o.type_name,
                 naming::camel_case(&d.field_name)
             );
@@ -1231,7 +1270,7 @@ impl Generator<'_> {
             );
             w_end_scope!(self.printer, "}}\n");
             if d.copy {
-                return;
+                continue;
             }
             w_scope!(
                 self.printer,
@@ -1241,7 +1280,7 @@ impl Generator<'_> {
             );
             w_scope!(
                 self.printer,
-                "if let Some({}::{}(v)) = &mut self.{} {{\n",
+                "if let Some({}::{}(ref mut v)) = self.{} {{\n",
                 o.type_name,
                 naming::camel_case(&d.field_name),
                 o.field_name
@@ -1250,20 +1289,20 @@ impl Generator<'_> {
             w_end_scope!(self.printer, "}}\n");
             w!(
                 self.printer,
-                "self.{} = Some({}::{}(Default::default());\n",
+                "self.{} = Some({}::{}(Default::default()));\n",
                 o.field_name,
                 o.type_name,
                 naming::camel_case(&d.field_name)
             );
             w_scope!(
                 self.printer,
-                "if let Some({}::{}(v)) = &mut self.{} {{\n",
+                "if let Some({}::{}(ref mut v)) = self.{} {{\n",
                 o.type_name,
                 naming::camel_case(&d.field_name),
                 o.field_name
             );
             w!(self.printer, "return v;\n");
-            w_end_scope!(self.printer, "}} else {{ unreachable!() }}\n");
+            w_end_scope!(self.printer, "}}\nunreachable!()\n");
             w_end_scope!(self.printer, "}}\n");
         }
     }
