@@ -192,7 +192,7 @@ impl<B: Buf> CodedInputStream<B> {
 
     #[inline]
     pub fn read_var_i32(&mut self) -> Result<i32> {
-        self.read_raw_varint32().map(|u| u as i32)
+        self.read_raw_varint64().map(|u| u as i64 as i32)
     }
 
     #[inline]
@@ -483,6 +483,7 @@ impl<B: Buf> CodedInputStream<B> {
                     self.buf.advance(n as usize);
                     Ok(u)
                 } else {
+                    eprintln!("{} {} {}", self.read, n, self.len_limit);
                     Err(Error::truncated())
                 }
             },

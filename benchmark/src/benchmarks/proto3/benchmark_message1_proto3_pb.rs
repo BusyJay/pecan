@@ -330,19 +330,19 @@ impl Message for GoogleMessage1 {
             n += 3;
         }
         if 0 != self.field2 {
-            n += codec::varint_i64_bytes_len(self.field2 as i64) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field2 as i64) as usize;
         }
         if 0 != self.field3 {
-            n += codec::varint_i64_bytes_len(self.field3 as i64) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field3 as i64) as usize;
         }
         if 0 != self.field280 {
-            n += codec::varint_i64_bytes_len(self.field280 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field280 as i64) as usize;
         }
         if 0 != self.field6 {
-            n += codec::varint_i64_bytes_len(self.field6 as i64) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field6 as i64) as usize;
         }
         if 0 != self.field22 {
-            n += codec::varint_i64_bytes_len(self.field22) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field22) as usize;
         }
         if !self.field4.is_empty() {
             n += {
@@ -366,10 +366,10 @@ impl Message for GoogleMessage1 {
             };
         }
         if 0 != self.field16 {
-            n += codec::varint_i64_bytes_len(self.field16 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field16 as i64) as usize;
         }
         if 0 != self.field130 {
-            n += codec::varint_i64_bytes_len(self.field130 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field130 as i64) as usize;
         }
         if self.field12 {
             n += 2;
@@ -384,13 +384,13 @@ impl Message for GoogleMessage1 {
             n += 2;
         }
         if 0 != self.field104 {
-            n += codec::varint_i64_bytes_len(self.field104 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field104 as i64) as usize;
         }
         if 0 != self.field100 {
-            n += codec::varint_i64_bytes_len(self.field100 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field100 as i64) as usize;
         }
         if 0 != self.field101 {
-            n += codec::varint_i64_bytes_len(self.field101 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field101 as i64) as usize;
         }
         if !self.field102.is_empty() {
             n += {
@@ -405,31 +405,31 @@ impl Message for GoogleMessage1 {
             };
         }
         if 0 != self.field29 {
-            n += codec::varint_i64_bytes_len(self.field29 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field29 as i64) as usize;
         }
         if self.field30 {
             n += 3;
         }
         if 0 != self.field60 {
-            n += codec::varint_i64_bytes_len(self.field60 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field60 as i64) as usize;
         }
         if 0 != self.field271 {
-            n += codec::varint_i64_bytes_len(self.field271 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field271 as i64) as usize;
         }
         if 0 != self.field272 {
-            n += codec::varint_i64_bytes_len(self.field272 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field272 as i64) as usize;
         }
         if 0 != self.field150 {
-            n += codec::varint_i64_bytes_len(self.field150 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field150 as i64) as usize;
         }
         if 0 != self.field23 {
-            n += codec::varint_i64_bytes_len(self.field23 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field23 as i64) as usize;
         }
         if self.field24 {
             n += 3;
         }
         if 0 != self.field25 {
-            n += codec::varint_i64_bytes_len(self.field25 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field25 as i64) as usize;
         }
         if let Some(v) = &self.field15 {
             n += {
@@ -441,13 +441,13 @@ impl Message for GoogleMessage1 {
             n += 3;
         }
         if 0 != self.field67 {
-            n += codec::varint_i64_bytes_len(self.field67 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field67 as i64) as usize;
         }
         if 0 != self.field68 {
-            n += codec::varint_i64_bytes_len(self.field68 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field68 as i64) as usize;
         }
         if 0 != self.field128 {
-            n += codec::varint_i64_bytes_len(self.field128 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field128 as i64) as usize;
         }
         if !self.field129.is_empty() {
             n += {
@@ -456,7 +456,7 @@ impl Message for GoogleMessage1 {
             };
         }
         if 0 != self.field131 {
-            n += codec::varint_i64_bytes_len(self.field131 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field131 as i64) as usize;
         }
         n
     }
@@ -936,13 +936,13 @@ impl Message for GoogleMessage1SubMessage {
     fn len(&self) -> usize {
         let mut n = self.unknown.len();
         if 0 != self.field1 {
-            n += codec::varint_i64_bytes_len(self.field1 as i64) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field1 as i64) as usize;
         }
         if 0 != self.field2 {
-            n += codec::varint_i64_bytes_len(self.field2 as i64) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field2 as i64) as usize;
         }
         if 0 != self.field3 {
-            n += codec::varint_i64_bytes_len(self.field3 as i64) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field3 as i64) as usize;
         }
         if !self.field15.is_empty() {
             n += {
@@ -954,16 +954,16 @@ impl Message for GoogleMessage1SubMessage {
             n += 2;
         }
         if 0 != self.field13 {
-            n += codec::varint_i64_bytes_len(self.field13) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field13) as usize;
         }
         if 0 != self.field14 {
-            n += codec::varint_i64_bytes_len(self.field14) as usize;
+            n += 1 + codec::varint_i64_bytes_len(self.field14) as usize;
         }
         if 0 != self.field16 {
-            n += codec::varint_i64_bytes_len(self.field16 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field16 as i64) as usize;
         }
         if 0 != self.field19 {
-            n += codec::varint_i64_bytes_len(self.field19 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field19 as i64) as usize;
         }
         if self.field20 {
             n += 3;
@@ -975,7 +975,7 @@ impl Message for GoogleMessage1SubMessage {
             n += 10;
         }
         if 0 != self.field22 {
-            n += codec::varint_i64_bytes_len(self.field22 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field22 as i64) as usize;
         }
         if self.field23 {
             n += 3;
@@ -987,7 +987,7 @@ impl Message for GoogleMessage1SubMessage {
             n += 6;
         }
         if 0 != self.field204 {
-            n += codec::varint_i64_bytes_len(self.field204 as i64) as usize;
+            n += 2 + codec::varint_i64_bytes_len(self.field204 as i64) as usize;
         }
         if !self.field205.is_empty() {
             n += {
@@ -996,10 +996,10 @@ impl Message for GoogleMessage1SubMessage {
             };
         }
         if 0 != self.field207 {
-            n += codec::varint_u64_bytes_len(self.field207) as usize;
+            n += 2 + codec::varint_u64_bytes_len(self.field207) as usize;
         }
         if 0 != self.field300 {
-            n += codec::varint_u64_bytes_len(self.field300) as usize;
+            n += 2 + codec::varint_u64_bytes_len(self.field300) as usize;
         }
         n
     }

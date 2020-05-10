@@ -810,11 +810,11 @@ use std::collections::HashMap;\n"
                     w!(self.printer, "{}", tag_len + 4);
                 } else {
                     if symbol == "enum" {
-                        w!(self.printer, "codec::varint_i64_bytes_len({}.value() as i64) as usize", field);
+                        w!(self.printer, "{} + codec::varint_i64_bytes_len({}.value() as i64) as usize", tag_len, field);
                     } else if symbol == "var_i32" {
-                        w!(self.printer, "codec::varint_i64_bytes_len({} as i64) as usize", field);
+                        w!(self.printer, "{} + codec::varint_i64_bytes_len({} as i64) as usize", tag_len, field);
                     } else {
-                        w!(self.printer, "codec::varint_{}_bytes_len({}) as usize", &symbol[symbol.len() - 3..], field)
+                        w!(self.printer, "{} + codec::varint_{}_bytes_len({}) as usize", tag_len, &symbol[symbol.len() - 3..], field)
                     }
                 }
             }
