@@ -1,6 +1,6 @@
 use std::{mem, ptr, slice, u64};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Error {
     Corrupted,
     Truncated,

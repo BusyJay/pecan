@@ -36,6 +36,20 @@ macro_rules! impl_fixed {
     };
 }
 
+macro_rules! impl_numeric_array {
+    ($t:ident, $func:ident, $read_one:ident) => {
+        pub fn $func(&mut self, dst: &mut Vec<$t>) -> Result<()> {
+            let len = self.read_raw_varint32()? as usize;
+            let old_limit = self.push_limit(len)?;
+            while self.read < self.len_limit {
+                dst.push(self.$read_one()?);
+            }
+            self.pop_limit(old_limit);
+            Ok(())
+        }
+    }
+}
+
 pub struct CodedInputStream<B> {
     buf: B,
     read: usize,
@@ -264,21 +278,25 @@ impl<B: Buf> CodedInputStream<B> {
         self.read_message(last)
     }
 
-    pub fn read_var_i32_array(&mut self, dst: &mut Vec<i32>) -> Result<()> {
-        let len = self.read_raw_varint32()? as usize;
-        let old_limit = self.push_limit(len)?;
-        while self.read < self.len_limit {
-            dst.push(self.read_var_i32()?);
-        }
-        self.pop_limit(old_limit);
-        Ok(())
-    }
+    impl_numeric_array!(bool, read_bool_array, read_bool);
+    impl_numeric_array!(i32, read_var_i32_array, read_var_i32);
+    impl_numeric_array!(u32, read_var_u32_array, read_var_u32);
+    impl_numeric_array!(i32, read_var_s32_array, read_var_s32);
+    impl_numeric_array!(f32, read_f32_array, read_f32);
+    impl_numeric_array!(i32, read_sfixed32_array, read_sfixed32);
+    impl_numeric_array!(u32, read_fixed32_array, read_fixed32);
+    impl_numeric_array!(i64, read_var_i64_array, read_var_i64);
+    impl_numeric_array!(u64, read_var_u64_array, read_var_u64);
+    impl_numeric_array!(i64, read_var_s64_array, read_var_s64);
+    impl_numeric_array!(f64, read_f64_array, read_f64);
+    impl_numeric_array!(i64, read_sfixed64_array, read_sfixed64);
+    impl_numeric_array!(u64, read_fixed64_array, read_fixed64);
 
-    pub fn read_fixed64_array(&mut self, dst: &mut Vec<u64>) -> Result<()> {
+    pub fn read_enum_array(&mut self, dst: &mut Vec<impl EnumType>) -> Result<()> {
         let len = self.read_raw_varint32()? as usize;
         let old_limit = self.push_limit(len)?;
         while self.read < self.len_limit {
-            dst.push(self.read_fixed64()?);
+            dst.push(self.read_var_i32()?.into());
         }
         self.pop_limit(old_limit);
         Ok(())
@@ -327,6 +345,10 @@ impl<B: Buf> CodedInputStream<B> {
     }
 
     fn skip_field_impl(&mut self, unknown: &mut impl Discard, tag: u32) -> Result<()> {
+        if tag >> 3 == 0 {
+            // 0 field number is illegal.
+            return Err(Error::corrupted());
+        }
         unknown.discard_varint(tag as u64);
         let mut to_skip = match tag & 0x07 {
             0 => return self.skip_varint(unknown),
@@ -400,7 +422,7 @@ impl<B: Buf> CodedInputStream<B> {
                 for i in 0..std::cmp::min(buf.len(), 4 - read) {
                     let b = unsafe { *buf.get_unchecked(i) };
                     data |= ((b & 0x7f) as u32) << ((i + read) * 7);
-                    if b <= 0x80 {
+                    if b < 0x80 {
                         read = i + 1;
                         break 'outer;
                     }
@@ -483,7 +505,6 @@ impl<B: Buf> CodedInputStream<B> {
                     self.buf.advance(n as usize);
                     Ok(u)
                 } else {
-                    eprintln!("{} {} {}", self.read, n, self.len_limit);
                     Err(Error::truncated())
                 }
             },
@@ -501,7 +522,7 @@ impl<B: Buf> CodedInputStream<B> {
                 for i in 0..std::cmp::min(buf.len(), 9 - read) {
                     let b = unsafe { *buf.get_unchecked(i) };
                     data |= ((b & 0x7f) as u64) << ((read + i) * 7);
-                    if b <= 0x80 {
+                    if b < 0x80 {
                         read = i + 1;
                         break 'outer;
                     }
@@ -563,4 +584,17 @@ impl Discard for BlackHole {
 
     #[inline]
     fn discard_slice(&mut self, _: &[u8]) {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_var_i64() {
+        let s: &[u8] = &[0x80];
+        let mut cis = CodedInputStream::new(s);
+        let e = cis.read_var_i64().unwrap_err();
+        assert!(e.is_truncated(), "{:?}", e);
+    }
 }

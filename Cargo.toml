@@ -16,12 +16,15 @@ bytes = "0.5"
 members = [
     "benchmark",
     "compiler",
+    "conformance",
     "descriptor",
     "utils",
 ]
 
 [profile.release]
 codegen-units = 1
+debug = true
 
 [profile.bench]
 codegen-units = 1
+debug = true

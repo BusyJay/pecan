@@ -29,6 +29,14 @@ impl Error {
             reason: codec::Error::Corrupted,
         }
     }
+
+    pub fn is_truncated(&self) -> bool {
+        if let Error::InvalidData { reason, .. } = self {
+            *reason == codec::Error::Truncated
+        } else {
+            false
+        }
+    }
 }
 
 impl Display for Error {

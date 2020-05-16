@@ -130,6 +130,10 @@ pub fn snake_case(s: &str) -> String {
                 s.push(b'_');
             }
             s.push(b.to_ascii_lowercase());
+        } else if *b == b'_' {
+            if *b != previous_byte {
+                s.push(*b);
+            }
         } else {
             s.push(*b)
         }
@@ -215,7 +219,7 @@ mod tests {
             ("abcdef", "abcdef"),
             ("a", "a"),
             ("A", "a"),
-            ("a__B__c__D_", "a__b__c__d_"),
+            ("a__B__c__D_", "a_b_c_d_"),
             ("abCDE", "ab_c_d_e"),
             ("ABCDE", "a_b_c_d_e"),
             ("Abc123Def", "abc123_def"),

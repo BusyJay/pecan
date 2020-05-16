@@ -26,6 +26,32 @@ pub trait Message {
     }
 }
 
+impl<T: Message> Message for Box<T> {
+    fn merge_from(&mut self, input: &mut CodedInputStream<impl Buf>) -> Result<()> {
+        self.as_mut().merge_from(input)
+    }
+
+    fn write_to(&self, output: &mut CodedOutputStream<impl BufMut>) -> Result<()> {
+        self.as_ref().write_to(output)
+    }
+
+    fn len(&self) -> usize {
+        self.as_ref().len()
+    }
+
+    fn merge_from_bytes(&mut self, s: &[u8]) -> Result<()> {
+        self.as_mut().merge_from_bytes(s)
+    }
+
+    fn write_to_vec(&self, s: &mut Vec<u8>) -> Result<()> {
+        self.as_ref().write_to_vec(s)
+    }
+
+    fn write_as_bytes(&self) -> Result<Vec<u8>> {
+        self.as_ref().write_as_bytes()
+    }
+}
+
 pub trait MergeFrom {
     fn merge_from(&mut self, other: Self);
 }

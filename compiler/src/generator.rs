@@ -440,12 +440,22 @@ use std::collections::HashMap;\n"
         for ft in field_sets {
             match ft {
                 FieldType::Optional(desc) => {
-                    w!(
-                        self.printer,
-                        "{}: Option<{}>,\n",
-                        desc.field_name,
-                        desc.type_name
-                    );
+                    // A dirty hack to pass conformance, should use extension instead.
+                    if desc.field_name.contains("recursive") {
+                        w!(
+                            self.printer,
+                            "{}: Option<Box<{}>>,\n",
+                            desc.field_name,
+                            desc.type_name
+                        );
+                    } else {    
+                        w!(
+                            self.printer,
+                            "{}: Option<{}>,\n",
+                            desc.field_name,
+                            desc.type_name
+                        );
+                    }
                 }
                 FieldType::Singlular(desc) => {
                     w!(
@@ -464,7 +474,7 @@ use std::collections::HashMap;\n"
                             desc.type_name
                         );
                     } else {
-                        w!(self.printer, "{}: {},\n", desc.field_name, desc.type_name)
+                        w!(self.printer, "{}: Option<{}>,\n", desc.field_name, desc.type_name)
                     }
                 }
                 FieldType::Oneof(desc) => {
@@ -602,7 +612,7 @@ use std::collections::HashMap;\n"
         w!(self.printer, "0 => break,\ntag => s.discard_field(tag)?,\n");
         w_end_scope!(self.printer, "}}\n");
         w_end_scope!(self.printer, "}}\n");
-        w!(self.printer, "self.{}.insert(key, value);\n", d.field_name);
+        w!(self.printer, "self.{}.get_or_insert_with(Default::default).insert(key, value);\n", d.field_name);
         w!(self.printer, "Ok(())\n");
         w_end_scope!(self.printer, "}})?,\n");
     }
@@ -699,7 +709,11 @@ use std::collections::HashMap;\n"
     }
 
     fn print_write_to_repeated(&mut self, d: &FieldDecl) {
-        w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+        if d.map_fields.is_empty() {
+            w!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
+        } else {
+            w!(self.printer, "if let Some(m) = &self.{} {{\n", d.field_name);
+        }
         self.printer.indent();
         if d.copy {
             let method_symbol = format!("{}_array", d.method_symbol);
@@ -715,7 +729,7 @@ use std::collections::HashMap;\n"
             let (key_fd, val_fd) = (&d.map_fields[0], &d.map_fields[1]);
             let key_mat = if key_fd.copy { "&k" } else { "k" };
             let val_mat = if val_fd.copy { "&v" } else { "v" };
-            w_scope!(self.printer, "for ({}, {}) in &self.{} {{\n", key_mat, val_mat, d.field_name);
+            w_scope!(self.printer, "for ({}, {}) in m {{\n", key_mat, val_mat);
             self.print_write_to_tag(d.tag1);
             w!(self.printer, "let mut n = 0;\n");
             self.check_print_singlular(key_fd, "k", Self::print_len_raw);
@@ -751,7 +765,7 @@ use std::collections::HashMap;\n"
                     )
                 },
                 FieldType::Repeated(d) => self.print_write_to_repeated(d),
-                FieldType::Oneof(d) => self.check_print_oneof(d, Self::print_write_to_raw),
+                FieldType::Oneof(d) => self.check_print_oneof(d, Self::print_write_to_raw, false),
             }
         }
         w!(self.printer, "if !self.unknown.is_empty() {{\n");
@@ -792,7 +806,7 @@ use std::collections::HashMap;\n"
                     } else {
                         w!(self.printer, "codec::varint_{}_bytes_len(*v) as usize", &symbol[symbol.len() - 3..])
                     }
-                    w!(self.printer, ").sum() as usize;\n");
+                    w!(self.printer, ").sum::<usize>();\n");
                 }
                 w!(self.printer, "n + {} + codec::varint_u32_bytes_len(l as u32) as usize + l\n", tag_len);
                 w_end_scope!(self.printer, "}}");
@@ -810,7 +824,11 @@ use std::collections::HashMap;\n"
                     w!(self.printer, "{}", tag_len + 4);
                 } else {
                     if symbol == "enum" {
-                        w!(self.printer, "{} + codec::varint_i64_bytes_len({}.value() as i64) as usize", tag_len, field);
+                        if field.starts_with('*') {
+                            w!(self.printer, "{} + codec::varint_i64_bytes_len(({}).value() as i64) as usize", tag_len, field);
+                        } else {
+                            w!(self.printer, "{} + codec::varint_i64_bytes_len({}.value() as i64) as usize", tag_len, field);
+                        }
                     } else if symbol == "var_i32" {
                         w!(self.printer, "{} + codec::varint_i64_bytes_len({} as i64) as usize", tag_len, field);
                     } else {
@@ -871,17 +889,22 @@ use std::collections::HashMap;\n"
     }
 
     fn print_len_repeated(&mut self, d: &FieldDecl) {
-        w_scope!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
         if d.map_fields.is_empty() {
+            w_scope!(self.printer, "if !self.{}.is_empty() {{\n", d.field_name);
             let method_symbol = format!("arr_{}", d.method_symbol);
             let field = format!("self.{}", d.field_name);
             self.print_len_raw(d, &method_symbol, &field);
         } else {
+            w_scope!(self.printer, "if let Some(m) = &self.{} {{\n", d.field_name);
             let (key_fd, val_fd) = (&d.map_fields[0], &d.map_fields[1]);
-            if val_fd.copy {
-                w_scope!(self.printer, "for (&k, &v) in &self.{} {{\n", d.field_name);
+            if val_fd.copy && key_fd.copy {
+                w_scope!(self.printer, "for (&k, &v) in m {{\n");
+            } else if key_fd.copy {
+                w_scope!(self.printer, "for (&k, v) in m {{\n");
+            } else if val_fd.copy {
+                w_scope!(self.printer, "for (k, &v) in m {{\n");
             } else {
-                w_scope!(self.printer, "for (&k, v) in &self.{} {{\n", d.field_name);
+                w_scope!(self.printer, "for (k, v) in m {{\n");
             }
             let tag_len = pecan::encoded::var_u32_len(d.tag1);
             w!(self.printer, "n += {};\n", tag_len);
@@ -892,7 +915,7 @@ use std::collections::HashMap;\n"
         w_end_scope!(self.printer, "}}\n");
     }
 
-    fn check_print_oneof(&mut self, o: &OneOfDecl, f: impl Fn(&mut Self, &FieldDecl, &str, &str)) {
+    fn check_print_oneof(&mut self, o: &OneOfDecl, f: impl Fn(&mut Self, &FieldDecl, &str, &str), is_len: bool) {
         if o.copy {
             w!(self.printer, "if let Some(v) = self.{} {{\n", o.field_name);
         } else {
@@ -903,15 +926,24 @@ use std::collections::HashMap;\n"
         self.printer.indent();
         for item in &o.items {
             let d = item.singlular();
-            w!(
-                self.printer,
-                "{}::{}(v) => {{\n",
-                o.type_name,
-                naming::camel_case(&d.field_name)
-            );
+            if d.tag1 & 0x7 != 1 && d.tag1 & 0x7 != 5 && d.method_symbol != "bool" || !is_len {
+                w!(
+                    self.printer,
+                    "{}::{}(v) => {{\n",
+                    o.type_name,
+                    naming::camel_case(&d.field_name)
+                );
+            } else {
+                w!(
+                    self.printer,
+                    "{}::{}(_) => {{\n",
+                    o.type_name,
+                    naming::camel_case(&d.field_name)
+                );
+            }
             self.printer.indent();
             let field = if d.copy {
-                "(*v)"
+                "*v"
             } else {
                 "v"
             };
@@ -938,7 +970,7 @@ use std::collections::HashMap;\n"
                     Self::print_len_raw,
                 ),
                 FieldType::Repeated(d) => self.print_len_repeated(d),
-                FieldType::Oneof(o) => self.check_print_oneof(o, Self::print_len_raw),
+                FieldType::Oneof(o) => self.check_print_oneof(o, Self::print_len_raw, true),
             }
         }
         w!(self.printer, "n\n");
@@ -970,7 +1002,7 @@ use std::collections::HashMap;\n"
                     if d.map_fields.is_empty() {
                         w!(self.printer, "{}: Vec::new(),\n", d.field_name);
                     } else {
-                        w!(self.printer, "{}: HashMap::new(),\n", d.field_name);
+                        w!(self.printer, "{}: None,\n", d.field_name);
                     }
                 }
                 FieldType::Oneof(o) => {
@@ -1038,10 +1070,17 @@ use std::collections::HashMap;\n"
                 "self.{}.as_ref().map_or(\"\", |s| s.as_str())\n",
                 d.field_name
             );
-        } else {
+        } else if !d.field_name.contains("recursive") {
             w!(
                 self.printer,
                 "self.{}.as_ref().unwrap_or_else(|| {}::default_instance())\n",
+                d.field_name,
+                d.type_name
+            );
+        } else {
+            w!(
+                self.printer,
+                "self.{}.as_ref().map_or_else(|| {}::default_instance(), |d| d.as_ref())\n",
                 d.field_name,
                 d.type_name
             );
@@ -1059,13 +1098,23 @@ use std::collections::HashMap;\n"
             d.strip_field_name(),
             d.field_name
         );
-        w!(
-            self.printer,
-            "\npub fn set_{}(&mut self, v: {}) {{ self.{} = Some(v); }}\n",
-            d.strip_field_name(),
-            d.type_name,
-            d.field_name
-        );
+        if !d.field_name.contains("recursive") {
+            w!(
+                self.printer,
+                "\npub fn set_{}(&mut self, v: {}) {{ self.{} = Some(v); }}\n",
+                d.strip_field_name(),
+                d.type_name,
+                d.field_name
+            );
+        } else {
+            w!(
+                self.printer,
+                "\npub fn set_{}(&mut self, v: {}) {{ self.{} = Some(Box::new(v)); }}\n",
+                d.strip_field_name(),
+                d.type_name,
+                d.field_name
+            );
+        }
         if d.copy {
             return;
         }
@@ -1157,7 +1206,7 @@ use std::collections::HashMap;\n"
                 format!("Vec<{}>", d.type_name),
             )
         } else {
-            (format!("&{}", d.type_name), d.type_name.clone())
+            (format!("&Option<{}>", d.type_name), format!("Option<{}>", d.type_name))
         };
         w!(
             self.printer,
@@ -1166,12 +1215,21 @@ use std::collections::HashMap;\n"
             ref_ty,
             d.field_name
         );
-        w!(
-            self.printer,
-            "\npub fn clear_{}(&mut self) {{ self.{}.clear(); }}\n",
-            d.strip_field_name(),
-            d.field_name
-        );
+        if d.map_fields.is_empty() {
+            w!(
+                self.printer,
+                "\npub fn clear_{}(&mut self) {{ self.{}.clear(); }}\n",
+                d.strip_field_name(),
+                d.field_name
+            );
+        } else {
+            w!(
+                self.printer,
+                "\npub fn clear_{}(&mut self) {{ self.{} = None; }}\n",
+                d.strip_field_name(),
+                d.field_name
+            );
+        }
         w!(
             self.printer,
             "\npub fn set_{}(&mut self, v: impl Into<{}>) {{ self.{} = v.into(); }}\n",
