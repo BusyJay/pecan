@@ -109,6 +109,25 @@ pub mod encoded {
     }
 }
 
+macro_rules! impl_numeric_array {
+    ($t:ident, $func:ident, $ty:ident => $len:tt, $write_one:ident) => {
+        pub fn $func(&mut self, arr: &[$t]) -> Result<()> {
+            let l: usize = impl_numeric_array!(calc_len, arr, $ty => $len);
+            self.write_var_u32(l as u32)?;
+            for i in arr {
+                self.$write_one(*i)?;
+            }
+            Ok(())
+        }
+    };
+    (calc_len, $arr:ident, fixed => $len:expr) => {
+        $arr.len() * $len
+    };
+    (calc_len, $arr:ident, var => $len_func:ident) => {
+        $arr.iter().map(|i| encoded::$len_func(*i)).sum()
+    };
+}
+
 pub struct CodedOutputStream<B> {
     buf: B,
     end: *mut u8,
@@ -268,127 +287,25 @@ impl<B: BufMut> CodedOutputStream<B> {
         self.write_fixed64(i as u64)
     }
 
-    pub fn write_var_i32_array(&mut self, arr: &[i32]) -> Result<()> {
-        let l: usize = arr.iter().map(|i| encoded::var_i32_len(*i)).sum();
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_var_i32(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_var_s32_array(&mut self, arr: &[i32]) -> Result<()> {
-        let l: usize = arr.iter().map(|i| encoded::var_s32_len(*i)).sum();
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_var_s32(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_var_u32_array(&mut self, arr: &[u32]) -> Result<()> {
-        let l: usize = arr.iter().map(|i| encoded::var_u32_len(*i)).sum();
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_var_u32(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_fixed32_array(&mut self, arr: &[u32]) -> Result<()> {
-        let l: usize = arr.len() * 8;
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_fixed32(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_var_i64_array(&mut self, arr: &[i64]) -> Result<()> {
-        let l: usize = arr.iter().map(|i| encoded::var_i64_len(*i)).sum();
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_var_i64(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_var_u64_array(&mut self, arr: &[u64]) -> Result<()> {
-        let l: usize = arr.iter().map(|i| encoded::var_u64_len(*i)).sum();
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_var_u64(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_var_s64_array(&mut self, arr: &[i64]) -> Result<()> {
-        let l: usize = arr.iter().map(|i| encoded::var_s64_len(*i)).sum();
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_var_s64(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_fixed64_array(&mut self, arr: &[u64]) -> Result<()> {
-        let l: usize = arr.len() * 8;
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_fixed64(*i)?;
-        }
-        Ok(())
-    }
+    impl_numeric_array!(bool, write_bool_array, fixed => 1, write_bool);
+    impl_numeric_array!(i32, write_var_i32_array, var => var_i32_len, write_var_i32);
+    impl_numeric_array!(i32, write_var_s32_array, var => var_s32_len, write_var_s32);
+    impl_numeric_array!(u32, write_var_u32_array, var => var_u32_len, write_var_u32);
+    impl_numeric_array!(u32, write_fixed32_array, fixed => 4, write_fixed32);
+    impl_numeric_array!(i32, write_sfixed32_array, fixed => 4, write_sfixed32);
+    impl_numeric_array!(f32, write_f32_array, fixed => 4, write_f32);
+    impl_numeric_array!(i64, write_var_i64_array, var => var_i64_len, write_var_i64);
+    impl_numeric_array!(i64, write_var_s64_array, var => var_s64_len, write_var_s64);
+    impl_numeric_array!(u64, write_var_u64_array, var => var_u64_len, write_var_u64);
+    impl_numeric_array!(u64, write_fixed64_array, fixed => 8, write_fixed64);
+    impl_numeric_array!(i64, write_sfixed64_array, fixed => 8, write_sfixed64);
+    impl_numeric_array!(f64, write_f64_array, fixed => 8, write_f64);
 
     pub fn write_enum_array(&mut self, enums: &[impl EnumType]) -> Result<()> {
         let l: usize = enums.iter().map(|e| encoded::var_i32_len(e.value())).sum();
         self.write_var_u32(l as u32)?;
         for e in enums {
             self.write_var_i32(e.value())?;
-        }
-        Ok(())
-    }
-
-    pub fn write_bool_array(&mut self, bools: &[bool]) -> Result<()> {
-        self.write_var_u32(bools.len() as u32)?;
-        for b in bools {
-            self.write_raw_1_byte([if *b { 1 } else { 0 }])?;
-        }
-        Ok(())
-    }
-
-    pub fn write_f64_array(&mut self, arr: &[f64]) -> Result<()> {
-        let l: usize = arr.len() * 8;
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_f64(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_f32_array(&mut self, arr: &[f32]) -> Result<()> {
-        let l: usize = arr.len() * 4;
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_f32(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_sfixed64_array(&mut self, arr: &[i64]) -> Result<()> {
-        let l: usize = arr.len() * 8;
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_sfixed64(*i)?;
-        }
-        Ok(())
-    }
-
-    pub fn write_sfixed32_array(&mut self, arr: &[i32]) -> Result<()> {
-        let l: usize = arr.len() * 8;
-        self.write_var_u32(l as u32)?;
-        for i in arr {
-            self.write_sfixed32(*i)?;
         }
         Ok(())
     }

@@ -1,4 +1,4 @@
-use std::{mem, ptr, slice, u64};
+use std::{mem, ptr, slice, u64, cmp};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Error {
@@ -32,21 +32,21 @@ fn decode_varint_u32_fallback(data: &[u8]) -> Result<(u32, u8)> {
         }
         let b = unsafe { *data.get_unchecked(4) };
         res |= (b as u32) << (4 * 7);
-        if b <= 15 {
+        // Technically, it should be <= 15, but protobuf requires not check the boundary.
+        if b < 0x80 {
             return Ok((res, 5));
         }
-        // It's possible to excceed 5 bytes, because protobuf encodes negative number as i64.
-        if (b & 0x80) > 0 {
-            if data.len() >= 10 {
-                let b = unsafe { *data.get_unchecked(9) };
-                if b == 1 {
-                    return Ok((res, 10));
-                }
-            } else {
-                return Err(Error::Truncated);
+        for i in 5..cmp::min(10, data.len()) {
+            let b = unsafe { *data.get_unchecked(i) };
+            if b < 0x80 {
+                return Ok((res, i as u8 + 1));
             }
         }
-        return Err(Error::Corrupted);
+        if data.len() >= 10 {
+            return Err(Error::Corrupted);
+        } else {
+            return Err(Error::Truncated);
+        }
     }
     decode_varint_u32_slow(data)
 }

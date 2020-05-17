@@ -448,9 +448,9 @@ impl Message for TestAllTypesProto3 {
                 816 => self.unpacked_nested_enum.push(s.read_enum()?),
                 818 => s.read_enum_array(&mut self.unpacked_nested_enum)?,
                 450 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_i32()?,
                             16 => value = s.read_var_i32()?,
@@ -462,9 +462,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 458 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_i64()?,
                             16 => value = s.read_var_i64()?,
@@ -476,9 +476,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 466 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_u32()?,
                             16 => value = s.read_var_u32()?,
@@ -490,9 +490,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 474 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_u64()?,
                             16 => value = s.read_var_u64()?,
@@ -504,9 +504,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 482 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_s32()?,
                             16 => value = s.read_var_s32()?,
@@ -518,9 +518,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 490 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_s64()?,
                             16 => value = s.read_var_s64()?,
@@ -532,9 +532,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 498 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             13 => key = s.read_fixed32()?,
                             21 => value = s.read_fixed32()?,
@@ -546,9 +546,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 506 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             9 => key = s.read_fixed64()?,
                             17 => value = s.read_fixed64()?,
@@ -560,9 +560,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 514 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             13 => key = s.read_sfixed32()?,
                             21 => value = s.read_sfixed32()?,
@@ -574,9 +574,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 522 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             9 => key = s.read_sfixed64()?,
                             17 => value = s.read_sfixed64()?,
@@ -588,9 +588,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 530 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_i32()?,
                             21 => value = s.read_f32()?,
@@ -602,9 +602,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 538 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_var_i32()?,
                             17 => value = s.read_f64()?,
@@ -616,9 +616,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 546 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             8 => key = s.read_bool()?,
                             16 => value = s.read_bool()?,
@@ -630,9 +630,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 554 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             18 => value = s.read_string()?,
@@ -644,9 +644,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 562 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             18 => value = s.read_bytes()?,
@@ -658,9 +658,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 570 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             18 => s.read_message(&mut value)?,
@@ -672,9 +672,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 578 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             18 => s.read_message(&mut value)?,
@@ -686,9 +686,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 586 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             16 => value = s.read_enum()?,
@@ -700,9 +700,9 @@ impl Message for TestAllTypesProto3 {
                     Ok(())
                 })?,
                 594 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             16 => value = s.read_enum()?,
@@ -1916,79 +1916,79 @@ impl Message for TestAllTypesProto3 {
         if !self.repeated_int32.is_empty() {
             n += {
                 let l = self.repeated_int32.iter().map(|v| codec::varint_i64_bytes_len(*v as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_int64.is_empty() {
             n += {
                 let l = self.repeated_int64.iter().map(|v| codec::varint_i64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_uint32.is_empty() {
             n += {
                 let l = self.repeated_uint32.iter().map(|v| codec::varint_u32_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_uint64.is_empty() {
             n += {
                 let l = self.repeated_uint64.iter().map(|v| codec::varint_u64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_sint32.is_empty() {
             n += {
                 let l = self.repeated_sint32.iter().map(|v| codec::varint_s32_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_sint64.is_empty() {
             n += {
                 let l = self.repeated_sint64.iter().map(|v| codec::varint_s64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_fixed32.is_empty() {
             n += {
                 let l = self.repeated_fixed32.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_fixed64.is_empty() {
             n += {
                 let l = self.repeated_fixed64.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_sfixed32.is_empty() {
             n += {
                 let l = self.repeated_sfixed32.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_sfixed64.is_empty() {
             n += {
                 let l = self.repeated_sfixed64.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_float.is_empty() {
             n += {
                 let l = self.repeated_float.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_double.is_empty() {
             n += {
                 let l = self.repeated_double.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_bool.is_empty() {
             n += {
                 let l = self.repeated_bool.len();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_string.is_empty() {
@@ -2018,13 +2018,13 @@ impl Message for TestAllTypesProto3 {
         if !self.repeated_nested_enum.is_empty() {
             n += {
                 let l = self.repeated_nested_enum.iter().map(|v| codec::varint_i64_bytes_len(v.value() as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_foreign_enum.is_empty() {
             n += {
                 let l = self.repeated_foreign_enum.iter().map(|v| codec::varint_i64_bytes_len(v.value() as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.repeated_string_piece.is_empty() {
@@ -2042,169 +2042,169 @@ impl Message for TestAllTypesProto3 {
         if !self.packed_int32.is_empty() {
             n += {
                 let l = self.packed_int32.iter().map(|v| codec::varint_i64_bytes_len(*v as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_int64.is_empty() {
             n += {
                 let l = self.packed_int64.iter().map(|v| codec::varint_i64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_uint32.is_empty() {
             n += {
                 let l = self.packed_uint32.iter().map(|v| codec::varint_u32_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_uint64.is_empty() {
             n += {
                 let l = self.packed_uint64.iter().map(|v| codec::varint_u64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_sint32.is_empty() {
             n += {
                 let l = self.packed_sint32.iter().map(|v| codec::varint_s32_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_sint64.is_empty() {
             n += {
                 let l = self.packed_sint64.iter().map(|v| codec::varint_s64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_fixed32.is_empty() {
             n += {
                 let l = self.packed_fixed32.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_fixed64.is_empty() {
             n += {
                 let l = self.packed_fixed64.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_sfixed32.is_empty() {
             n += {
                 let l = self.packed_sfixed32.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_sfixed64.is_empty() {
             n += {
                 let l = self.packed_sfixed64.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_float.is_empty() {
             n += {
                 let l = self.packed_float.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_double.is_empty() {
             n += {
                 let l = self.packed_double.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_bool.is_empty() {
             n += {
                 let l = self.packed_bool.len();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.packed_nested_enum.is_empty() {
             n += {
                 let l = self.packed_nested_enum.iter().map(|v| codec::varint_i64_bytes_len(v.value() as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_int32.is_empty() {
             n += {
                 let l = self.unpacked_int32.iter().map(|v| codec::varint_i64_bytes_len(*v as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_int64.is_empty() {
             n += {
                 let l = self.unpacked_int64.iter().map(|v| codec::varint_i64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_uint32.is_empty() {
             n += {
                 let l = self.unpacked_uint32.iter().map(|v| codec::varint_u32_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_uint64.is_empty() {
             n += {
                 let l = self.unpacked_uint64.iter().map(|v| codec::varint_u64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_sint32.is_empty() {
             n += {
                 let l = self.unpacked_sint32.iter().map(|v| codec::varint_s32_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_sint64.is_empty() {
             n += {
                 let l = self.unpacked_sint64.iter().map(|v| codec::varint_s64_bytes_len(*v) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_fixed32.is_empty() {
             n += {
                 let l = self.unpacked_fixed32.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_fixed64.is_empty() {
             n += {
                 let l = self.unpacked_fixed64.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_sfixed32.is_empty() {
             n += {
                 let l = self.unpacked_sfixed32.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_sfixed64.is_empty() {
             n += {
                 let l = self.unpacked_sfixed64.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_float.is_empty() {
             n += {
                 let l = self.unpacked_float.len() * 4;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_double.is_empty() {
             n += {
                 let l = self.unpacked_double.len() * 8;
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_bool.is_empty() {
             n += {
                 let l = self.unpacked_bool.len();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if !self.unpacked_nested_enum.is_empty() {
             n += {
                 let l = self.unpacked_nested_enum.iter().map(|v| codec::varint_i64_bytes_len(v.value() as i64) as usize).sum::<usize>();
-                n + 2 + codec::varint_u32_bytes_len(l as u32) as usize + l
+                2 + codec::varint_u32_bytes_len(l as u32) as usize + l
             };
         }
         if let Some(m) = &self.map_int32_int32 {

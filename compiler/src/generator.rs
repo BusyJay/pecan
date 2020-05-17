@@ -582,12 +582,12 @@ use std::collections::HashMap;\n"
 
         let (k_fd, v_fd) = (&d.map_fields[0], &d.map_fields[1]);
         w_scope!(self.printer, "s.read_message_like(|s| {{\n");
-        w!(self.printer, "let tag = s.read_tag()?;\n");
         w!(
             self.printer,
             "let (mut key, mut value) = Default::default();\n"
         );
         w_scope!(self.printer, "loop {{\n");
+        w!(self.printer, "let tag = s.read_tag()?;\n");
         w_scope!(self.printer, "match tag {{\n");
         w!(
             self.printer,
@@ -808,7 +808,7 @@ use std::collections::HashMap;\n"
                     }
                     w!(self.printer, ").sum::<usize>();\n");
                 }
-                w!(self.printer, "n + {} + codec::varint_u32_bytes_len(l as u32) as usize + l\n", tag_len);
+                w!(self.printer, "{} + codec::varint_u32_bytes_len(l as u32) as usize + l\n", tag_len);
                 w_end_scope!(self.printer, "}}");
             }
         } else {

@@ -236,13 +236,12 @@ impl<B: Buf> CodedInputStream<B> {
             }
             unsafe { *bytes.get_unchecked(0) }
         };
-        self.buf.advance(1);
-        self.read += 1;
-        match b {
-            1 => Ok(true),
-            0 => Ok(false),
-            _ => Err(Error::corrupted()),
+        if b < 0x80 {
+            self.buf.advance(1);
+            self.read += 1;
+            return Ok(b != 0);
         }
+        self.read_var_u64().map(|u| u != 0)
     }
 
     #[inline]
@@ -381,6 +380,7 @@ impl<B: Buf> CodedInputStream<B> {
                 }
             };
             self.buf.advance(l);
+            self.read += l;
             to_skip -= l;
         }
         Ok(())
@@ -429,22 +429,19 @@ impl<B: Buf> CodedInputStream<B> {
                 }
                 if buf.len() > 4 - read {
                     let b = unsafe { *buf.get_unchecked(4 - read) };
-                    if b <= 15 {
-                        data |= (b as u32) << 28;
+                    data |= (b as u32) << 28;
+                    if b < 0x80 {
                         read = 4 - read + 1;
                         break 'outer;
                     }
-                    if (b & 0x80) > 0 {
-                        if buf.len() >= 10 - read {
-                            let b = unsafe { *buf.get_unchecked(9 - read) };
-                            if b == 1 {
-                                read = 10 - read;
-                                break 'outer;
-                            } else {
-                                return Err(Error::corrupted());
-                            }
+                    for i in 5 - read..std::cmp::min(buf.len(), 10 - read) {
+                        let b = unsafe { *buf.get_unchecked(i) };
+                        if b < 0x80 {
+                            read = i + 1;
+                            break 'outer;
                         }
-                    } else {
+                    }
+                    if buf.len() >= 10 - read {
                         return Err(Error::corrupted());
                     }
                 } else if buf.is_empty() {
@@ -596,5 +593,18 @@ mod tests {
         let mut cis = CodedInputStream::new(s);
         let e = cis.read_var_i64().unwrap_err();
         assert!(e.is_truncated(), "{:?}", e);
+    }
+
+    #[test]
+    fn test_read_var_u32() {
+        let cases: &[(&[u8], u32)] = &[
+            (&[0xb9, 0xe0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00], 12345),
+            (&[0x80, 0x80, 0x80, 0x80, 0x30], 0),
+        ];
+        for (bytes, n) in cases {
+            let mut cis = CodedInputStream::new(*bytes);
+            let u = cis.read_var_u32().unwrap();
+            assert_eq!(u, *n);
+        }
     }
 }

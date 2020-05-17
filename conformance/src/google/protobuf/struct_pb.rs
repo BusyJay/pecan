@@ -76,9 +76,9 @@ impl Message for Struct {
             let tag = s.read_tag()?;
             match tag {
                 10 => s.read_message_like(|s| {
-                    let tag = s.read_tag()?;
                     let (mut key, mut value) = Default::default();
                     loop {
+                        let tag = s.read_tag()?;
                         match tag {
                             10 => key = s.read_string()?,
                             18 => s.read_message(&mut value)?,
