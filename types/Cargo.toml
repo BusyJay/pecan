@@ -1,0 +1,9 @@
+[package]
+name = "pecan-types"
+version = "0.1.0"
+authors = ["Jay Lee <BusyJayLee@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pecan = { version = "0.1", path = "../pecan" }
+bytes = "1.0"

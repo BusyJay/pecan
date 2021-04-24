@@ -1,6 +1,6 @@
-[package]
-name = "pecan"
-version = "0.1.0"
-authors = ["Jay Lee <BusyJayLee@gmail.com>"]
-
-[dependencies]
+[workspace]
+members = [
+    "pecan",
+    "compiler",
+    "types",
+]
