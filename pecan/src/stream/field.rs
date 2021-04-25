@@ -1,10 +1,10 @@
 use std::ptr;
 
-use crate::{codec, Error, Result};
 use crate::{
     stream::{CodedInputStream, CodedOutputStream},
     Enumerate, Message,
 };
+use crate::{Error, Result};
 use bytes::{buf::UninitSlice, Buf, BufMut, Bytes};
 
 pub trait ReadFieldCodec<Field> {
@@ -68,7 +68,7 @@ pub struct LengthPrefixed;
 
 impl ReadFieldCodec<Bytes> for LengthPrefixed {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Bytes> {
-        let len = buf.read_var_u64()?;
+        let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
             buf.flush();
             let len = len as usize;
@@ -127,7 +127,7 @@ impl ReadFieldCodec<u32> for Fixed {
             }
         }
         let mut bytes = [0; 4];
-        buf.read_n_bytes(&mut bytes)?;
+        buf.read_raw_bytes(&mut bytes)?;
         Ok(u32::from_le_bytes(bytes))
     }
 }
@@ -165,7 +165,7 @@ impl ReadFieldCodec<u64> for Fixed {
             }
         }
         let mut bytes = [0; 8];
-        buf.read_n_bytes(&mut bytes)?;
+        buf.read_raw_bytes(&mut bytes)?;
         Ok(u64::from_le_bytes(bytes))
     }
 }
@@ -299,7 +299,7 @@ impl WriteFieldCodec<i64> for Fixed {
 
 impl ReadFieldCodec<String> for LengthPrefixed {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<String> {
-        let len = buf.read_var_u64()?;
+        let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
             let len = len as usize;
             let mut v = Vec::with_capacity(len);
@@ -419,44 +419,16 @@ impl WriteFieldCodec<u32> for Varint {
 }
 
 impl ReadFieldCodec<u64> for Varint {
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<u64> {
-        let (mut tmp, mut lp) = match codec::decode_var_u64(&mut buf.chunk) {
-            Ok(v) => {
-                return Ok(v);
-            }
-            Err(Error::WantMore(tmp, lp)) => (tmp, lp),
-            Err(e) => return Err(e),
-        };
-
-        loop {
-            buf.renew()?;
-            match codec::decode_var_u64_resume(&mut buf.chunk, tmp, lp) {
-                Ok(v) => {
-                    return Ok(v);
-                }
-                Err(Error::WantMore(t, l)) => {
-                    tmp = t;
-                    lp = l;
-                    continue;
-                }
-                Err(e) => return Err(e),
-            }
-        }
+        buf.read_var_u64_raw()
     }
 }
 
 impl WriteFieldCodec<u64> for Varint {
-    fn write_to<B: BufMut>(mut val: u64, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        loop {
-            match codec::encode_var_u64(&mut buf.chunk, val) {
-                Ok(()) => return Ok(()),
-                Err(Error::WantMore(v, _)) => {
-                    buf.renew()?;
-                    val = v;
-                }
-                Err(e) => return Err(e),
-            }
-        }
+    #[inline]
+    fn write_to<B: BufMut>(val: u64, buf: &mut CodedOutputStream<B>) -> Result<()> {
+        buf.write_var_u64_raw(val)
     }
 
     fn len(mut val: u64) -> u64 {
@@ -492,7 +464,7 @@ impl<E: Enumerate> WriteFieldCodec<E> for Varint {
 
 impl<M: Message> MergeFieldCodec<M> for LengthPrefixed {
     fn merge_from<B: Buf>(current: &mut M, buf: &mut CodedInputStream<B>) -> Result<()> {
-        let s = buf.read_var_u64()?;
+        let s = buf.read_var_u64_raw()?;
         if buf.depth < buf.depth_limit {
             buf.depth += 1;
         } else {

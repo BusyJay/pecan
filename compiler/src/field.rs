@@ -1,4 +1,5 @@
 use crate::{util, Generator};
+use pecan::prelude::*;
 use pecan_types::google::protobuf::descriptor_pb::*;
 use proc_macro2::{Literal, TokenStream};
 use quote::{format_ident, quote};
@@ -249,7 +250,7 @@ impl FieldGenerator {
     }
 
     pub fn fn_len(&self) -> TokenStream {
-        let len_raw = pecan::stream::var_u64_len(self.tag);
+        let len_raw = Varint::len(self.tag);
         let tag_len = Literal::u64_unsuffixed(len_raw);
         let codec = &self.codec;
         if !self.repeated {
