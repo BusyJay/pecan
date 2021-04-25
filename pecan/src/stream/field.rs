@@ -84,6 +84,7 @@ impl ReadFieldCodec<Bytes> for LengthPrefixed {
 
 impl<'a> WriteFieldCodec<&'a [u8]> for LengthPrefixed {
     fn write_to<B: BufMut>(val: &[u8], buf: &mut CodedOutputStream<B>) -> Result<()> {
+        Varint::write_to(val.len() as u64, buf)?;
         buf.write_raw_bytes(val)
     }
 
@@ -321,15 +322,31 @@ impl ReadFieldCodec<String> for LengthPrefixed {
     }
 }
 
-impl<'a> WriteFieldCodec<&'a str> for LengthPrefixed {
-    fn write_to<B: BufMut>(val: &str, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        LengthPrefixed::write_to(val.as_bytes(), buf)
-    }
+macro_rules! impl_length_prefix {
+    ($type:ty, $method:ident) => {
+        impl<'a> WriteFieldCodec<&'a $type> for LengthPrefixed {
+            #[inline]
+            fn write_to<B: BufMut>(val: &$type, buf: &mut CodedOutputStream<B>) -> Result<()> {
+                LengthPrefixed::write_to(impl_length_prefix!(eval val, $method), buf)
+            }
 
-    fn len(val: &str) -> u64 {
-        LengthPrefixed::len(val.as_bytes())
-    }
+            #[inline]
+            fn len(val: &$type) -> u64 {
+                LengthPrefixed::len(impl_length_prefix!(eval val, $method))
+            }
+        }
+    };
+    (eval $val:ident, inplace) => {
+        $val
+    };
+    (eval $val:ident, $method:ident) => {
+        $val.$method()
+    };
 }
+
+impl_length_prefix!(str, as_bytes);
+impl_length_prefix!(String, as_bytes);
+impl_length_prefix!(Bytes, as_ref);
 
 pub struct ZigZag;
 
@@ -515,9 +532,9 @@ impl<'a, M: Message> WriteFieldCodec<&'a M> for LengthPrefixed {
     }
 }
 
-pub struct LengthPrefixArray;
+pub struct LengthPrefixedArray;
 
-impl<Field> MergeFieldCodec<Vec<Field>> for LengthPrefixArray
+impl<Field> MergeFieldCodec<Vec<Field>> for LengthPrefixedArray
 where
     LengthPrefixed: ReadFieldCodec<Field>,
 {
@@ -527,7 +544,7 @@ where
     }
 }
 
-impl<'a, Field> WriteFieldCodec<&'a [Field]> for LengthPrefixArray
+impl<'a, Field> WriteFieldCodec<&'a [Field]> for LengthPrefixedArray
 where
     LengthPrefixed: WriteFieldCodec<&'a Field>,
 {
@@ -540,33 +557,64 @@ where
     }
 }
 
-pub struct VarintArray;
+macro_rules! impl_array {
+    ($name:ident, $codec:ident) => {
+        pub struct $name;
 
-impl<Field> MergeFieldCodec<Vec<Field>> for VarintArray
-where
-    Varint: ReadFieldCodec<Field>,
-{
-    fn merge_from<B: Buf>(current: &mut Vec<Field>, buf: &mut CodedInputStream<B>) -> Result<()> {
-        let len: u64 = <Varint as ReadFieldCodec<u64>>::read_from(buf)?;
-        let limit = buf.progress() + len;
-        while buf.progress() < limit {
-            current.push(Varint::read_from(buf)?);
+        impl<Field> MergeFieldCodec<Vec<Field>> for $name
+        where
+            $codec: ReadFieldCodec<Field>,
+        {
+            fn merge_from<B: Buf>(
+                current: &mut Vec<Field>,
+                buf: &mut CodedInputStream<B>,
+            ) -> Result<()> {
+                let len: u64 = <Varint as ReadFieldCodec<u64>>::read_from(buf)?;
+                let limit = buf.progress() + len;
+                while buf.progress() < limit {
+                    current.push($codec::read_from(buf)?);
+                }
+                if buf.progress() == limit {
+                    Ok(())
+                } else {
+                    Err(Error::corrupted())
+                }
+            }
         }
-        if buf.progress() == limit {
-            Ok(())
-        } else {
-            Err(Error::corrupted())
+
+        impl<Field> ReadFieldCodec<Vec<Field>> for $name
+        where
+            $codec: ReadFieldCodec<Field>,
+        {
+            fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Field>> {
+                let mut res = Vec::new();
+                $name::merge_from(&mut res, buf)?;
+                Ok(res)
+            }
         }
-    }
+
+        impl<'a, Field> WriteFieldCodec<&'a [Field]> for $name
+        where
+            Field: Copy,
+            $codec: WriteFieldCodec<Field>,
+        {
+            fn write_to<B: BufMut>(val: &'a [Field], buf: &mut CodedOutputStream<B>) -> Result<()> {
+                let l: u64 = val.into_iter().map(|v| $codec::len(*v)).sum();
+                <Varint as WriteFieldCodec<u64>>::write_to(l, buf)?;
+                for v in val {
+                    $codec::write_to(*v, buf)?;
+                }
+                Ok(())
+            }
+
+            fn len(val: &'a [Field]) -> u64 {
+                let l: u64 = val.into_iter().map(|v| $codec::len(*v)).sum();
+                <Varint as WriteFieldCodec<u64>>::len(l) + l
+            }
+        }
+    };
 }
 
-impl<Field> ReadFieldCodec<Vec<Field>> for VarintArray
-where
-    Varint: ReadFieldCodec<Field>,
-{
-    fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Field>> {
-        let mut res = Vec::new();
-        VarintArray::merge_from(&mut res, buf)?;
-        Ok(res)
-    }
-}
+impl_array!(VarintArray, Varint);
+impl_array!(FixedArray, Fixed);
+impl_array!(ZigZagArray, ZigZag);

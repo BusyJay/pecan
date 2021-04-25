@@ -17,7 +17,7 @@ impl pecan::Message for FileDescriptorSet {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => s.read_message_to(&mut self.file)?,
+                10 => LengthPrefixedArray::merge_from(&mut self.file, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -27,7 +27,7 @@ impl pecan::Message for FileDescriptorSet {
         if !self.file.is_empty() {
             for i in &self.file {
                 s.write_tag(10)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -38,10 +38,7 @@ impl pecan::Message for FileDescriptorSet {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.file.is_empty() {
-            l += self.file.len() as u64;
-            for i in &self.file {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.file.len() as u64 + LengthPrefixedArray::len(&self.file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -169,18 +166,18 @@ impl pecan::Message for FileDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => self.package = Some(s.read_string()?),
-                26 => self.dependency.push(s.read_string()?),
-                34 => s.read_message_to(&mut self.message_type)?,
-                42 => s.read_message_to(&mut self.enum_type)?,
-                50 => s.read_message_to(&mut self.service)?,
-                58 => s.read_message_to(&mut self.extension)?,
-                66 => s.merge_message_to(self.options_mut())?,
-                74 => s.merge_message_to(self.source_code_info_mut())?,
-                82 => s.read_packed_array(&mut self.public_dependency, |s| s.read_var_i32())?,
-                90 => s.read_packed_array(&mut self.weak_dependency, |s| s.read_var_i32())?,
-                98 => self.syntax = Some(s.read_string()?),
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => self.package = Some(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixedArray::merge_from(&mut self.dependency, s)?,
+                34 => LengthPrefixedArray::merge_from(&mut self.message_type, s)?,
+                42 => LengthPrefixedArray::merge_from(&mut self.enum_type, s)?,
+                50 => LengthPrefixedArray::merge_from(&mut self.service, s)?,
+                58 => LengthPrefixedArray::merge_from(&mut self.extension, s)?,
+                66 => LengthPrefixed::merge_from(self.options_mut(), s)?,
+                74 => LengthPrefixed::merge_from(self.source_code_info_mut(), s)?,
+                82 => VarintArray::merge_from(&mut self.public_dependency, s)?,
+                90 => VarintArray::merge_from(&mut self.weak_dependency, s)?,
+                98 => self.syntax = Some(LengthPrefixed::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -189,67 +186,61 @@ impl pecan::Message for FileDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.package {
             s.write_tag(18)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.dependency.is_empty() {
             for i in &self.dependency {
                 s.write_tag(26)?;
-                s.write_string(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.message_type.is_empty() {
             for i in &self.message_type {
                 s.write_tag(34)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.enum_type.is_empty() {
             for i in &self.enum_type {
                 s.write_tag(42)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.service.is_empty() {
             for i in &self.service {
                 s.write_tag(50)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.extension.is_empty() {
             for i in &self.extension {
                 s.write_tag(58)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if let Some(v) = &self.options {
             s.write_tag(66)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.source_code_info {
             s.write_tag(74)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.public_dependency.is_empty() {
-            let l = pecan::stream::packed_array_len(
-                &self.public_dependency,
-                pecan::stream::var_i32_len,
-            );
             s.write_tag(82)?;
-            s.write_packed_array(l, &self.public_dependency, |s, i| s.write_var_i32(i))?;
+            VarintArray::write_to(&self.public_dependency, s)?;
         }
         if !self.weak_dependency.is_empty() {
-            let l =
-                pecan::stream::packed_array_len(&self.weak_dependency, pecan::stream::var_i32_len);
             s.write_tag(90)?;
-            s.write_packed_array(l, &self.weak_dependency, |s, i| s.write_var_i32(i))?;
+            VarintArray::write_to(&self.weak_dependency, s)?;
         }
         if let Some(v) = &self.syntax {
             s.write_tag(98)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -259,61 +250,40 @@ impl pecan::Message for FileDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.package {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.dependency.is_empty() {
-            l += self.dependency.len() as u64;
-            for i in &self.dependency {
-                l += pecan::stream::string_len(i);
-            }
+            l += self.dependency.len() as u64 + LengthPrefixedArray::len(&self.dependency);
         }
         if !self.message_type.is_empty() {
-            l += self.message_type.len() as u64;
-            for i in &self.message_type {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.message_type.len() as u64 + LengthPrefixedArray::len(&self.message_type);
         }
         if !self.enum_type.is_empty() {
-            l += self.enum_type.len() as u64;
-            for i in &self.enum_type {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.enum_type.len() as u64 + LengthPrefixedArray::len(&self.enum_type);
         }
         if !self.service.is_empty() {
-            l += self.service.len() as u64;
-            for i in &self.service {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.service.len() as u64 + LengthPrefixedArray::len(&self.service);
         }
         if !self.extension.is_empty() {
-            l += self.extension.len() as u64;
-            for i in &self.extension {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.extension.len() as u64 + LengthPrefixedArray::len(&self.extension);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.source_code_info {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.public_dependency.is_empty() {
-            l += 1 + pecan::stream::packed_array_len(
-                &self.public_dependency,
-                pecan::stream::var_i32_len,
-            );
+            l += 1 + VarintArray::len(&self.public_dependency);
         }
         if !self.weak_dependency.is_empty() {
-            l += 1 + pecan::stream::packed_array_len(
-                &self.weak_dependency,
-                pecan::stream::var_i32_len,
-            );
+            l += 1 + VarintArray::len(&self.weak_dependency);
         }
         if let Some(v) = &self.syntax {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -387,9 +357,9 @@ impl pecan::Message for DescriptorProto_ExtensionRange {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.start = Some(s.read_var_i32()?),
-                16 => self.end = Some(s.read_var_i32()?),
-                26 => s.merge_message_to(self.options_mut())?,
+                8 => self.start = Some(Varint::read_from(s)?),
+                16 => self.end = Some(Varint::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -398,15 +368,15 @@ impl pecan::Message for DescriptorProto_ExtensionRange {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.end {
             s.write_tag(16)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.options {
             s.write_tag(26)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -416,13 +386,13 @@ impl pecan::Message for DescriptorProto_ExtensionRange {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.start {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.end {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -479,8 +449,8 @@ impl pecan::Message for DescriptorProto_ReservedRange {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.start = Some(s.read_var_i32()?),
-                16 => self.end = Some(s.read_var_i32()?),
+                8 => self.start = Some(Varint::read_from(s)?),
+                16 => self.end = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -489,11 +459,11 @@ impl pecan::Message for DescriptorProto_ReservedRange {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.end {
             s.write_tag(16)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -503,10 +473,10 @@ impl pecan::Message for DescriptorProto_ReservedRange {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.start {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.end {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -585,16 +555,16 @@ impl pecan::Message for DescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => s.read_message_to(&mut self.field)?,
-                26 => s.read_message_to(&mut self.nested_type)?,
-                34 => s.read_message_to(&mut self.enum_type)?,
-                42 => s.read_message_to(&mut self.extension_range)?,
-                50 => s.read_message_to(&mut self.extension)?,
-                58 => s.merge_message_to(self.options_mut())?,
-                66 => s.read_message_to(&mut self.oneof_decl)?,
-                74 => s.read_message_to(&mut self.reserved_range)?,
-                82 => self.reserved_name.push(s.read_string()?),
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixedArray::merge_from(&mut self.field, s)?,
+                26 => LengthPrefixedArray::merge_from(&mut self.nested_type, s)?,
+                34 => LengthPrefixedArray::merge_from(&mut self.enum_type, s)?,
+                42 => LengthPrefixedArray::merge_from(&mut self.extension_range, s)?,
+                50 => LengthPrefixedArray::merge_from(&mut self.extension, s)?,
+                58 => LengthPrefixed::merge_from(self.options_mut(), s)?,
+                66 => LengthPrefixedArray::merge_from(&mut self.oneof_decl, s)?,
+                74 => LengthPrefixedArray::merge_from(&mut self.reserved_range, s)?,
+                82 => LengthPrefixedArray::merge_from(&mut self.reserved_name, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -603,58 +573,58 @@ impl pecan::Message for DescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.field.is_empty() {
             for i in &self.field {
                 s.write_tag(18)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.nested_type.is_empty() {
             for i in &self.nested_type {
                 s.write_tag(26)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.enum_type.is_empty() {
             for i in &self.enum_type {
                 s.write_tag(34)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.extension_range.is_empty() {
             for i in &self.extension_range {
                 s.write_tag(42)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.extension.is_empty() {
             for i in &self.extension {
                 s.write_tag(50)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if let Some(v) = &self.options {
             s.write_tag(58)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.oneof_decl.is_empty() {
             for i in &self.oneof_decl {
                 s.write_tag(66)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.reserved_range.is_empty() {
             for i in &self.reserved_range {
                 s.write_tag(74)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.reserved_name.is_empty() {
             for i in &self.reserved_name {
                 s.write_tag(82)?;
-                s.write_string(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -665,58 +635,35 @@ impl pecan::Message for DescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.field.is_empty() {
-            l += self.field.len() as u64;
-            for i in &self.field {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.field.len() as u64 + LengthPrefixedArray::len(&self.field);
         }
         if !self.nested_type.is_empty() {
-            l += self.nested_type.len() as u64;
-            for i in &self.nested_type {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.nested_type.len() as u64 + LengthPrefixedArray::len(&self.nested_type);
         }
         if !self.enum_type.is_empty() {
-            l += self.enum_type.len() as u64;
-            for i in &self.enum_type {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.enum_type.len() as u64 + LengthPrefixedArray::len(&self.enum_type);
         }
         if !self.extension_range.is_empty() {
-            l += self.extension_range.len() as u64;
-            for i in &self.extension_range {
-                l += pecan::stream::message_len(i);
-            }
+            l +=
+                self.extension_range.len() as u64 + LengthPrefixedArray::len(&self.extension_range);
         }
         if !self.extension.is_empty() {
-            l += self.extension.len() as u64;
-            for i in &self.extension {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.extension.len() as u64 + LengthPrefixedArray::len(&self.extension);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.oneof_decl.is_empty() {
-            l += self.oneof_decl.len() as u64;
-            for i in &self.oneof_decl {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.oneof_decl.len() as u64 + LengthPrefixedArray::len(&self.oneof_decl);
         }
         if !self.reserved_range.is_empty() {
-            l += self.reserved_range.len() as u64;
-            for i in &self.reserved_range {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.reserved_range.len() as u64 + LengthPrefixedArray::len(&self.reserved_range);
         }
         if !self.reserved_name.is_empty() {
-            l += self.reserved_name.len() as u64;
-            for i in &self.reserved_name {
-                l += pecan::stream::string_len(i);
-            }
+            l += self.reserved_name.len() as u64 + LengthPrefixedArray::len(&self.reserved_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -747,7 +694,7 @@ impl pecan::Message for ExtensionRangeOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -757,7 +704,7 @@ impl pecan::Message for ExtensionRangeOptions {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -768,10 +715,8 @@ impl pecan::Message for ExtensionRangeOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1062,17 +1007,17 @@ impl pecan::Message for FieldDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => self.extendee = Some(s.read_string()?),
-                24 => self.number = Some(s.read_var_i32()?),
-                32 => self.label = Some(s.read_enum()?),
-                40 => self.r#type = Some(s.read_enum()?),
-                50 => self.type_name = Some(s.read_string()?),
-                58 => self.default_value = Some(s.read_string()?),
-                66 => s.merge_message_to(self.options_mut())?,
-                72 => self.oneof_index = Some(s.read_var_i32()?),
-                82 => self.json_name = Some(s.read_string()?),
-                136 => self.proto3_optional = Some(s.read_bool()?),
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => self.extendee = Some(LengthPrefixed::read_from(s)?),
+                24 => self.number = Some(Varint::read_from(s)?),
+                32 => self.label = Some(Varint::read_from(s)?),
+                40 => self.r#type = Some(Varint::read_from(s)?),
+                50 => self.type_name = Some(LengthPrefixed::read_from(s)?),
+                58 => self.default_value = Some(LengthPrefixed::read_from(s)?),
+                66 => LengthPrefixed::merge_from(self.options_mut(), s)?,
+                72 => self.oneof_index = Some(Varint::read_from(s)?),
+                82 => self.json_name = Some(LengthPrefixed::read_from(s)?),
+                136 => self.proto3_optional = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1081,47 +1026,47 @@ impl pecan::Message for FieldDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.extendee {
             s.write_tag(18)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.number {
             s.write_tag(24)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.label {
             s.write_tag(32)?;
-            s.write_enum(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.r#type {
             s.write_tag(40)?;
-            s.write_enum(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.type_name {
             s.write_tag(50)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.default_value {
             s.write_tag(58)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.options {
             s.write_tag(66)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.oneof_index {
             s.write_tag(72)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.json_name {
             s.write_tag(82)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.proto3_optional {
             s.write_tag(136)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -1131,37 +1076,37 @@ impl pecan::Message for FieldDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.extendee {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.number {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.label {
-            l += 1 + pecan::stream::enum_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.r#type {
-            l += 1 + pecan::stream::enum_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = &self.type_name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.default_value {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.oneof_index {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = &self.json_name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.proto3_optional {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1224,8 +1169,8 @@ impl pecan::Message for OneofDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => s.merge_message_to(self.options_mut())?,
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1234,11 +1179,11 @@ impl pecan::Message for OneofDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.options {
             s.write_tag(18)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -1248,10 +1193,10 @@ impl pecan::Message for OneofDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1308,8 +1253,8 @@ impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.start = Some(s.read_var_i32()?),
-                16 => self.end = Some(s.read_var_i32()?),
+                8 => self.start = Some(Varint::read_from(s)?),
+                16 => self.end = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1318,11 +1263,11 @@ impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.end {
             s.write_tag(16)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -1332,10 +1277,10 @@ impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.start {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.end {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1405,11 +1350,11 @@ impl pecan::Message for EnumDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => s.read_message_to(&mut self.value)?,
-                26 => s.merge_message_to(self.options_mut())?,
-                34 => s.read_message_to(&mut self.reserved_range)?,
-                42 => self.reserved_name.push(s.read_string()?),
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixedArray::merge_from(&mut self.value, s)?,
+                26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
+                34 => LengthPrefixedArray::merge_from(&mut self.reserved_range, s)?,
+                42 => LengthPrefixedArray::merge_from(&mut self.reserved_name, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1418,28 +1363,28 @@ impl pecan::Message for EnumDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.value.is_empty() {
             for i in &self.value {
                 s.write_tag(18)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if let Some(v) = &self.options {
             s.write_tag(26)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.reserved_range.is_empty() {
             for i in &self.reserved_range {
                 s.write_tag(34)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self.reserved_name.is_empty() {
             for i in &self.reserved_name {
                 s.write_tag(42)?;
-                s.write_string(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -1450,28 +1395,19 @@ impl pecan::Message for EnumDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.value.is_empty() {
-            l += self.value.len() as u64;
-            for i in &self.value {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.value.len() as u64 + LengthPrefixedArray::len(&self.value);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.reserved_range.is_empty() {
-            l += self.reserved_range.len() as u64;
-            for i in &self.reserved_range {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.reserved_range.len() as u64 + LengthPrefixedArray::len(&self.reserved_range);
         }
         if !self.reserved_name.is_empty() {
-            l += self.reserved_name.len() as u64;
-            for i in &self.reserved_name {
-                l += pecan::stream::string_len(i);
-            }
+            l += self.reserved_name.len() as u64 + LengthPrefixedArray::len(&self.reserved_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1548,9 +1484,9 @@ impl pecan::Message for EnumValueDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                16 => self.number = Some(s.read_var_i32()?),
-                26 => s.merge_message_to(self.options_mut())?,
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                16 => self.number = Some(Varint::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1559,15 +1495,15 @@ impl pecan::Message for EnumValueDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.number {
             s.write_tag(16)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.options {
             s.write_tag(26)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -1577,13 +1513,13 @@ impl pecan::Message for EnumValueDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.number {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1648,9 +1584,9 @@ impl pecan::Message for ServiceDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => s.read_message_to(&mut self.method)?,
-                26 => s.merge_message_to(self.options_mut())?,
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixedArray::merge_from(&mut self.method, s)?,
+                26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1659,17 +1595,17 @@ impl pecan::Message for ServiceDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.method.is_empty() {
             for i in &self.method {
                 s.write_tag(18)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if let Some(v) = &self.options {
             s.write_tag(26)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -1679,16 +1615,13 @@ impl pecan::Message for ServiceDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.method.is_empty() {
-            l += self.method.len() as u64;
-            for i in &self.method {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.method.len() as u64 + LengthPrefixedArray::len(&self.method);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1813,12 +1746,12 @@ impl pecan::Message for MethodDescriptorProto {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => self.input_type = Some(s.read_string()?),
-                26 => self.output_type = Some(s.read_string()?),
-                34 => s.merge_message_to(self.options_mut())?,
-                40 => self.client_streaming = Some(s.read_bool()?),
-                48 => self.server_streaming = Some(s.read_bool()?),
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => self.input_type = Some(LengthPrefixed::read_from(s)?),
+                26 => self.output_type = Some(LengthPrefixed::read_from(s)?),
+                34 => LengthPrefixed::merge_from(self.options_mut(), s)?,
+                40 => self.client_streaming = Some(Varint::read_from(s)?),
+                48 => self.server_streaming = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1827,27 +1760,27 @@ impl pecan::Message for MethodDescriptorProto {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.input_type {
             s.write_tag(18)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.output_type {
             s.write_tag(26)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.options {
             s.write_tag(34)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.client_streaming {
             s.write_tag(40)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.server_streaming {
             s.write_tag(48)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -1857,22 +1790,22 @@ impl pecan::Message for MethodDescriptorProto {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.input_type {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.output_type {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.client_streaming {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.server_streaming {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2243,27 +2176,27 @@ impl pecan::Message for FileOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.java_package = Some(s.read_string()?),
-                66 => self.java_outer_classname = Some(s.read_string()?),
-                72 => self.optimize_for = Some(s.read_enum()?),
-                80 => self.java_multiple_files = Some(s.read_bool()?),
-                90 => self.go_package = Some(s.read_string()?),
-                128 => self.cc_generic_services = Some(s.read_bool()?),
-                136 => self.java_generic_services = Some(s.read_bool()?),
-                144 => self.py_generic_services = Some(s.read_bool()?),
-                160 => self.java_generate_equals_and_hash = Some(s.read_bool()?),
-                184 => self.deprecated = Some(s.read_bool()?),
-                216 => self.java_string_check_utf8 = Some(s.read_bool()?),
-                248 => self.cc_enable_arenas = Some(s.read_bool()?),
-                290 => self.objc_class_prefix = Some(s.read_string()?),
-                298 => self.csharp_namespace = Some(s.read_string()?),
-                314 => self.swift_prefix = Some(s.read_string()?),
-                322 => self.php_class_prefix = Some(s.read_string()?),
-                330 => self.php_namespace = Some(s.read_string()?),
-                336 => self.php_generic_services = Some(s.read_bool()?),
-                354 => self.php_metadata_namespace = Some(s.read_string()?),
-                362 => self.ruby_package = Some(s.read_string()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                10 => self.java_package = Some(LengthPrefixed::read_from(s)?),
+                66 => self.java_outer_classname = Some(LengthPrefixed::read_from(s)?),
+                72 => self.optimize_for = Some(Varint::read_from(s)?),
+                80 => self.java_multiple_files = Some(Varint::read_from(s)?),
+                90 => self.go_package = Some(LengthPrefixed::read_from(s)?),
+                128 => self.cc_generic_services = Some(Varint::read_from(s)?),
+                136 => self.java_generic_services = Some(Varint::read_from(s)?),
+                144 => self.py_generic_services = Some(Varint::read_from(s)?),
+                160 => self.java_generate_equals_and_hash = Some(Varint::read_from(s)?),
+                184 => self.deprecated = Some(Varint::read_from(s)?),
+                216 => self.java_string_check_utf8 = Some(Varint::read_from(s)?),
+                248 => self.cc_enable_arenas = Some(Varint::read_from(s)?),
+                290 => self.objc_class_prefix = Some(LengthPrefixed::read_from(s)?),
+                298 => self.csharp_namespace = Some(LengthPrefixed::read_from(s)?),
+                314 => self.swift_prefix = Some(LengthPrefixed::read_from(s)?),
+                322 => self.php_class_prefix = Some(LengthPrefixed::read_from(s)?),
+                330 => self.php_namespace = Some(LengthPrefixed::read_from(s)?),
+                336 => self.php_generic_services = Some(Varint::read_from(s)?),
+                354 => self.php_metadata_namespace = Some(LengthPrefixed::read_from(s)?),
+                362 => self.ruby_package = Some(LengthPrefixed::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -2272,88 +2205,88 @@ impl pecan::Message for FileOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.java_package {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.java_outer_classname {
             s.write_tag(66)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.optimize_for {
             s.write_tag(72)?;
-            s.write_enum(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.java_multiple_files {
             s.write_tag(80)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.go_package {
             s.write_tag(90)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.cc_generic_services {
             s.write_tag(128)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.java_generic_services {
             s.write_tag(136)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.py_generic_services {
             s.write_tag(144)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.java_generate_equals_and_hash {
             s.write_tag(160)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.deprecated {
             s.write_tag(184)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.java_string_check_utf8 {
             s.write_tag(216)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.cc_enable_arenas {
             s.write_tag(248)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.objc_class_prefix {
             s.write_tag(290)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.csharp_namespace {
             s.write_tag(298)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.swift_prefix {
             s.write_tag(314)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.php_class_prefix {
             s.write_tag(322)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.php_namespace {
             s.write_tag(330)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.php_generic_services {
             s.write_tag(336)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.php_metadata_namespace {
             s.write_tag(354)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.ruby_package {
             s.write_tag(362)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -2364,70 +2297,68 @@ impl pecan::Message for FileOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.java_package {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.java_outer_classname {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.optimize_for {
-            l += 1 + pecan::stream::enum_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.java_multiple_files {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = &self.go_package {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.cc_generic_services {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.java_generic_services {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.py_generic_services {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.java_generate_equals_and_hash {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.deprecated {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.java_string_check_utf8 {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.cc_enable_arenas {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = &self.objc_class_prefix {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.csharp_namespace {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.swift_prefix {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.php_class_prefix {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.php_namespace {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.php_generic_services {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = &self.php_metadata_namespace {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.ruby_package {
-            l += 2 + pecan::stream::string_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2514,11 +2445,11 @@ impl pecan::Message for MessageOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.message_set_wire_format = Some(s.read_bool()?),
-                16 => self.no_standard_descriptor_accessor = Some(s.read_bool()?),
-                24 => self.deprecated = Some(s.read_bool()?),
-                56 => self.map_entry = Some(s.read_bool()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                8 => self.message_set_wire_format = Some(Varint::read_from(s)?),
+                16 => self.no_standard_descriptor_accessor = Some(Varint::read_from(s)?),
+                24 => self.deprecated = Some(Varint::read_from(s)?),
+                56 => self.map_entry = Some(Varint::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -2527,24 +2458,24 @@ impl pecan::Message for MessageOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.message_set_wire_format {
             s.write_tag(8)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.no_standard_descriptor_accessor {
             s.write_tag(16)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.deprecated {
             s.write_tag(24)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.map_entry {
             s.write_tag(56)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -2555,22 +2486,20 @@ impl pecan::Message for MessageOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.message_set_wire_format {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.no_standard_descriptor_accessor {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.deprecated {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.map_entry {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2745,13 +2674,13 @@ impl pecan::Message for FieldOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.ctype = Some(s.read_enum()?),
-                16 => self.packed = Some(s.read_bool()?),
-                24 => self.deprecated = Some(s.read_bool()?),
-                40 => self.lazy = Some(s.read_bool()?),
-                48 => self.jstype = Some(s.read_enum()?),
-                80 => self.weak = Some(s.read_bool()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                8 => self.ctype = Some(Varint::read_from(s)?),
+                16 => self.packed = Some(Varint::read_from(s)?),
+                24 => self.deprecated = Some(Varint::read_from(s)?),
+                40 => self.lazy = Some(Varint::read_from(s)?),
+                48 => self.jstype = Some(Varint::read_from(s)?),
+                80 => self.weak = Some(Varint::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -2760,32 +2689,32 @@ impl pecan::Message for FieldOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.ctype {
             s.write_tag(8)?;
-            s.write_enum(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.packed {
             s.write_tag(16)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.deprecated {
             s.write_tag(24)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.lazy {
             s.write_tag(40)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.jstype {
             s.write_tag(48)?;
-            s.write_enum(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.weak {
             s.write_tag(80)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -2796,28 +2725,26 @@ impl pecan::Message for FieldOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.ctype {
-            l += 1 + pecan::stream::enum_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.packed {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.deprecated {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.lazy {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.jstype {
-            l += 1 + pecan::stream::enum_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.weak {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2848,7 +2775,7 @@ impl pecan::Message for OneofOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -2858,7 +2785,7 @@ impl pecan::Message for OneofOptions {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -2869,10 +2796,8 @@ impl pecan::Message for OneofOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2931,9 +2856,9 @@ impl pecan::Message for EnumOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                16 => self.allow_alias = Some(s.read_bool()?),
-                24 => self.deprecated = Some(s.read_bool()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                16 => self.allow_alias = Some(Varint::read_from(s)?),
+                24 => self.deprecated = Some(Varint::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -2942,16 +2867,16 @@ impl pecan::Message for EnumOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.allow_alias {
             s.write_tag(16)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.deprecated {
             s.write_tag(24)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -2962,16 +2887,14 @@ impl pecan::Message for EnumOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.allow_alias {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.deprecated {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3016,8 +2939,8 @@ impl pecan::Message for EnumValueOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.deprecated = Some(s.read_bool()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                8 => self.deprecated = Some(Varint::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3026,12 +2949,12 @@ impl pecan::Message for EnumValueOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(8)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -3042,13 +2965,11 @@ impl pecan::Message for EnumValueOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.deprecated {
-            l += 1 + pecan::stream::bool_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3093,8 +3014,8 @@ impl pecan::Message for ServiceOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                264 => self.deprecated = Some(s.read_bool()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                264 => self.deprecated = Some(Varint::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3103,12 +3024,12 @@ impl pecan::Message for ServiceOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -3119,13 +3040,11 @@ impl pecan::Message for ServiceOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.deprecated {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3215,9 +3134,9 @@ impl pecan::Message for MethodOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                264 => self.deprecated = Some(s.read_bool()?),
-                272 => self.idempotency_level = Some(s.read_enum()?),
-                7994 => s.read_message_to(&mut self.uninterpreted_option)?,
+                264 => self.deprecated = Some(Varint::read_from(s)?),
+                272 => self.idempotency_level = Some(Varint::read_from(s)?),
+                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3226,16 +3145,16 @@ impl pecan::Message for MethodOptions {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
-            s.write_bool(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.idempotency_level {
             s.write_tag(272)?;
-            s.write_enum(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -3246,16 +3165,14 @@ impl pecan::Message for MethodOptions {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.deprecated {
-            l += 2 + pecan::stream::bool_len(v);
+            l += 2 + Varint::len(v);
         }
         if let Some(v) = self.idempotency_level {
-            l += 2 + pecan::stream::enum_len(v);
+            l += 2 + Varint::len(v);
         }
         if !self.uninterpreted_option.is_empty() {
-            l += 2 * self.uninterpreted_option.len() as u64;
-            for i in &self.uninterpreted_option {
-                l += pecan::stream::message_len(i);
-            }
+            l += 2 * self.uninterpreted_option.len() as u64
+                + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3288,8 +3205,8 @@ impl pecan::Message for UninterpretedOption_NamePart {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name_part = s.read_string()?,
-                16 => self.is_extension = s.read_bool()?,
+                10 => self.name_part = LengthPrefixed::read_from(s)?,
+                16 => self.is_extension = Varint::read_from(s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3298,11 +3215,11 @@ impl pecan::Message for UninterpretedOption_NamePart {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.name_part.is_empty() {
             s.write_tag(10)?;
-            s.write_string(&self.name_part)?;
+            LengthPrefixed::write_to(&self.name_part, s)?;
         }
         if self.is_extension {
             s.write_tag(16)?;
-            s.write_bool(self.is_extension)?;
+            Varint::write_to(self.is_extension, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -3312,10 +3229,10 @@ impl pecan::Message for UninterpretedOption_NamePart {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.name_part.is_empty() {
-            l += 1 + pecan::stream::string_len(&self.name_part);
+            l += 1 + LengthPrefixed::len(&self.name_part);
         }
         if self.is_extension {
-            l += 1 + pecan::stream::bool_len(self.is_extension);
+            l += 1 + Varint::len(self.is_extension);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3439,13 +3356,13 @@ impl pecan::Message for UninterpretedOption {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                18 => s.read_message_to(&mut self.name)?,
-                26 => self.identifier_value = Some(s.read_string()?),
-                32 => self.positive_int_value = Some(s.read_var_u64()?),
-                40 => self.negative_int_value = Some(s.read_var_i64()?),
-                49 => self.double_value = Some(s.read_f64()?),
-                58 => self.string_value = Some(s.read_bytes()?),
-                66 => self.aggregate_value = Some(s.read_string()?),
+                18 => LengthPrefixedArray::merge_from(&mut self.name, s)?,
+                26 => self.identifier_value = Some(LengthPrefixed::read_from(s)?),
+                32 => self.positive_int_value = Some(Varint::read_from(s)?),
+                40 => self.negative_int_value = Some(Varint::read_from(s)?),
+                49 => self.double_value = Some(Fixed::read_from(s)?),
+                58 => self.string_value = Some(LengthPrefixed::read_from(s)?),
+                66 => self.aggregate_value = Some(LengthPrefixed::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3455,32 +3372,32 @@ impl pecan::Message for UninterpretedOption {
         if !self.name.is_empty() {
             for i in &self.name {
                 s.write_tag(18)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if let Some(v) = &self.identifier_value {
             s.write_tag(26)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.positive_int_value {
             s.write_tag(32)?;
-            s.write_var_u64(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.negative_int_value {
             s.write_tag(40)?;
-            s.write_var_i64(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.double_value {
             s.write_tag(49)?;
-            s.write_f64(v)?;
+            Fixed::write_to(v, s)?;
         }
         if let Some(v) = &self.string_value {
             s.write_tag(58)?;
-            s.write_bytes(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.aggregate_value {
             s.write_tag(66)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -3490,28 +3407,25 @@ impl pecan::Message for UninterpretedOption {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += self.name.len() as u64;
-            for i in &self.name {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.name.len() as u64 + LengthPrefixedArray::len(&self.name);
         }
         if let Some(v) = &self.identifier_value {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.positive_int_value {
-            l += 1 + pecan::stream::var_u64_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.negative_int_value {
-            l += 1 + pecan::stream::var_i64_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.double_value {
-            l += 1 + pecan::stream::f64_len(v);
+            l += 1 + Fixed::len(v);
         }
         if let Some(v) = &self.string_value {
-            l += 1 + pecan::stream::bytes_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.aggregate_value {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3580,11 +3494,11 @@ impl pecan::Message for SourceCodeInfo_Location {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => s.read_packed_array(&mut self.path, |s| s.read_var_i32())?,
-                18 => s.read_packed_array(&mut self.span, |s| s.read_var_i32())?,
-                26 => self.leading_comments = Some(s.read_string()?),
-                34 => self.trailing_comments = Some(s.read_string()?),
-                50 => self.leading_detached_comments.push(s.read_string()?),
+                10 => VarintArray::merge_from(&mut self.path, s)?,
+                18 => VarintArray::merge_from(&mut self.span, s)?,
+                26 => self.leading_comments = Some(LengthPrefixed::read_from(s)?),
+                34 => self.trailing_comments = Some(LengthPrefixed::read_from(s)?),
+                50 => LengthPrefixedArray::merge_from(&mut self.leading_detached_comments, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3592,27 +3506,25 @@ impl pecan::Message for SourceCodeInfo_Location {
     }
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.path.is_empty() {
-            let l = pecan::stream::packed_array_len(&self.path, pecan::stream::var_i32_len);
             s.write_tag(10)?;
-            s.write_packed_array(l, &self.path, |s, i| s.write_var_i32(i))?;
+            VarintArray::write_to(&self.path, s)?;
         }
         if !self.span.is_empty() {
-            let l = pecan::stream::packed_array_len(&self.span, pecan::stream::var_i32_len);
             s.write_tag(18)?;
-            s.write_packed_array(l, &self.span, |s, i| s.write_var_i32(i))?;
+            VarintArray::write_to(&self.span, s)?;
         }
         if let Some(v) = &self.leading_comments {
             s.write_tag(26)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.trailing_comments {
             s.write_tag(34)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.leading_detached_comments.is_empty() {
             for i in &self.leading_detached_comments {
                 s.write_tag(50)?;
-                s.write_string(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -3623,22 +3535,20 @@ impl pecan::Message for SourceCodeInfo_Location {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.path.is_empty() {
-            l += 1 + pecan::stream::packed_array_len(&self.path, pecan::stream::var_i32_len);
+            l += 1 + VarintArray::len(&self.path);
         }
         if !self.span.is_empty() {
-            l += 1 + pecan::stream::packed_array_len(&self.span, pecan::stream::var_i32_len);
+            l += 1 + VarintArray::len(&self.span);
         }
         if let Some(v) = &self.leading_comments {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.trailing_comments {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.leading_detached_comments.is_empty() {
-            l += self.leading_detached_comments.len() as u64;
-            for i in &self.leading_detached_comments {
-                l += pecan::stream::string_len(i);
-            }
+            l += self.leading_detached_comments.len() as u64
+                + LengthPrefixedArray::len(&self.leading_detached_comments);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3669,7 +3579,7 @@ impl pecan::Message for SourceCodeInfo {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => s.read_message_to(&mut self.location)?,
+                10 => LengthPrefixedArray::merge_from(&mut self.location, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3679,7 +3589,7 @@ impl pecan::Message for SourceCodeInfo {
         if !self.location.is_empty() {
             for i in &self.location {
                 s.write_tag(10)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -3690,10 +3600,7 @@ impl pecan::Message for SourceCodeInfo {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.location.is_empty() {
-            l += self.location.len() as u64;
-            for i in &self.location {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.location.len() as u64 + LengthPrefixedArray::len(&self.location);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3769,10 +3676,10 @@ impl pecan::Message for GeneratedCodeInfo_Annotation {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => s.read_packed_array(&mut self.path, |s| s.read_var_i32())?,
-                18 => self.source_file = Some(s.read_string()?),
-                24 => self.begin = Some(s.read_var_i32()?),
-                32 => self.end = Some(s.read_var_i32()?),
+                10 => VarintArray::merge_from(&mut self.path, s)?,
+                18 => self.source_file = Some(LengthPrefixed::read_from(s)?),
+                24 => self.begin = Some(Varint::read_from(s)?),
+                32 => self.end = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3780,21 +3687,20 @@ impl pecan::Message for GeneratedCodeInfo_Annotation {
     }
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.path.is_empty() {
-            let l = pecan::stream::packed_array_len(&self.path, pecan::stream::var_i32_len);
             s.write_tag(10)?;
-            s.write_packed_array(l, &self.path, |s, i| s.write_var_i32(i))?;
+            VarintArray::write_to(&self.path, s)?;
         }
         if let Some(v) = &self.source_file {
             s.write_tag(18)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.begin {
             s.write_tag(24)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.end {
             s.write_tag(32)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -3804,16 +3710,16 @@ impl pecan::Message for GeneratedCodeInfo_Annotation {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.path.is_empty() {
-            l += 1 + pecan::stream::packed_array_len(&self.path, pecan::stream::var_i32_len);
+            l += 1 + VarintArray::len(&self.path);
         }
         if let Some(v) = &self.source_file {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.begin {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.end {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3844,7 +3750,7 @@ impl pecan::Message for GeneratedCodeInfo {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => s.read_message_to(&mut self.annotation)?,
+                10 => LengthPrefixedArray::merge_from(&mut self.annotation, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3854,7 +3760,7 @@ impl pecan::Message for GeneratedCodeInfo {
         if !self.annotation.is_empty() {
             for i in &self.annotation {
                 s.write_tag(10)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -3865,10 +3771,7 @@ impl pecan::Message for GeneratedCodeInfo {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.annotation.is_empty() {
-            l += self.annotation.len() as u64;
-            for i in &self.annotation {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.annotation.len() as u64 + LengthPrefixedArray::len(&self.annotation);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

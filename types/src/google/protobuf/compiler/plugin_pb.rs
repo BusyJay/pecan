@@ -74,10 +74,10 @@ impl pecan::Message for Version {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                8 => self.major = Some(s.read_var_i32()?),
-                16 => self.minor = Some(s.read_var_i32()?),
-                24 => self.patch = Some(s.read_var_i32()?),
-                34 => self.suffix = Some(s.read_string()?),
+                8 => self.major = Some(Varint::read_from(s)?),
+                16 => self.minor = Some(Varint::read_from(s)?),
+                24 => self.patch = Some(Varint::read_from(s)?),
+                34 => self.suffix = Some(LengthPrefixed::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -86,19 +86,19 @@ impl pecan::Message for Version {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.major {
             s.write_tag(8)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.minor {
             s.write_tag(16)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = self.patch {
             s.write_tag(24)?;
-            s.write_var_i32(v)?;
+            Varint::write_to(v, s)?;
         }
         if let Some(v) = &self.suffix {
             s.write_tag(34)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -108,16 +108,16 @@ impl pecan::Message for Version {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.major {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.minor {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = self.patch {
-            l += 1 + pecan::stream::var_i32_len(v);
+            l += 1 + Varint::len(v);
         }
         if let Some(v) = &self.suffix {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -184,10 +184,10 @@ impl pecan::Message for CodeGeneratorRequest {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.file_to_generate.push(s.read_string()?),
-                18 => self.parameter = Some(s.read_string()?),
-                26 => s.merge_message_to(self.compiler_version_mut())?,
-                122 => s.read_message_to(&mut self.proto_file)?,
+                10 => LengthPrefixedArray::merge_from(&mut self.file_to_generate, s)?,
+                18 => self.parameter = Some(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.compiler_version_mut(), s)?,
+                122 => LengthPrefixedArray::merge_from(&mut self.proto_file, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -197,21 +197,21 @@ impl pecan::Message for CodeGeneratorRequest {
         if !self.file_to_generate.is_empty() {
             for i in &self.file_to_generate {
                 s.write_tag(10)?;
-                s.write_string(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if let Some(v) = &self.parameter {
             s.write_tag(18)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.compiler_version {
             s.write_tag(26)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self.proto_file.is_empty() {
             for i in &self.proto_file {
                 s.write_tag(122)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -222,22 +222,17 @@ impl pecan::Message for CodeGeneratorRequest {
     fn len(&self) -> u64 {
         let mut l = 0;
         if !self.file_to_generate.is_empty() {
-            l += self.file_to_generate.len() as u64;
-            for i in &self.file_to_generate {
-                l += pecan::stream::string_len(i);
-            }
+            l += self.file_to_generate.len() as u64
+                + LengthPrefixedArray::len(&self.file_to_generate);
         }
         if let Some(v) = &self.parameter {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.compiler_version {
-            l += 1 + pecan::stream::message_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if !self.proto_file.is_empty() {
-            l += self.proto_file.len() as u64;
-            for i in &self.proto_file {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.proto_file.len() as u64 + LengthPrefixedArray::len(&self.proto_file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -371,10 +366,10 @@ impl pecan::Message for CodeGeneratorResponse_File {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(s.read_string()?),
-                18 => self.insertion_point = Some(s.read_string()?),
-                122 => self.content = Some(s.read_string()?),
-                130 => s.merge_message_to(self.generated_code_info_mut())?,
+                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                18 => self.insertion_point = Some(LengthPrefixed::read_from(s)?),
+                122 => self.content = Some(LengthPrefixed::read_from(s)?),
+                130 => LengthPrefixed::merge_from(self.generated_code_info_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -383,19 +378,19 @@ impl pecan::Message for CodeGeneratorResponse_File {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.insertion_point {
             s.write_tag(18)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.content {
             s.write_tag(122)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = &self.generated_code_info {
             s.write_tag(130)?;
-            s.write_message(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -405,16 +400,16 @@ impl pecan::Message for CodeGeneratorResponse_File {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.insertion_point {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.content {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = &self.generated_code_info {
-            l += 2 + pecan::stream::message_len(v);
+            l += 2 + LengthPrefixed::len(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -476,9 +471,9 @@ impl pecan::Message for CodeGeneratorResponse {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.error = Some(s.read_string()?),
-                16 => self.supported_features = Some(s.read_var_u64()?),
-                122 => s.read_message_to(&mut self.file)?,
+                10 => self.error = Some(LengthPrefixed::read_from(s)?),
+                16 => self.supported_features = Some(Varint::read_from(s)?),
+                122 => LengthPrefixedArray::merge_from(&mut self.file, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -487,16 +482,16 @@ impl pecan::Message for CodeGeneratorResponse {
     fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.error {
             s.write_tag(10)?;
-            s.write_string(v)?;
+            LengthPrefixed::write_to(v, s)?;
         }
         if let Some(v) = self.supported_features {
             s.write_tag(16)?;
-            s.write_var_u64(v)?;
+            Varint::write_to(v, s)?;
         }
         if !self.file.is_empty() {
             for i in &self.file {
                 s.write_tag(122)?;
-                s.write_message(i)?;
+                LengthPrefixed::write_to(i, s)?;
             }
         }
         if !self._unknown.is_empty() {
@@ -507,16 +502,13 @@ impl pecan::Message for CodeGeneratorResponse {
     fn len(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.error {
-            l += 1 + pecan::stream::string_len(v);
+            l += 1 + LengthPrefixed::len(v);
         }
         if let Some(v) = self.supported_features {
-            l += 1 + pecan::stream::var_u64_len(v);
+            l += 1 + Varint::len(v);
         }
         if !self.file.is_empty() {
-            l += self.file.len() as u64;
-            for i in &self.file {
-                l += pecan::stream::message_len(i);
-            }
+            l += self.file.len() as u64 + LengthPrefixedArray::len(&self.file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

@@ -25,7 +25,7 @@ pub struct FieldGenerator {
     r#type: TokenStream,
     inner_type: TokenStream,
     tag: u64,
-    method: &'static str,
+    codec: Ident,
     default_value: TokenStream,
     kind: FieldKind,
     repeated: bool,
@@ -36,45 +36,49 @@ impl FieldGenerator {
     pub fn new(generator: &Generator, f: &FieldDescriptorProto) -> FieldGenerator {
         let name = util::snake_name(f.name.as_ref().unwrap());
         let pb_ty = f.r#type.unwrap();
-        let (inner_type, wire_ty, method, kind) = match pb_ty {
-            FieldDescriptorProto_Type::TYPE_BOOL => (quote!(bool), 0, "bool", FieldKind::Boolean),
+        let (inner_type, wire_ty, codec, kind) = match pb_ty {
+            FieldDescriptorProto_Type::TYPE_BOOL => (quote!(bool), 0, "Varint", FieldKind::Boolean),
             FieldDescriptorProto_Type::TYPE_BYTES => {
-                (quote!(bytes::Bytes), 2, "bytes", FieldKind::Bytes)
+                (quote!(bytes::Bytes), 2, "LengthPrefixed", FieldKind::Bytes)
             }
-            FieldDescriptorProto_Type::TYPE_DOUBLE => (quote!(f64), 1, "f64", FieldKind::Primitive),
+            FieldDescriptorProto_Type::TYPE_DOUBLE => {
+                (quote!(f64), 1, "Fixed", FieldKind::Primitive)
+            }
             FieldDescriptorProto_Type::TYPE_FIXED32 => {
-                (quote!(u32), 5, "u32", FieldKind::Primitive)
+                (quote!(u32), 5, "Fixed", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_FIXED64 => {
-                (quote!(u64), 1, "u64", FieldKind::Primitive)
+                (quote!(u64), 1, "Fixed", FieldKind::Primitive)
             }
-            FieldDescriptorProto_Type::TYPE_FLOAT => (quote!(f32), 5, "f32", FieldKind::Primitive),
+            FieldDescriptorProto_Type::TYPE_FLOAT => {
+                (quote!(f32), 5, "Fixed", FieldKind::Primitive)
+            }
             FieldDescriptorProto_Type::TYPE_INT32 => {
-                (quote!(i32), 0, "var_i32", FieldKind::Primitive)
+                (quote!(i32), 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_INT64 => {
-                (quote!(i64), 0, "var_i64", FieldKind::Primitive)
+                (quote!(i64), 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_SFIXED32 => {
-                (quote!(i32), 5, "i32", FieldKind::Primitive)
+                (quote!(i32), 5, "Fixed", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_SFIXED64 => {
-                (quote!(i64), 1, "i64", FieldKind::Primitive)
+                (quote!(i64), 1, "Fixed", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_STRING => {
-                (quote!(String), 2, "string", FieldKind::Bytes)
+                (quote!(String), 2, "LengthPrefixed", FieldKind::Bytes)
             }
             FieldDescriptorProto_Type::TYPE_SINT32 => {
-                (quote!(i32), 0, "zz_i32", FieldKind::Primitive)
+                (quote!(i32), 0, "ZigZag", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_SINT64 => {
-                (quote!(i64), 0, "zz_i64", FieldKind::Primitive)
+                (quote!(i64), 0, "ZigZag", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_UINT32 => {
-                (quote!(u32), 0, "var_u32", FieldKind::Primitive)
+                (quote!(u32), 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_UINT64 => {
-                (quote!(u64), 0, "var_u64", FieldKind::Primitive)
+                (quote!(u64), 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_ENUM => {
                 let p = generator
@@ -86,7 +90,7 @@ impl FieldGenerator {
                 } else {
                     format!("{}::{}", p.package(), p.name()).parse().unwrap()
                 };
-                (ty, 0, "enum", FieldKind::Primitive)
+                (ty, 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_MESSAGE => {
                 let p = generator
@@ -98,7 +102,7 @@ impl FieldGenerator {
                 } else {
                     format!("{}::{}", p.package(), p.name()).parse().unwrap()
                 };
-                (ty, 2, "message", FieldKind::Message)
+                (ty, 2, "LengthPrefixed", FieldKind::Message)
             }
             ty => panic!("unsupported type: {}", ty),
         };
@@ -141,7 +145,7 @@ impl FieldGenerator {
             r#type,
             inner_type,
             tag: tag as u64,
-            method,
+            codec: format_ident!("{}{}", codec, if repeated { "Array" } else { "" }),
             default_value,
             kind,
             repeated,
@@ -160,41 +164,30 @@ impl FieldGenerator {
     pub fn fn_merge_from(&self) -> TokenStream {
         let name = self.name();
         let tag = self.tag();
+        let codec = &self.codec;
         if self.kind == FieldKind::Message {
             if !self.optional {
-                let method = if self.repeated {
-                    format_ident!("read_{}_to", self.method)
-                } else {
-                    format_ident!("merge_{}_to", self.method)
-                };
                 quote! {
-                    #tag => s.#method(&mut self.#name)?,
+                    #tag => #codec::merge_from(&mut self.#name, s)?,
                 }
             } else {
                 let accessor = format_ident!("{}_mut", self.name);
                 quote! {
-                    #tag => s.merge_message_to(self.#accessor())?,
+                    #tag => #codec::merge_from(self.#accessor(), s)?,
                 }
             }
         } else {
-            let method = format_ident!("read_{}", self.method);
             if self.optional {
                 quote! {
-                    #tag => self.#name = Some(s.#method()?),
+                    #tag => self.#name = Some(#codec::read_from(s)?),
                 }
             } else if self.repeated {
-                if !self.kind.can_copy() {
-                    quote! {
-                        #tag => self.#name.push(s.#method()?),
-                    }
-                } else {
-                    quote! {
-                        #tag => s.read_packed_array(&mut self.#name, |s| s.#method())?,
-                    }
+                quote! {
+                    #tag => #codec::merge_from(&mut self.#name, s)?,
                 }
             } else {
                 quote! {
-                    #tag => self.#name = s.#method()?,
+                    #tag => self.#name = #codec::read_from(s)?,
                 }
             }
         }
@@ -228,32 +221,28 @@ impl FieldGenerator {
 
     pub fn fn_write_to(&self) -> TokenStream {
         let tag = self.tag();
+        let codec = &self.codec;
         if !self.repeated {
-            let method = format_ident!("write_{}", self.method);
             self.check_empty(|_, v| {
                 quote! {
                     s.write_tag(#tag)?;
-                    s.#method(#v)?;
+                    #codec::write_to(#v, s)?;
                 }
             })
         } else if !self.kind.can_copy() {
-            let method = format_ident!("write_{}", self.method);
             self.check_empty(|_, v| {
                 quote! {
                     for i in #v {
                         s.write_tag(#tag)?;
-                        s.#method(i)?;
+                        LengthPrefixed::write_to(i, s)?;
                     }
                 }
             })
         } else {
-            let method = format_ident!("write_{}", self.method);
-            let len_method = format_ident!("{}_len", self.method);
             self.check_empty(|_, v| {
                 quote! {
-                    let l = pecan::stream::packed_array_len(#v, pecan::stream::#len_method);
                     s.write_tag(#tag)?;
-                    s.write_packed_array(l, #v, |s, i| s.#method(i))?;
+                    #codec::write_to(#v, s)?;
                 }
             })
         }
@@ -262,13 +251,12 @@ impl FieldGenerator {
     pub fn fn_len(&self) -> TokenStream {
         let len_raw = pecan::stream::var_u64_len(self.tag);
         let tag_len = Literal::u64_unsuffixed(len_raw);
+        let codec = &self.codec;
         if !self.repeated {
-            let method = format_ident!("{}_len", self.method);
             self.check_empty(|_, v| {
-                quote! { l += #tag_len + pecan::stream::#method(#v); }
+                quote! { l += #tag_len + #codec::len(#v); }
             })
         } else if !self.kind.can_copy() {
-            let method = format_ident!("{}_len", self.method);
             self.check_empty(|v, v_ref| {
                 let vector_len = if len_raw == 1 {
                     quote! { #v.len() }
@@ -276,17 +264,13 @@ impl FieldGenerator {
                     quote! { #tag_len * #v.len() }
                 };
                 quote! {
-                    l += #vector_len as u64;
-                    for i in #v_ref {
-                        l += pecan::stream::#method(i);
-                    }
+                    l += #vector_len as u64 + #codec::len(#v_ref);
                 }
             })
         } else {
-            let method = format_ident!("{}_len", self.method);
             self.check_empty(|_, v| {
                 quote! {
-                    l += #tag_len + pecan::stream::packed_array_len(#v, pecan::stream::#method);
+                    l += #tag_len + #codec::len(#v);
                 }
             })
         }
