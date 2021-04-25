@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "google/protobuf/descriptor.proto";
+
+package pecan;
+
+message PecanFieldOptions {
+    bool box_field = 1;
+}
+
+extend google.protobuf.FieldOptions {
+    PecanFieldOptions pecan = 2333;
+}

@@ -1,3 +1,5 @@
+pub mod field;
+
 use crate::{codec, Enumerate, Error, Message, Result};
 use bytes::{buf::UninitSlice, Buf, BufMut, Bytes};
 use std::{i32, mem, ptr};

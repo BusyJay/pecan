@@ -24,7 +24,7 @@ pub struct FieldGenerator {
     name: String,
     r#type: TokenStream,
     inner_type: TokenStream,
-    tag: i64,
+    tag: u64,
     method: &'static str,
     default_value: TokenStream,
     kind: FieldKind,
@@ -140,7 +140,7 @@ impl FieldGenerator {
             name,
             r#type,
             inner_type,
-            tag,
+            tag: tag as u64,
             method,
             default_value,
             kind,
@@ -154,7 +154,7 @@ impl FieldGenerator {
     }
 
     pub fn tag(&self) -> Literal {
-        Literal::i64_unsuffixed(self.tag)
+        Literal::u64_unsuffixed(self.tag)
     }
 
     pub fn fn_merge_from(&self) -> TokenStream {
@@ -260,7 +260,7 @@ impl FieldGenerator {
     }
 
     pub fn fn_len(&self) -> TokenStream {
-        let len_raw = pecan::stream::var_i64_len(self.tag);
+        let len_raw = pecan::stream::var_u64_len(self.tag);
         let tag_len = Literal::u64_unsuffixed(len_raw);
         if !self.repeated {
             let method = format_ident!("{}_len", self.method);
@@ -318,7 +318,7 @@ impl FieldGenerator {
         }
     }
 
-    pub fn tag_value(&self) -> i64 {
+    pub fn tag_value(&self) -> u64 {
         self.tag
     }
 
