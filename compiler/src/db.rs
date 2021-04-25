@@ -13,14 +13,14 @@ pub struct File {
 
 impl File {
     fn new(p: FileDescriptorProto) -> File {
-        let proto_path = p.name.as_ref().unwrap();
+        let proto_path = p.name();
         // TODO: load crate name from file.
         let module = rust_module(proto_path);
         let full_package = format!("crate::{}", module.join("::"));
         File {
             target: target_path(proto_path),
             full_package,
-            proto3: p.syntax.as_ref().map_or(false, |p| p == "proto3"),
+            proto3: p.syntax() == "proto3",
             proto: p,
         }
     }
@@ -73,7 +73,7 @@ impl Database {
     pub fn load(&mut self, file: FileDescriptorProto) {
         let package_prefix = package_prefix(&file);
         let f = File::new(file);
-        let proto_path = f.proto.name.as_ref().unwrap();
+        let proto_path = f.proto.name();
         for e in &f.proto.enum_type {
             self.register_enum(&package_prefix, &f, e);
         }
@@ -94,7 +94,7 @@ impl Database {
         file: &File,
         e: &EnumDescriptorProto,
     ) {
-        let enum_name = e.name.as_ref().unwrap();
+        let enum_name = e.name();
         let ty_name = type_name(enum_name, ty_prefix);
         let full_name = format!("{}{}", prefix, enum_name);
         assert_eq!(
@@ -117,7 +117,7 @@ impl Database {
         file: &File,
         e: &DescriptorProto,
     ) {
-        let msg_name = e.name.as_ref().unwrap();
+        let msg_name = e.name();
         let ty_name = type_name(msg_name, ty_prefix);
         let full_name = format!("{}{}", prefix, msg_name);
         assert_eq!(

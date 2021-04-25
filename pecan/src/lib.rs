@@ -1,10 +1,11 @@
 mod codec;
 mod error;
+mod extension;
 mod message;
 pub mod stream;
-// mod extension;
 
 pub use self::error::{Error, Result};
+pub use self::extension::{Extension, ExtensionMap};
 pub use self::message::{DefaultInstance, Enumerate, Message};
 pub use self::stream::{CodedInputStream, CodedOutputStream};
 

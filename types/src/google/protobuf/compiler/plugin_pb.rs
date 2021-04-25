@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 use pecan::prelude::*;
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct Version {
     pub major: Option<i32>,
     pub minor: Option<i32>,
@@ -131,7 +131,13 @@ impl pecan::DefaultInstance for Version {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for Version {
+    #[inline]
+    fn default() -> Version {
+        Version::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct CodeGeneratorRequest {
     pub file_to_generate: Vec<String>,
     pub parameter: Option<String>,
@@ -246,6 +252,12 @@ impl pecan::DefaultInstance for CodeGeneratorRequest {
         &DEFAULT
     }
 }
+impl Default for CodeGeneratorRequest {
+    #[inline]
+    fn default() -> CodeGeneratorRequest {
+        CodeGeneratorRequest::new()
+    }
+}
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CodeGeneratorResponse_Feature(i32);
 impl pecan::Enumerate for CodeGeneratorResponse_Feature {
@@ -275,7 +287,7 @@ impl std::fmt::Display for CodeGeneratorResponse_Feature {
         }
     }
 }
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct CodeGeneratorResponse_File {
     pub name: Option<String>,
     pub insertion_point: Option<String>,
@@ -423,7 +435,13 @@ impl pecan::DefaultInstance for CodeGeneratorResponse_File {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for CodeGeneratorResponse_File {
+    #[inline]
+    fn default() -> CodeGeneratorResponse_File {
+        CodeGeneratorResponse_File::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct CodeGeneratorResponse {
     pub error: Option<String>,
     pub supported_features: Option<u64>,
@@ -520,5 +538,11 @@ impl pecan::DefaultInstance for CodeGeneratorResponse {
     fn default_instance() -> &'static CodeGeneratorResponse {
         static DEFAULT: CodeGeneratorResponse = CodeGeneratorResponse::new();
         &DEFAULT
+    }
+}
+impl Default for CodeGeneratorResponse {
+    #[inline]
+    fn default() -> CodeGeneratorResponse {
+        CodeGeneratorResponse::new()
     }
 }

@@ -1,19 +1,20 @@
 #![allow(non_camel_case_types)]
 use pecan::prelude::*;
-#[derive(Clone, Default, Debug)]
-pub struct PecanFieldOptions {
+pub const FIELD_OPT: pecan::Extension<FieldOptions, LengthPrefixed> = pecan::Extension::new(18666);
+#[derive(Clone, Debug)]
+pub struct FieldOptions {
     pub box_field: bool,
     _unknown: Vec<u8>,
 }
-impl PecanFieldOptions {
-    pub const fn new() -> PecanFieldOptions {
-        PecanFieldOptions {
+impl FieldOptions {
+    pub const fn new() -> FieldOptions {
+        FieldOptions {
             box_field: false,
             _unknown: Vec::new(),
         }
     }
 }
-impl pecan::Message for PecanFieldOptions {
+impl pecan::Message for FieldOptions {
     fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
@@ -44,9 +45,15 @@ impl pecan::Message for PecanFieldOptions {
         l
     }
 }
-impl pecan::DefaultInstance for PecanFieldOptions {
-    fn default_instance() -> &'static PecanFieldOptions {
-        static DEFAULT: PecanFieldOptions = PecanFieldOptions::new();
+impl pecan::DefaultInstance for FieldOptions {
+    fn default_instance() -> &'static FieldOptions {
+        static DEFAULT: FieldOptions = FieldOptions::new();
         &DEFAULT
+    }
+}
+impl Default for FieldOptions {
+    #[inline]
+    fn default() -> FieldOptions {
+        FieldOptions::new()
     }
 }

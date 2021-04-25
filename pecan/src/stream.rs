@@ -1,7 +1,7 @@
 pub mod field;
 
-use crate::{codec, Error, Result};
-use bytes::{buf::UninitSlice, Buf, BufMut, Bytes};
+use crate::{codec, extension::ExtensionMap, Error, Result};
+use bytes::{buf::UninitSlice, Buf, BufMut, Bytes, BytesMut};
 use field::{Fixed, LengthPrefixed, ReadFieldCodec, Varint, WriteFieldCodec};
 use std::{mem, ptr};
 
@@ -100,6 +100,16 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    pub fn read_extension(&mut self, tag: u64, extension: &mut ExtensionMap) -> Result<()> {
+        let mut data = BytesMut::new();
+        if let Some(buf) = extension.get_raw(tag) {
+            data.extend(buf);
+        }
+        self.read_unknown_field(tag, &mut data)?;
+        extension.insert_raw(tag, data.freeze());
+        Ok(())
+    }
+
     pub fn read_unknown_field(&mut self, tag: u64, unknown: &mut impl BufMut) -> Result<()> {
         let mut os = CodedOutputStream::new(unknown);
         os.write_tag(tag)?;
@@ -131,6 +141,10 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         self.buf.advance(self.last_len - self.chunk.len());
         self.last_len = 0;
         self.chunk = &[];
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.progress() >= self.limit || self.chunk.is_empty() && !self.buf.has_remaining()
     }
 }
 
@@ -206,6 +220,15 @@ impl<'a, B: BufMut> CodedOutputStream<'a, B> {
             self.renew()?;
             s = rp;
         }
+    }
+
+    pub fn write_extensions(&mut self, extensions: &ExtensionMap) -> Result<()> {
+        if let Some(values) = extensions.values_raw() {
+            for val in values {
+                self.write_raw_bytes(val)?;
+            }
+        }
+        Ok(())
     }
 }
 

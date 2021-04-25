@@ -9,6 +9,15 @@ use bytes::{buf::UninitSlice, Buf, BufMut, Bytes};
 
 pub trait ReadFieldCodec<Field> {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Field>;
+
+    #[inline]
+    fn wire() -> u8 {
+        0
+    }
+    #[inline]
+    fn tag(number: u32) -> u64 {
+        ((number as u64) << 3) | Self::wire() as u64
+    }
 }
 
 pub trait MergeFieldCodec<Field> {
@@ -67,6 +76,11 @@ impl WriteFieldCodec<bool> for Varint {
 pub struct LengthPrefixed;
 
 impl ReadFieldCodec<Bytes> for LengthPrefixed {
+    #[inline]
+    fn wire() -> u8 {
+        2
+    }
+
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Bytes> {
         let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
@@ -97,6 +111,11 @@ pub struct Fixed;
 
 impl ReadFieldCodec<f64> for Fixed {
     #[inline]
+    fn wire() -> u8 {
+        1
+    }
+
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<f64> {
         let u: u64 = Fixed::read_from(buf)?;
         Ok(f64::from_bits(u))
@@ -117,6 +136,11 @@ impl WriteFieldCodec<f64> for Fixed {
 }
 
 impl ReadFieldCodec<u32> for Fixed {
+    #[inline]
+    fn wire() -> u8 {
+        5
+    }
+
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<u32> {
         if buf.chunk.len() >= 4 {
             unsafe {
@@ -155,6 +179,11 @@ impl WriteFieldCodec<u32> for Fixed {
 }
 
 impl ReadFieldCodec<u64> for Fixed {
+    #[inline]
+    fn wire() -> u8 {
+        1
+    }
+
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<u64> {
         if buf.chunk.len() >= 8 {
             unsafe {
@@ -193,6 +222,11 @@ impl WriteFieldCodec<u64> for Fixed {
 }
 
 impl ReadFieldCodec<f32> for Fixed {
+    #[inline]
+    fn wire() -> u8 {
+        5
+    }
+
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<f32> {
         let u: u32 = Fixed::read_from(buf)?;
@@ -259,6 +293,11 @@ impl WriteFieldCodec<i64> for Varint {
 
 impl ReadFieldCodec<i32> for Fixed {
     #[inline]
+    fn wire() -> u8 {
+        5
+    }
+
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<i32> {
         let u: u32 = Fixed::read_from(buf)?;
         Ok(u as i32)
@@ -279,6 +318,11 @@ impl WriteFieldCodec<i32> for Fixed {
 
 impl ReadFieldCodec<i64> for Fixed {
     #[inline]
+    fn wire() -> u8 {
+        1
+    }
+
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<i64> {
         let u: u64 = Fixed::read_from(buf)?;
         Ok(u as i64)
@@ -298,6 +342,11 @@ impl WriteFieldCodec<i64> for Fixed {
 }
 
 impl ReadFieldCodec<String> for LengthPrefixed {
+    #[inline]
+    fn wire() -> u8 {
+        2
+    }
+
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<String> {
         let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
@@ -484,6 +533,11 @@ impl<M: Message> MergeFieldCodec<M> for LengthPrefixed {
 }
 
 impl<M: Message + Default> ReadFieldCodec<M> for LengthPrefixed {
+    #[inline]
+    fn wire() -> u8 {
+        2
+    }
+
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<M> {
         let mut m = Default::default();
         LengthPrefixed::merge_from(&mut m, buf)?;
@@ -513,6 +567,22 @@ where
     fn merge_from<B: Buf>(current: &mut Vec<Field>, buf: &mut CodedInputStream<B>) -> Result<()> {
         current.push(LengthPrefixed::read_from(buf)?);
         Ok(())
+    }
+}
+
+impl<Field> ReadFieldCodec<Vec<Field>> for LengthPrefixedArray
+where
+    LengthPrefixed: ReadFieldCodec<Field>,
+{
+    #[inline]
+    fn wire() -> u8 {
+        2
+    }
+
+    fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Field>> {
+        let mut v = Vec::new();
+        LengthPrefixedArray::merge_from(&mut v, buf)?;
+        Ok(v)
     }
 }
 
@@ -558,6 +628,10 @@ macro_rules! impl_array {
         where
             $codec: ReadFieldCodec<Field>,
         {
+            fn wire() -> u8 {
+                2
+            }
+
             fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Field>> {
                 let mut res = Vec::new();
                 $name::merge_from(&mut res, buf)?;

@@ -35,8 +35,8 @@ pub struct FieldGenerator {
 
 impl FieldGenerator {
     pub fn new(generator: &Generator, f: &FieldDescriptorProto) -> FieldGenerator {
-        let name = util::snake_name(f.name.as_ref().unwrap());
-        let pb_ty = f.r#type.unwrap();
+        let name = util::snake_name(f.name());
+        let pb_ty = f.r#type();
         let (inner_type, wire_ty, codec, kind) = match pb_ty {
             FieldDescriptorProto_Type::TYPE_BOOL => (quote!(bool), 0, "Varint", FieldKind::Boolean),
             FieldDescriptorProto_Type::TYPE_BYTES => {
@@ -82,10 +82,7 @@ impl FieldGenerator {
                 (quote!(u64), 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_ENUM => {
-                let p = generator
-                    .db()
-                    .r#type(f.type_name.as_ref().unwrap())
-                    .unwrap();
+                let p = generator.db().r#type(f.type_name()).unwrap();
                 let ty = if p.package() == generator.file().full_package() {
                     p.name().parse().unwrap()
                 } else {
@@ -94,10 +91,7 @@ impl FieldGenerator {
                 (ty, 0, "Varint", FieldKind::Primitive)
             }
             FieldDescriptorProto_Type::TYPE_MESSAGE => {
-                let p = generator
-                    .db()
-                    .r#type(f.type_name.as_ref().unwrap())
-                    .unwrap();
+                let p = generator.db().r#type(f.type_name()).unwrap();
                 let ty = if p.package() == generator.file().full_package() {
                     p.name().parse().unwrap()
                 } else {
@@ -107,7 +101,7 @@ impl FieldGenerator {
             }
             ty => panic!("unsupported type: {}", ty),
         };
-        let label = f.label.unwrap();
+        let label = f.label();
         let default_value = match pb_ty {
             FieldDescriptorProto_Type::TYPE_DOUBLE => quote! { 0f64 },
             FieldDescriptorProto_Type::TYPE_FLOAT => quote! { 0f32 },
@@ -118,7 +112,7 @@ impl FieldGenerator {
             FieldDescriptorProto_Type::TYPE_BOOL => quote! { false },
             _ => quote! { 0 },
         };
-        let number = f.number.unwrap() as i64;
+        let number = f.number() as i64;
         let tag;
         let r#type;
         let (mut repeated, mut optional) = (false, false);
@@ -177,19 +171,17 @@ impl FieldGenerator {
                     #tag => #codec::merge_from(self.#accessor(), s)?,
                 }
             }
+        } else if self.optional {
+            quote! {
+                #tag => self.#name = Some(#codec::read_from(s)?),
+            }
+        } else if self.repeated {
+            quote! {
+                #tag => #codec::merge_from(&mut self.#name, s)?,
+            }
         } else {
-            if self.optional {
-                quote! {
-                    #tag => self.#name = Some(#codec::read_from(s)?),
-                }
-            } else if self.repeated {
-                quote! {
-                    #tag => #codec::merge_from(&mut self.#name, s)?,
-                }
-            } else {
-                quote! {
-                    #tag => self.#name = #codec::read_from(s)?,
-                }
+            quote! {
+                #tag => self.#name = #codec::read_from(s)?,
             }
         }
     }
@@ -347,5 +339,20 @@ impl FieldGenerator {
                 self.#name = Some(val);
             }
         })
+    }
+
+    pub fn extension(&self) -> TokenStream {
+        let name = util::const_name(&self.name);
+        let name_ident = format_ident!("{}", name);
+        let tag = self.tag();
+        let ty = if self.optional {
+            &self.inner_type
+        } else {
+            &self.r#type
+        };
+        let codec = &self.codec;
+        quote! {
+            pub const #name_ident: pecan::Extension<#ty, #codec> = pecan::Extension::new(#tag);
+        }
     }
 }

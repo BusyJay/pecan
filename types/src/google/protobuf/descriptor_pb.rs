@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 use pecan::prelude::*;
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct FileDescriptorSet {
     pub file: Vec<FileDescriptorProto>,
     _unknown: Vec<u8>,
@@ -52,7 +52,13 @@ impl pecan::DefaultInstance for FileDescriptorSet {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for FileDescriptorSet {
+    #[inline]
+    fn default() -> FileDescriptorSet {
+        FileDescriptorSet::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct FileDescriptorProto {
     pub name: Option<String>,
     pub package: Option<String>,
@@ -297,7 +303,13 @@ impl pecan::DefaultInstance for FileDescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for FileDescriptorProto {
+    #[inline]
+    fn default() -> FileDescriptorProto {
+        FileDescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct DescriptorProto_ExtensionRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
@@ -406,7 +418,13 @@ impl pecan::DefaultInstance for DescriptorProto_ExtensionRange {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for DescriptorProto_ExtensionRange {
+    #[inline]
+    fn default() -> DescriptorProto_ExtensionRange {
+        DescriptorProto_ExtensionRange::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct DescriptorProto_ReservedRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
@@ -490,7 +508,13 @@ impl pecan::DefaultInstance for DescriptorProto_ReservedRange {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for DescriptorProto_ReservedRange {
+    #[inline]
+    fn default() -> DescriptorProto_ReservedRange {
+        DescriptorProto_ReservedRange::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct DescriptorProto {
     pub name: Option<String>,
     pub field: Vec<FieldDescriptorProto>,
@@ -677,15 +701,23 @@ impl pecan::DefaultInstance for DescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for DescriptorProto {
+    #[inline]
+    fn default() -> DescriptorProto {
+        DescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct ExtensionRangeOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl ExtensionRangeOptions {
     pub const fn new() -> ExtensionRangeOptions {
         ExtensionRangeOptions {
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -696,7 +728,13 @@ impl pecan::Message for ExtensionRangeOptions {
             match s.read_tag()? {
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -706,6 +744,9 @@ impl pecan::Message for ExtensionRangeOptions {
                 s.write_tag(7994)?;
                 LengthPrefixed::write_to(i, s)?;
             }
+        }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -718,6 +759,9 @@ impl pecan::Message for ExtensionRangeOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -728,6 +772,12 @@ impl pecan::DefaultInstance for ExtensionRangeOptions {
     fn default_instance() -> &'static ExtensionRangeOptions {
         static DEFAULT: ExtensionRangeOptions = ExtensionRangeOptions::new();
         &DEFAULT
+    }
+}
+impl Default for ExtensionRangeOptions {
+    #[inline]
+    fn default() -> ExtensionRangeOptions {
+        ExtensionRangeOptions::new()
     }
 }
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -820,7 +870,7 @@ impl std::fmt::Display for FieldDescriptorProto_Label {
         }
     }
 }
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct FieldDescriptorProto {
     pub name: Option<String>,
     pub number: Option<i32>,
@@ -1120,7 +1170,13 @@ impl pecan::DefaultInstance for FieldDescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for FieldDescriptorProto {
+    #[inline]
+    fn default() -> FieldDescriptorProto {
+        FieldDescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct OneofDescriptorProto {
     pub name: Option<String>,
     pub options: Option<OneofOptions>,
@@ -1210,7 +1266,13 @@ impl pecan::DefaultInstance for OneofDescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for OneofDescriptorProto {
+    #[inline]
+    fn default() -> OneofDescriptorProto {
+        OneofDescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct EnumDescriptorProto_EnumReservedRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
@@ -1295,7 +1357,13 @@ impl pecan::DefaultInstance for EnumDescriptorProto_EnumReservedRange {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for EnumDescriptorProto_EnumReservedRange {
+    #[inline]
+    fn default() -> EnumDescriptorProto_EnumReservedRange {
+        EnumDescriptorProto_EnumReservedRange::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct EnumDescriptorProto {
     pub name: Option<String>,
     pub value: Vec<EnumValueDescriptorProto>,
@@ -1421,7 +1489,13 @@ impl pecan::DefaultInstance for EnumDescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for EnumDescriptorProto {
+    #[inline]
+    fn default() -> EnumDescriptorProto {
+        EnumDescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct EnumValueDescriptorProto {
     pub name: Option<String>,
     pub number: Option<i32>,
@@ -1533,7 +1607,13 @@ impl pecan::DefaultInstance for EnumValueDescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for EnumValueDescriptorProto {
+    #[inline]
+    fn default() -> EnumValueDescriptorProto {
+        EnumValueDescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct ServiceDescriptorProto {
     pub name: Option<String>,
     pub method: Vec<MethodDescriptorProto>,
@@ -1635,7 +1715,13 @@ impl pecan::DefaultInstance for ServiceDescriptorProto {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for ServiceDescriptorProto {
+    #[inline]
+    fn default() -> ServiceDescriptorProto {
+        ServiceDescriptorProto::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct MethodDescriptorProto {
     pub name: Option<String>,
     pub input_type: Option<String>,
@@ -1819,6 +1905,12 @@ impl pecan::DefaultInstance for MethodDescriptorProto {
         &DEFAULT
     }
 }
+impl Default for MethodDescriptorProto {
+    #[inline]
+    fn default() -> MethodDescriptorProto {
+        MethodDescriptorProto::new()
+    }
+}
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FileOptions_OptimizeMode(i32);
 impl pecan::Enumerate for FileOptions_OptimizeMode {
@@ -1849,7 +1941,7 @@ impl std::fmt::Display for FileOptions_OptimizeMode {
         }
     }
 }
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct FileOptions {
     pub java_package: Option<String>,
     pub java_outer_classname: Option<String>,
@@ -1872,6 +1964,7 @@ pub struct FileOptions {
     pub php_metadata_namespace: Option<String>,
     pub ruby_package: Option<String>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl FileOptions {
@@ -1898,6 +1991,7 @@ impl FileOptions {
             php_metadata_namespace: None,
             ruby_package: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2198,7 +2292,13 @@ impl pecan::Message for FileOptions {
                 362 => self.ruby_package = Some(LengthPrefixed::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -2289,6 +2389,9 @@ impl pecan::Message for FileOptions {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -2360,6 +2463,9 @@ impl pecan::Message for FileOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -2372,13 +2478,20 @@ impl pecan::DefaultInstance for FileOptions {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for FileOptions {
+    #[inline]
+    fn default() -> FileOptions {
+        FileOptions::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct MessageOptions {
     pub message_set_wire_format: Option<bool>,
     pub no_standard_descriptor_accessor: Option<bool>,
     pub deprecated: Option<bool>,
     pub map_entry: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl MessageOptions {
@@ -2389,6 +2502,7 @@ impl MessageOptions {
             deprecated: None,
             map_entry: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2451,7 +2565,13 @@ impl pecan::Message for MessageOptions {
                 56 => self.map_entry = Some(Varint::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -2478,6 +2598,9 @@ impl pecan::Message for MessageOptions {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -2501,6 +2624,9 @@ impl pecan::Message for MessageOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -2511,6 +2637,12 @@ impl pecan::DefaultInstance for MessageOptions {
     fn default_instance() -> &'static MessageOptions {
         static DEFAULT: MessageOptions = MessageOptions::new();
         &DEFAULT
+    }
+}
+impl Default for MessageOptions {
+    #[inline]
+    fn default() -> MessageOptions {
+        MessageOptions::new()
     }
 }
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -2573,7 +2705,7 @@ impl std::fmt::Display for FieldOptions_JsType {
         }
     }
 }
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct FieldOptions {
     pub ctype: Option<FieldOptions_CType>,
     pub packed: Option<bool>,
@@ -2582,6 +2714,7 @@ pub struct FieldOptions {
     pub deprecated: Option<bool>,
     pub weak: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl FieldOptions {
@@ -2594,6 +2727,7 @@ impl FieldOptions {
             jstype: None,
             weak: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2682,7 +2816,13 @@ impl pecan::Message for FieldOptions {
                 80 => self.weak = Some(Varint::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -2717,6 +2857,9 @@ impl pecan::Message for FieldOptions {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -2746,6 +2889,9 @@ impl pecan::Message for FieldOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -2758,15 +2904,23 @@ impl pecan::DefaultInstance for FieldOptions {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for FieldOptions {
+    #[inline]
+    fn default() -> FieldOptions {
+        FieldOptions::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct OneofOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl OneofOptions {
     pub const fn new() -> OneofOptions {
         OneofOptions {
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2777,7 +2931,13 @@ impl pecan::Message for OneofOptions {
             match s.read_tag()? {
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -2787,6 +2947,9 @@ impl pecan::Message for OneofOptions {
                 s.write_tag(7994)?;
                 LengthPrefixed::write_to(i, s)?;
             }
+        }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -2798,6 +2961,9 @@ impl pecan::Message for OneofOptions {
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
+        }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2811,11 +2977,18 @@ impl pecan::DefaultInstance for OneofOptions {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for OneofOptions {
+    #[inline]
+    fn default() -> OneofOptions {
+        OneofOptions::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct EnumOptions {
     pub allow_alias: Option<bool>,
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl EnumOptions {
@@ -2824,6 +2997,7 @@ impl EnumOptions {
             allow_alias: None,
             deprecated: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2860,7 +3034,13 @@ impl pecan::Message for EnumOptions {
                 24 => self.deprecated = Some(Varint::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -2879,6 +3059,9 @@ impl pecan::Message for EnumOptions {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -2896,6 +3079,9 @@ impl pecan::Message for EnumOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -2908,10 +3094,17 @@ impl pecan::DefaultInstance for EnumOptions {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for EnumOptions {
+    #[inline]
+    fn default() -> EnumOptions {
+        EnumOptions::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct EnumValueOptions {
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl EnumValueOptions {
@@ -2919,6 +3112,7 @@ impl EnumValueOptions {
         EnumValueOptions {
             deprecated: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2942,7 +3136,13 @@ impl pecan::Message for EnumValueOptions {
                 8 => self.deprecated = Some(Varint::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -2956,6 +3156,9 @@ impl pecan::Message for EnumValueOptions {
                 s.write_tag(7994)?;
                 LengthPrefixed::write_to(i, s)?;
             }
+        }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -2971,6 +3174,9 @@ impl pecan::Message for EnumValueOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -2983,10 +3189,17 @@ impl pecan::DefaultInstance for EnumValueOptions {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for EnumValueOptions {
+    #[inline]
+    fn default() -> EnumValueOptions {
+        EnumValueOptions::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct ServiceOptions {
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl ServiceOptions {
@@ -2994,6 +3207,7 @@ impl ServiceOptions {
         ServiceOptions {
             deprecated: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -3017,7 +3231,13 @@ impl pecan::Message for ServiceOptions {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -3031,6 +3251,9 @@ impl pecan::Message for ServiceOptions {
                 s.write_tag(7994)?;
                 LengthPrefixed::write_to(i, s)?;
             }
+        }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
         }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
@@ -3046,6 +3269,9 @@ impl pecan::Message for ServiceOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -3056,6 +3282,12 @@ impl pecan::DefaultInstance for ServiceOptions {
     fn default_instance() -> &'static ServiceOptions {
         static DEFAULT: ServiceOptions = ServiceOptions::new();
         &DEFAULT
+    }
+}
+impl Default for ServiceOptions {
+    #[inline]
+    fn default() -> ServiceOptions {
+        ServiceOptions::new()
     }
 }
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -3089,11 +3321,12 @@ impl std::fmt::Display for MethodOptions_IdempotencyLevel {
         }
     }
 }
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct MethodOptions {
     pub deprecated: Option<bool>,
     pub idempotency_level: Option<MethodOptions_IdempotencyLevel>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
+    pub extensions: pecan::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl MethodOptions {
@@ -3102,6 +3335,7 @@ impl MethodOptions {
             deprecated: None,
             idempotency_level: None,
             uninterpreted_option: Vec::new(),
+            extensions: pecan::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -3138,7 +3372,13 @@ impl pecan::Message for MethodOptions {
                 272 => self.idempotency_level = Some(Varint::read_from(s)?),
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
-                tag => s.read_unknown_field(tag, &mut self._unknown)?,
+                tag => {
+                    if (8000..=4294967303).contains(&tag) {
+                        s.read_extension(tag, &mut self.extensions)?;
+                        continue;
+                    }
+                    s.read_unknown_field(tag, &mut self._unknown)?;
+                }
             }
         }
     }
@@ -3157,6 +3397,9 @@ impl pecan::Message for MethodOptions {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
+        if !self.extensions.is_empty() {
+            s.write_extensions(&self.extensions)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -3174,6 +3417,9 @@ impl pecan::Message for MethodOptions {
             l += 2 * self.uninterpreted_option.len() as u64
                 + LengthPrefixedArray::len(&self.uninterpreted_option);
         }
+        if !self.extensions.is_empty() {
+            l += self.extensions.len();
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -3186,7 +3432,13 @@ impl pecan::DefaultInstance for MethodOptions {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for MethodOptions {
+    #[inline]
+    fn default() -> MethodOptions {
+        MethodOptions::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct UninterpretedOption_NamePart {
     pub name_part: String,
     pub is_extension: bool,
@@ -3246,7 +3498,13 @@ impl pecan::DefaultInstance for UninterpretedOption_NamePart {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for UninterpretedOption_NamePart {
+    #[inline]
+    fn default() -> UninterpretedOption_NamePart {
+        UninterpretedOption_NamePart::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct UninterpretedOption {
     pub name: Vec<UninterpretedOption_NamePart>,
     pub identifier_value: Option<String>,
@@ -3439,7 +3697,13 @@ impl pecan::DefaultInstance for UninterpretedOption {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for UninterpretedOption {
+    #[inline]
+    fn default() -> UninterpretedOption {
+        UninterpretedOption::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct SourceCodeInfo_Location {
     pub path: Vec<i32>,
     pub span: Vec<i32>,
@@ -3562,7 +3826,13 @@ impl pecan::DefaultInstance for SourceCodeInfo_Location {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for SourceCodeInfo_Location {
+    #[inline]
+    fn default() -> SourceCodeInfo_Location {
+        SourceCodeInfo_Location::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct SourceCodeInfo {
     pub location: Vec<SourceCodeInfo_Location>,
     _unknown: Vec<u8>,
@@ -3614,7 +3884,13 @@ impl pecan::DefaultInstance for SourceCodeInfo {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for SourceCodeInfo {
+    #[inline]
+    fn default() -> SourceCodeInfo {
+        SourceCodeInfo::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct GeneratedCodeInfo_Annotation {
     pub path: Vec<i32>,
     pub source_file: Option<String>,
@@ -3733,7 +4009,13 @@ impl pecan::DefaultInstance for GeneratedCodeInfo_Annotation {
         &DEFAULT
     }
 }
-#[derive(Clone, Default, Debug)]
+impl Default for GeneratedCodeInfo_Annotation {
+    #[inline]
+    fn default() -> GeneratedCodeInfo_Annotation {
+        GeneratedCodeInfo_Annotation::new()
+    }
+}
+#[derive(Clone, Debug)]
 pub struct GeneratedCodeInfo {
     pub annotation: Vec<GeneratedCodeInfo_Annotation>,
     _unknown: Vec<u8>,
@@ -3783,5 +4065,11 @@ impl pecan::DefaultInstance for GeneratedCodeInfo {
     fn default_instance() -> &'static GeneratedCodeInfo {
         static DEFAULT: GeneratedCodeInfo = GeneratedCodeInfo::new();
         &DEFAULT
+    }
+}
+impl Default for GeneratedCodeInfo {
+    #[inline]
+    fn default() -> GeneratedCodeInfo {
+        GeneratedCodeInfo::new()
     }
 }

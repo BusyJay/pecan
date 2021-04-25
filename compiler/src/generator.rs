@@ -1,6 +1,9 @@
-use crate::db::{Database, File};
-use crate::field::FieldGenerator;
 use crate::util::*;
+use crate::{
+    db::{Database, File},
+    field::FieldGenerator,
+    message::MessageGenerator,
+};
 use pecan_types::google::protobuf::descriptor_pb::*;
 use proc_macro2::Literal;
 use proc_macro2::TokenStream;
@@ -17,7 +20,7 @@ impl<'a> Generator<'a> {
     }
 
     fn generate_enum(&self, e: &EnumDescriptorProto) -> TokenStream {
-        let name = type_name(e.name.as_ref().unwrap(), "");
+        let name = type_name(e.name(), "");
         self.generate_enum_impl(&name, e)
     }
 
@@ -26,7 +29,7 @@ impl<'a> Generator<'a> {
         let mut raw_values: Vec<_> = e
             .value
             .iter()
-            .map(|v| (escape(v.name.as_ref().unwrap()), v.number.unwrap()))
+            .map(|v| (escape(v.name()), v.number()))
             .collect();
         let all_values: Vec<_> = raw_values
             .iter()
@@ -79,88 +82,27 @@ impl<'a> Generator<'a> {
     }
 
     fn generate_message(&self, d: &DescriptorProto) -> TokenStream {
-        let msg_name = type_name(d.name.as_ref().unwrap(), "");
+        let msg_name = type_name(d.name(), "");
         self.generate_message_impl(&msg_name, d)
     }
 
     fn generate_message_impl(&self, msg_name: &str, d: &DescriptorProto) -> TokenStream {
         let mut token = TokenStream::new();
         for e in &d.enum_type {
-            let name = type_name(e.name.as_ref().unwrap(), msg_name);
+            let name = type_name(e.name(), msg_name);
             token.extend(self.generate_enum_impl(&name, e));
         }
         for e in &d.nested_type {
-            let name = type_name(e.name.as_ref().unwrap(), msg_name);
+            let name = type_name(e.name(), msg_name);
             token.extend(self.generate_message_impl(&name, e));
         }
-        let msg_name = format_ident!("{}", msg_name);
-        let mut fgs: Vec<_> = d
-            .field
-            .iter()
-            .map(|f| FieldGenerator::new(self, f))
-            .collect();
-        let decl: Vec<_> = fgs.iter().map(|g| g.field_decl()).collect();
-        fgs.sort_by_key(|g| g.tag_value());
-        let init = fgs.iter().map(|g| g.field_init());
-        let merge_from = fgs.iter().map(|g| g.fn_merge_from());
-        let write_to = fgs.iter().map(|g| g.fn_write_to());
-        let len = fgs.iter().map(|g| g.fn_len());
-        let accessors = fgs.iter().flat_map(|g| g.accessor());
-        token.extend(quote! {
-            #[derive(Clone, Default, Debug)]
-            pub struct #msg_name {
-                #(#decl)*
-                _unknown: Vec<u8>,
-            }
-
-            impl #msg_name {
-                pub const fn new() -> #msg_name {
-                    #msg_name {
-                        #(#init)*
-                        _unknown: Vec::new(),
-                    }
-                }
-
-                #(#accessors)*
-            }
-
-            impl pecan::Message for #msg_name {
-                fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
-                    loop {
-                        match s.read_tag()? {
-                            #(#merge_from)*
-                            0 => return Ok(()),
-                            tag => s.read_unknown_field(tag, &mut self._unknown)?,
-                        }
-                    }
-                }
-
-                fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-                    #(#write_to)*
-                    if !self._unknown.is_empty() {
-                        s.write_raw_bytes(&self._unknown)?;
-                    }
-                    Ok(())
-                }
-
-                fn len(&self) -> u64 {
-                    let mut l = 0;
-                    #(#len)*
-                    if !self._unknown.is_empty() {
-                        l += self._unknown.len() as u64;
-                    }
-                    l
-                }
-            }
-
-            impl pecan::DefaultInstance for #msg_name {
-                fn default_instance() -> &'static #msg_name {
-                    static DEFAULT: #msg_name = #msg_name::new();
-                    &DEFAULT
-                }
-            }
-        });
+        let g = MessageGenerator::new(self, d, msg_name);
+        token.extend(g.generate());
         token
+    }
+
+    fn generate_extension(&self, f: &FieldDescriptorProto) -> TokenStream {
+        FieldGenerator::new(self, f).extension()
     }
 
     pub fn generate(&self) -> String {
@@ -169,6 +111,9 @@ impl<'a> Generator<'a> {
 
             use pecan::prelude::*;
         };
+        for e in &self.file.proto().extension {
+            token.extend(self.generate_extension(e));
+        }
         for e in &self.file.proto().enum_type {
             token.extend(self.generate_enum(e));
         }

@@ -157,6 +157,24 @@ pub fn rustfmt(data: &str) -> String {
     thread.join().unwrap()
 }
 
+pub fn const_name(name: &str) -> String {
+    let mut last_lower = false;
+    let mut res = String::new();
+    for c in name.chars() {
+        if c.is_ascii_uppercase() {
+            if last_lower {
+                res.push('_');
+                last_lower = false;
+            }
+            res.push(c);
+        } else {
+            res.push(c.to_ascii_uppercase());
+            last_lower = c != '_';
+        }
+    }
+    res
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -201,6 +219,32 @@ mod tests {
         ];
         for (s, t) in cases {
             let res = super::snake_name(s);
+            assert_eq!(res, t, "{}", s);
+        }
+    }
+
+    #[test]
+    fn test_const_name() {
+        let cases = vec![
+            ("Abcd", "ABCD"),
+            ("abcd", "ABCD"),
+            ("A_B_C_D", "A_B_C_D"),
+            ("ABCD", "ABCD"),
+            ("ABcdEFGh", "ABCD_EFGH"),
+            ("aBcD", "A_BC_D"),
+            ("a", "A"),
+            ("_", "_"),
+            ("_a", "_A"),
+            ("_A", "_A"),
+            ("A_", "A_"),
+            ("a_", "A_"),
+            ("A123_45bcd", "A123_45BCD"),
+            ("A123_B45bcd", "A123_B45BCD"),
+            ("A123_b45bcd", "A123_B45BCD"),
+            ("A123_B45Bcd", "A123_B45_BCD"),
+        ];
+        for (s, t) in cases {
+            let res = super::const_name(s);
             assert_eq!(res, t, "{}", s);
         }
     }
