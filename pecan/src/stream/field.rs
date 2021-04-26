@@ -84,13 +84,7 @@ impl ReadFieldCodec<Bytes> for LengthPrefixed {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Bytes> {
         let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
-            buf.flush();
-            let len = len as usize;
-            if buf.buf.remaining() >= len {
-                return Ok(buf.buf.copy_to_bytes(len as usize));
-            } else {
-                return Err(Error::Eof);
-            }
+            return buf.copy_to_bytes(len as usize);
         }
         Err(Error::corrupted())
     }
@@ -538,6 +532,7 @@ impl<M: Message + Default> ReadFieldCodec<M> for LengthPrefixed {
         2
     }
 
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<M> {
         let mut m = Default::default();
         LengthPrefixed::merge_from(&mut m, buf)?;
@@ -546,12 +541,14 @@ impl<M: Message + Default> ReadFieldCodec<M> for LengthPrefixed {
 }
 
 impl<'a, M: Message> WriteFieldCodec<&'a M> for LengthPrefixed {
+    #[inline]
     fn write_to<B: BufMut>(val: &M, buf: &mut CodedOutputStream<B>) -> Result<()> {
         let l = val.len();
         Varint::write_to(l, buf)?;
         val.write_to(buf)
     }
 
+    #[inline]
     fn len(val: &M) -> u64 {
         let l = val.len();
         Varint::len(l) + l
@@ -564,6 +561,7 @@ impl<Field> MergeFieldCodec<Vec<Field>> for LengthPrefixedArray
 where
     LengthPrefixed: ReadFieldCodec<Field>,
 {
+    #[inline]
     fn merge_from<B: Buf>(current: &mut Vec<Field>, buf: &mut CodedInputStream<B>) -> Result<()> {
         current.push(LengthPrefixed::read_from(buf)?);
         Ok(())
@@ -579,6 +577,7 @@ where
         2
     }
 
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Field>> {
         let mut v = Vec::new();
         LengthPrefixedArray::merge_from(&mut v, buf)?;
@@ -594,6 +593,7 @@ where
         unimplemented!("Writting repeated string/bytes/message requires tag");
     }
 
+    #[inline]
     fn len(val: &'a [Field]) -> u64 {
         val.into_iter().map(LengthPrefixed::len).sum()
     }

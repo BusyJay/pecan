@@ -46,8 +46,10 @@ impl ExtensionMap {
             None => return Ok(None),
         };
         let mut input = CodedInputStream::new(&mut buf);
+        input.read_tag()?;
         let mut v = C::read_from(&mut input)?;
-        if !input.is_empty() {
+        while !input.is_empty() {
+            input.read_tag()?;
             C::merge_from(&mut v, &mut input)?;
         }
         Ok(Some(v))

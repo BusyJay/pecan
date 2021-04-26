@@ -85,6 +85,16 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    fn copy_to_bytes(&mut self, len: usize) -> Result<Bytes> {
+        self.flush();
+        if self.buf.remaining() >= len {
+            self.flushed += len as u64;
+            return Ok(self.buf.copy_to_bytes(len));
+        } else {
+            return Err(Error::Eof);
+        }
+    }
+
     fn read_raw_bytes(&mut self, mut target: &mut [u8]) -> Result<()> {
         loop {
             if self.chunk.len() >= target.len() {

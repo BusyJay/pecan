@@ -1,6 +1,7 @@
 use crate::{util, Generator};
 use pecan::prelude::*;
 use pecan_types::google::protobuf::descriptor_pb::*;
+use pecan_types::pecan::options_pb::*;
 use proc_macro2::{Literal, TokenStream};
 use quote::{format_ident, quote};
 use syn::Ident;
@@ -29,6 +30,7 @@ pub struct FieldGenerator {
     codec: Ident,
     default_value: TokenStream,
     kind: FieldKind,
+    opt: pecan_types::pecan::options_pb::FieldOptions,
     repeated: bool,
     optional: bool,
 }
@@ -102,7 +104,22 @@ impl FieldGenerator {
             ty => panic!("unsupported type: {}", ty),
         };
         let label = f.label();
-        let default_value = match pb_ty {
+        let mut opt = f
+            .options()
+            .extensions
+            .get(&FIELD_OPT)
+            .unwrap()
+            .unwrap_or_default();
+        let wrap_type = if pb_ty == FieldDescriptorProto_Type::TYPE_MESSAGE
+            && label != FieldDescriptorProto_Label::LABEL_REPEATED
+            && opt.box_field
+        {
+            quote! { Box<#inner_type> }
+        } else {
+            opt.box_field = false;
+            inner_type.clone()
+        };
+        let mut default_value = match pb_ty {
             FieldDescriptorProto_Type::TYPE_DOUBLE => quote! { 0f64 },
             FieldDescriptorProto_Type::TYPE_FLOAT => quote! { 0f32 },
             FieldDescriptorProto_Type::TYPE_BYTES
@@ -112,6 +129,9 @@ impl FieldGenerator {
             FieldDescriptorProto_Type::TYPE_BOOL => quote! { false },
             _ => quote! { 0 },
         };
+        if opt.box_field {
+            default_value = quote! { Box::new(#default_value) };
+        }
         let number = f.number() as i64;
         let tag;
         let r#type;
@@ -122,10 +142,10 @@ impl FieldGenerator {
             || label == FieldDescriptorProto_Label::LABEL_REQUIRED
         {
             tag = (number << 3) | wire_ty;
-            r#type = quote! { #inner_type };
+            r#type = quote! { #wrap_type };
         } else if label == FieldDescriptorProto_Label::LABEL_OPTIONAL {
             tag = (number << 3) | wire_ty;
-            r#type = quote! { Option<#inner_type> };
+            r#type = quote! { Option<#wrap_type> };
             optional = true;
         } else if label == FieldDescriptorProto_Label::LABEL_REPEATED {
             tag = (number << 3) | 2;
@@ -138,6 +158,7 @@ impl FieldGenerator {
         FieldGenerator {
             name,
             r#type,
+            opt,
             inner_type,
             tag: tag as u64,
             codec: format_ident!("{}{}", codec, if repeated { "Array" } else { "" }),
@@ -161,15 +182,18 @@ impl FieldGenerator {
         let tag = self.tag();
         let codec = &self.codec;
         if self.kind == FieldKind::Message {
-            if !self.optional {
-                quote! {
-                    #tag => #codec::merge_from(&mut self.#name, s)?,
+            let accessor = if !self.optional {
+                if self.opt.box_field {
+                    quote! { &mut *self.#name }
+                } else {
+                    quote! { &mut self.#name }
                 }
             } else {
-                let accessor = format_ident!("{}_mut", self.name);
-                quote! {
-                    #tag => #codec::merge_from(self.#accessor(), s)?,
-                }
+                let method = format_ident!("{}_mut", self.name);
+                quote! { self.#method() }
+            };
+            quote! {
+                #tag => #codec::merge_from(#accessor, s)?,
             }
         } else if self.optional {
             quote! {
@@ -197,17 +221,27 @@ impl FieldGenerator {
             quote! { &self.#name }
         };
         if self.optional {
-            let t = action(quote!(v), &quote!(v));
+            let t = if !self.opt.box_field {
+                action(quote!(v), &quote!(v))
+            } else {
+                action(quote!(v), &quote!(v.as_ref()))
+            };
             quote! { if let Some(v) = #read_accessor { #t } }
         } else {
-            let t = action(quote! { self.#name }, &read_accessor);
+            let t = if !self.opt.box_field {
+                action(quote! { self.#name }, &read_accessor)
+            } else {
+                action(quote! { self.#name }, &quote! { &*self.#name })
+            };
             if self.repeated || self.kind == FieldKind::Bytes {
                 quote! { if !self.#name.is_empty() { #t } }
             } else if self.kind == FieldKind::Boolean {
                 quote! { if self.#name { #t } }
-            } else {
+            } else if self.kind != FieldKind::Message {
                 let val = &self.default_value;
                 quote! { if self.#name != #val { #t } }
+            } else {
+                t
             }
         }
     }
@@ -308,6 +342,11 @@ impl FieldGenerator {
         let setter = format_ident!("set_{}", self.name);
         let val = &self.default_value;
         let ty = &self.r#inner_type;
+        let set_ty = if self.opt.box_field && !self.repeated {
+            quote! { Box<#ty> }
+        } else {
+            self.inner_type.clone()
+        };
         let getter = if self.kind.can_copy() {
             quote! {
                 pub fn #name(&self) -> #ty {
@@ -335,7 +374,7 @@ impl FieldGenerator {
                 self.#name.as_mut().unwrap()
             }
 
-            pub fn #setter(&mut self, val: #ty) {
+            pub fn #setter(&mut self, val: #set_ty) {
                 self.#name = Some(val);
             }
         })
