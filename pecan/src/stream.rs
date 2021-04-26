@@ -2,7 +2,7 @@ pub mod field;
 
 use crate::{codec, extension::ExtensionMap, Error, Result};
 use bytes::{buf::UninitSlice, Buf, BufMut, Bytes, BytesMut};
-use field::{Fixed, LengthPrefixed, ReadFieldCodec, Varint, WriteFieldCodec};
+use field::{Fixed32, Fixed64, LengthPrefixed, ReadFieldCodec, Varint, WriteFieldCodec};
 use std::{mem, ptr};
 
 pub struct CodedInputStream<'a, B: Buf> {
@@ -129,8 +129,8 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
                 Varint::write_to(v, &mut os)
             }
             1 => {
-                let v: u64 = Fixed::read_from(self)?;
-                Fixed::write_to(v, &mut os)
+                let v: u64 = Fixed64::read_from(self)?;
+                Fixed64::write_to(v, &mut os)
             }
             2 => {
                 // TODO: no copy is better.
@@ -139,8 +139,8 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
             }
             3 | 4 => unimplemented!("{}", tag),
             5 => {
-                let v: u32 = Fixed::read_from(self)?;
-                Fixed::write_to(v, &mut os)
+                let v: u32 = Fixed32::read_from(self)?;
+                Fixed32::write_to(v, &mut os)
             }
             _ => return Err(Error::corrupted()),
         }
@@ -155,6 +155,37 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
 
     pub fn is_empty(&self) -> bool {
         self.progress() >= self.limit || self.chunk.is_empty() && !self.buf.has_remaining()
+    }
+
+    #[inline]
+    fn push_limit(&mut self, size: u64) -> Result<u64> {
+        if self.depth < self.depth_limit {
+            self.depth += 1;
+        } else {
+            return Err(Error::DepthExcceedLimit(self.depth_limit));
+        }
+        let last_limit = self.limit;
+        self.limit = self.progress() + size;
+        Ok(last_limit)
+    }
+
+    #[inline]
+    fn pop_limit(&mut self, last_limit: u64) -> Result<()> {
+        self.depth -= 1;
+        if self.limit == self.progress() {
+            self.limit = last_limit;
+            Ok(())
+        } else {
+            Err(Error::corrupted())
+        }
+    }
+
+    #[inline]
+    pub fn read_length_limited(&mut self, f: impl FnOnce(&mut Self) -> Result<()>) -> Result<()> {
+        let size = self.read_var_u64_raw()?;
+        let last_limit = self.push_limit(size)?;
+        f(self)?;
+        self.pop_limit(last_limit)
     }
 }
 

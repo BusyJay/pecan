@@ -42,15 +42,26 @@ impl File {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone)]
+pub enum Proto {
+    Enum(EnumDescriptorProto),
+    Message(DescriptorProto),
+}
+
+#[derive(Debug, Clone)]
 pub struct TypeReference {
     package: String,
     name: String,
+    proto: Proto,
 }
 
 impl TypeReference {
-    pub fn new(package: String, name: String) -> TypeReference {
-        TypeReference { package, name }
+    pub fn new(package: String, name: String, proto: Proto) -> TypeReference {
+        TypeReference {
+            package,
+            name,
+            proto,
+        }
     }
 
     pub fn package(&self) -> &str {
@@ -59,6 +70,13 @@ impl TypeReference {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn message(&self) -> Option<&DescriptorProto> {
+        match &self.proto {
+            Proto::Message(m) => Some(m),
+            _ => None,
+        }
     }
 }
 
@@ -97,13 +115,13 @@ impl Database {
         let enum_name = e.name();
         let ty_name = type_name(enum_name, ty_prefix);
         let full_name = format!("{}{}", prefix, enum_name);
-        assert_eq!(
-            self.types.insert(
+        assert!(self
+            .types
+            .insert(
                 full_name,
-                TypeReference::new(file.full_package.clone(), ty_name)
-            ),
-            None
-        );
+                TypeReference::new(file.full_package.clone(), ty_name, Proto::Enum(e.clone()))
+            )
+            .is_none());
     }
 
     fn register_message(&mut self, prefix: &str, file: &File, e: &DescriptorProto) {
@@ -120,13 +138,17 @@ impl Database {
         let msg_name = e.name();
         let ty_name = type_name(msg_name, ty_prefix);
         let full_name = format!("{}{}", prefix, msg_name);
-        assert_eq!(
-            self.types.insert(
+        assert!(self
+            .types
+            .insert(
                 full_name.clone(),
-                TypeReference::new(file.full_package.clone(), ty_name.clone())
-            ),
-            None
-        );
+                TypeReference::new(
+                    file.full_package.clone(),
+                    ty_name.clone(),
+                    Proto::Message(e.clone())
+                )
+            )
+            .is_none(),);
 
         let sub_prefix = full_name + ".";
         for m in &e.nested_type {

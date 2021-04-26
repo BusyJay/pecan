@@ -15,7 +15,10 @@ pub struct MessageGenerator {
 }
 
 impl MessageGenerator {
-    pub fn new(g: &Generator, proto: &DescriptorProto, name: &str) -> MessageGenerator {
+    pub fn new(g: &Generator, proto: &DescriptorProto, name: &str) -> Option<MessageGenerator> {
+        if proto.options().map_entry() {
+            return None;
+        }
         let fgs: Vec<_> = proto
             .field
             .iter()
@@ -30,13 +33,13 @@ impl MessageGenerator {
             .iter()
             .map(|r| (r.start(), r.end()))
             .collect();
-        MessageGenerator {
+        Some(MessageGenerator {
             name: name.to_string(),
             decl_order,
             sorted_order,
             fields,
             extension_range,
-        }
+        })
     }
 
     fn name(&self) -> Ident {
@@ -55,7 +58,7 @@ impl MessageGenerator {
             quote! { pub extensions: pecan::ExtensionMap, }
         };
         quote! {
-            #[derive(Clone, Debug)]
+            #[derive(Clone, Debug, PartialEq)]
             pub struct #name {
                 #(#decl)*
                 #extension

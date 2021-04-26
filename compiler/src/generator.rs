@@ -47,7 +47,7 @@ impl<'a> Generator<'a> {
         let raw_repr = format!("{}({{}})", name);
         let r_name = std::iter::repeat(&name_ident);
         quote! {
-            #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+            #[derive(Default, Clone, Copy, PartialEq, Eq)]
             pub struct #name_ident(i32);
 
             impl pecan::Enumerate for #name_ident {
@@ -70,7 +70,7 @@ impl<'a> Generator<'a> {
                 }
             }
 
-            impl std::fmt::Display for #name_ident {
+            impl std::fmt::Debug for #name_ident {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     match self.0 {
                         #(#dedup_value => write!(f, #dedup_key),)*
@@ -96,8 +96,9 @@ impl<'a> Generator<'a> {
             let name = type_name(e.name(), msg_name);
             token.extend(self.generate_message_impl(&name, e));
         }
-        let g = MessageGenerator::new(self, d, msg_name);
-        token.extend(g.generate());
+        if let Some(g) = MessageGenerator::new(self, d, msg_name) {
+            token.extend(g.generate());
+        }
         token
     }
 

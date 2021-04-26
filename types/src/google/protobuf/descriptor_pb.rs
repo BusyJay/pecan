@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 use pecan::prelude::*;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FileDescriptorSet {
     pub file: Vec<FileDescriptorProto>,
     _unknown: Vec<u8>,
@@ -58,7 +58,7 @@ impl Default for FileDescriptorSet {
         FileDescriptorSet::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FileDescriptorProto {
     pub name: Option<String>,
     pub package: Option<String>,
@@ -309,7 +309,7 @@ impl Default for FileDescriptorProto {
         FileDescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DescriptorProto_ExtensionRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
@@ -424,7 +424,7 @@ impl Default for DescriptorProto_ExtensionRange {
         DescriptorProto_ExtensionRange::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DescriptorProto_ReservedRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
@@ -514,7 +514,7 @@ impl Default for DescriptorProto_ReservedRange {
         DescriptorProto_ReservedRange::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DescriptorProto {
     pub name: Option<String>,
     pub field: Vec<FieldDescriptorProto>,
@@ -707,7 +707,7 @@ impl Default for DescriptorProto {
         DescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ExtensionRangeOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: pecan::ExtensionMap,
@@ -780,7 +780,7 @@ impl Default for ExtensionRangeOptions {
         ExtensionRangeOptions::new()
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldDescriptorProto_Type(i32);
 impl pecan::Enumerate for FieldDescriptorProto_Type {
     #[inline]
@@ -815,7 +815,7 @@ impl FieldDescriptorProto_Type {
         FieldDescriptorProto_Type(0)
     }
 }
-impl std::fmt::Display for FieldDescriptorProto_Type {
+impl std::fmt::Debug for FieldDescriptorProto_Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             1 => write!(f, "TYPE_DOUBLE"),
@@ -840,7 +840,7 @@ impl std::fmt::Display for FieldDescriptorProto_Type {
         }
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldDescriptorProto_Label(i32);
 impl pecan::Enumerate for FieldDescriptorProto_Label {
     #[inline]
@@ -860,7 +860,7 @@ impl FieldDescriptorProto_Label {
         FieldDescriptorProto_Label(0)
     }
 }
-impl std::fmt::Display for FieldDescriptorProto_Label {
+impl std::fmt::Debug for FieldDescriptorProto_Label {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             1 => write!(f, "LABEL_OPTIONAL"),
@@ -870,7 +870,7 @@ impl std::fmt::Display for FieldDescriptorProto_Label {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FieldDescriptorProto {
     pub name: Option<String>,
     pub number: Option<i32>,
@@ -1176,7 +1176,7 @@ impl Default for FieldDescriptorProto {
         FieldDescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct OneofDescriptorProto {
     pub name: Option<String>,
     pub options: Option<OneofOptions>,
@@ -1272,7 +1272,7 @@ impl Default for OneofDescriptorProto {
         OneofDescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EnumDescriptorProto_EnumReservedRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
@@ -1363,7 +1363,7 @@ impl Default for EnumDescriptorProto_EnumReservedRange {
         EnumDescriptorProto_EnumReservedRange::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EnumDescriptorProto {
     pub name: Option<String>,
     pub value: Vec<EnumValueDescriptorProto>,
@@ -1495,7 +1495,7 @@ impl Default for EnumDescriptorProto {
         EnumDescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EnumValueDescriptorProto {
     pub name: Option<String>,
     pub number: Option<i32>,
@@ -1613,7 +1613,7 @@ impl Default for EnumValueDescriptorProto {
         EnumValueDescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ServiceDescriptorProto {
     pub name: Option<String>,
     pub method: Vec<MethodDescriptorProto>,
@@ -1721,7 +1721,7 @@ impl Default for ServiceDescriptorProto {
         ServiceDescriptorProto::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MethodDescriptorProto {
     pub name: Option<String>,
     pub input_type: Option<String>,
@@ -1911,7 +1911,7 @@ impl Default for MethodDescriptorProto {
         MethodDescriptorProto::new()
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FileOptions_OptimizeMode(i32);
 impl pecan::Enumerate for FileOptions_OptimizeMode {
     #[inline]
@@ -1931,7 +1931,7 @@ impl FileOptions_OptimizeMode {
         FileOptions_OptimizeMode(0)
     }
 }
-impl std::fmt::Display for FileOptions_OptimizeMode {
+impl std::fmt::Debug for FileOptions_OptimizeMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             1 => write!(f, "SPEED"),
@@ -1941,7 +1941,7 @@ impl std::fmt::Display for FileOptions_OptimizeMode {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FileOptions {
     pub java_package: Option<String>,
     pub java_outer_classname: Option<String>,
@@ -2484,7 +2484,7 @@ impl Default for FileOptions {
         FileOptions::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MessageOptions {
     pub message_set_wire_format: Option<bool>,
     pub no_standard_descriptor_accessor: Option<bool>,
@@ -2645,7 +2645,7 @@ impl Default for MessageOptions {
         MessageOptions::new()
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldOptions_CType(i32);
 impl pecan::Enumerate for FieldOptions_CType {
     #[inline]
@@ -2665,7 +2665,7 @@ impl FieldOptions_CType {
         FieldOptions_CType(0)
     }
 }
-impl std::fmt::Display for FieldOptions_CType {
+impl std::fmt::Debug for FieldOptions_CType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             0 => write!(f, "STRING"),
@@ -2675,7 +2675,7 @@ impl std::fmt::Display for FieldOptions_CType {
         }
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldOptions_JsType(i32);
 impl pecan::Enumerate for FieldOptions_JsType {
     #[inline]
@@ -2695,7 +2695,7 @@ impl FieldOptions_JsType {
         FieldOptions_JsType(0)
     }
 }
-impl std::fmt::Display for FieldOptions_JsType {
+impl std::fmt::Debug for FieldOptions_JsType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             0 => write!(f, "JS_NORMAL"),
@@ -2705,7 +2705,7 @@ impl std::fmt::Display for FieldOptions_JsType {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FieldOptions {
     pub ctype: Option<FieldOptions_CType>,
     pub packed: Option<bool>,
@@ -2910,7 +2910,7 @@ impl Default for FieldOptions {
         FieldOptions::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct OneofOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: pecan::ExtensionMap,
@@ -2983,7 +2983,7 @@ impl Default for OneofOptions {
         OneofOptions::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EnumOptions {
     pub allow_alias: Option<bool>,
     pub deprecated: Option<bool>,
@@ -3100,7 +3100,7 @@ impl Default for EnumOptions {
         EnumOptions::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EnumValueOptions {
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
@@ -3195,7 +3195,7 @@ impl Default for EnumValueOptions {
         EnumValueOptions::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ServiceOptions {
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
@@ -3290,7 +3290,7 @@ impl Default for ServiceOptions {
         ServiceOptions::new()
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct MethodOptions_IdempotencyLevel(i32);
 impl pecan::Enumerate for MethodOptions_IdempotencyLevel {
     #[inline]
@@ -3311,7 +3311,7 @@ impl MethodOptions_IdempotencyLevel {
         MethodOptions_IdempotencyLevel(0)
     }
 }
-impl std::fmt::Display for MethodOptions_IdempotencyLevel {
+impl std::fmt::Debug for MethodOptions_IdempotencyLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             0 => write!(f, "IDEMPOTENCY_UNKNOWN"),
@@ -3321,7 +3321,7 @@ impl std::fmt::Display for MethodOptions_IdempotencyLevel {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct MethodOptions {
     pub deprecated: Option<bool>,
     pub idempotency_level: Option<MethodOptions_IdempotencyLevel>,
@@ -3438,7 +3438,7 @@ impl Default for MethodOptions {
         MethodOptions::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UninterpretedOption_NamePart {
     pub name_part: String,
     pub is_extension: bool,
@@ -3504,7 +3504,7 @@ impl Default for UninterpretedOption_NamePart {
         UninterpretedOption_NamePart::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UninterpretedOption {
     pub name: Vec<UninterpretedOption_NamePart>,
     pub identifier_value: Option<String>,
@@ -3618,7 +3618,7 @@ impl pecan::Message for UninterpretedOption {
                 26 => self.identifier_value = Some(LengthPrefixed::read_from(s)?),
                 32 => self.positive_int_value = Some(Varint::read_from(s)?),
                 40 => self.negative_int_value = Some(Varint::read_from(s)?),
-                49 => self.double_value = Some(Fixed::read_from(s)?),
+                49 => self.double_value = Some(Fixed64::read_from(s)?),
                 58 => self.string_value = Some(LengthPrefixed::read_from(s)?),
                 66 => self.aggregate_value = Some(LengthPrefixed::read_from(s)?),
                 0 => return Ok(()),
@@ -3647,7 +3647,7 @@ impl pecan::Message for UninterpretedOption {
         }
         if let Some(v) = self.double_value {
             s.write_tag(49)?;
-            Fixed::write_to(v, s)?;
+            Fixed64::write_to(v, s)?;
         }
         if let Some(v) = &self.string_value {
             s.write_tag(58)?;
@@ -3677,7 +3677,7 @@ impl pecan::Message for UninterpretedOption {
             l += 1 + Varint::len(v);
         }
         if let Some(v) = self.double_value {
-            l += 1 + Fixed::len(v);
+            l += 1 + Fixed64::len(v);
         }
         if let Some(v) = &self.string_value {
             l += 1 + LengthPrefixed::len(v);
@@ -3703,7 +3703,7 @@ impl Default for UninterpretedOption {
         UninterpretedOption::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SourceCodeInfo_Location {
     pub path: Vec<i32>,
     pub span: Vec<i32>,
@@ -3832,7 +3832,7 @@ impl Default for SourceCodeInfo_Location {
         SourceCodeInfo_Location::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SourceCodeInfo {
     pub location: Vec<SourceCodeInfo_Location>,
     _unknown: Vec<u8>,
@@ -3890,7 +3890,7 @@ impl Default for SourceCodeInfo {
         SourceCodeInfo::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GeneratedCodeInfo_Annotation {
     pub path: Vec<i32>,
     pub source_file: Option<String>,
@@ -4015,7 +4015,7 @@ impl Default for GeneratedCodeInfo_Annotation {
         GeneratedCodeInfo_Annotation::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GeneratedCodeInfo {
     pub annotation: Vec<GeneratedCodeInfo_Annotation>,
     _unknown: Vec<u8>,

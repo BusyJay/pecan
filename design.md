@@ -47,3 +47,5 @@ reference at every read accessor. So there should be an easy way to return a
 default message. One way is always constructing a new struct at every get,
 another way is using global value. Using LazyStatic should be possible, but I
 prefer a more clean and zero cost way: use static directly with const fn.
+
+### Should partial eq consider unknown fields?

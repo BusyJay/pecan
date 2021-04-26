@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 use pecan::prelude::*;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Version {
     pub major: Option<i32>,
     pub minor: Option<i32>,
@@ -137,7 +137,7 @@ impl Default for Version {
         Version::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CodeGeneratorRequest {
     pub file_to_generate: Vec<String>,
     pub parameter: Option<String>,
@@ -258,7 +258,7 @@ impl Default for CodeGeneratorRequest {
         CodeGeneratorRequest::new()
     }
 }
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct CodeGeneratorResponse_Feature(i32);
 impl pecan::Enumerate for CodeGeneratorResponse_Feature {
     #[inline]
@@ -278,7 +278,7 @@ impl CodeGeneratorResponse_Feature {
         CodeGeneratorResponse_Feature(0)
     }
 }
-impl std::fmt::Display for CodeGeneratorResponse_Feature {
+impl std::fmt::Debug for CodeGeneratorResponse_Feature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
             0 => write!(f, "FEATURE_NONE"),
@@ -287,7 +287,7 @@ impl std::fmt::Display for CodeGeneratorResponse_Feature {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CodeGeneratorResponse_File {
     pub name: Option<String>,
     pub insertion_point: Option<String>,
@@ -441,7 +441,7 @@ impl Default for CodeGeneratorResponse_File {
         CodeGeneratorResponse_File::new()
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct CodeGeneratorResponse {
     pub error: Option<String>,
     pub supported_features: Option<u64>,

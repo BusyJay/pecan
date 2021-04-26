@@ -22,7 +22,7 @@ impl<T, C> Extension<T, C> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct ExtensionMap {
     // Use an `Option` to make it possible to initialize in const context.
     map: Option<HashMap<u64, Bytes>>,

@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 use pecan::prelude::*;
 pub const FIELD_OPT: pecan::Extension<FieldOptions, LengthPrefixed> = pecan::Extension::new(18666);
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct FieldOptions {
     pub box_field: bool,
     _unknown: Vec<u8>,
