@@ -42,7 +42,7 @@ impl FieldGenerator {
         let (inner_type, wire_ty, codec, kind) = match pb_ty {
             FieldDescriptorProto_Type::TYPE_BOOL => (quote!(bool), 0, "Varint", FieldKind::Boolean),
             FieldDescriptorProto_Type::TYPE_BYTES => {
-                (quote!(bytes::Bytes), 2, "LengthPrefixed", FieldKind::Bytes)
+                (quote!(pecan::Bytes), 2, "LengthPrefixed", FieldKind::Bytes)
             }
             FieldDescriptorProto_Type::TYPE_DOUBLE => {
                 (quote!(f64), 1, "Fixed", FieldKind::Primitive)

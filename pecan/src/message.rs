@@ -5,6 +5,16 @@ pub trait Message {
     fn merge_from<B: Buf>(&mut self, s: &mut CodedInputStream<B>) -> Result<()>;
     fn write_to<B: BufMut>(&self, s: &mut CodedOutputStream<B>) -> Result<()>;
     fn len(&self) -> u64;
+
+    fn merge_from_buf<B: Buf>(&mut self, s: &mut B) -> Result<()> {
+        let mut input = CodedInputStream::new(s);
+        self.merge_from(&mut input)
+    }
+
+    fn write_to_buf<B: BufMut>(&self, bytes: &mut B) -> Result<()> {
+        let mut output = CodedOutputStream::new(bytes);
+        self.write_to(&mut output)
+    }
 }
 
 pub trait DefaultInstance {

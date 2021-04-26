@@ -6,4 +6,3 @@ edition = "2018"
 
 [dependencies]
 pecan = { version = "0.1", path = "../pecan" }
-bytes = "1.0"

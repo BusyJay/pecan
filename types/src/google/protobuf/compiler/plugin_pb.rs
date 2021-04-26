@@ -71,7 +71,7 @@ impl Version {
     }
 }
 impl pecan::Message for Version {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.major = Some(Varint::read_from(s)?),
@@ -83,7 +83,7 @@ impl pecan::Message for Version {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.major {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -187,7 +187,7 @@ impl CodeGeneratorRequest {
     }
 }
 impl pecan::Message for CodeGeneratorRequest {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.file_to_generate, s)?,
@@ -199,7 +199,7 @@ impl pecan::Message for CodeGeneratorRequest {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.file_to_generate.is_empty() {
             for i in &self.file_to_generate {
                 s.write_tag(10)?;
@@ -375,7 +375,7 @@ impl CodeGeneratorResponse_File {
     }
 }
 impl pecan::Message for CodeGeneratorResponse_File {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -387,7 +387,7 @@ impl pecan::Message for CodeGeneratorResponse_File {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -486,7 +486,7 @@ impl CodeGeneratorResponse {
     }
 }
 impl pecan::Message for CodeGeneratorResponse {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.error = Some(LengthPrefixed::read_from(s)?),
@@ -497,7 +497,7 @@ impl pecan::Message for CodeGeneratorResponse {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.error {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;

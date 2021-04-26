@@ -15,7 +15,7 @@ impl FieldOptions {
     }
 }
 impl pecan::Message for FieldOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.box_field = Varint::read_from(s)?,
@@ -24,7 +24,7 @@ impl pecan::Message for FieldOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if self.box_field {
             s.write_tag(8)?;
             Varint::write_to(self.box_field, s)?;

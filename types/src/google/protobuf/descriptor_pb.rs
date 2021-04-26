@@ -14,7 +14,7 @@ impl FileDescriptorSet {
     }
 }
 impl pecan::Message for FileDescriptorSet {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.file, s)?,
@@ -23,7 +23,7 @@ impl pecan::Message for FileDescriptorSet {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.file.is_empty() {
             for i in &self.file {
                 s.write_tag(10)?;
@@ -169,7 +169,7 @@ impl FileDescriptorProto {
     }
 }
 impl pecan::Message for FileDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -189,7 +189,7 @@ impl pecan::Message for FileDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -366,7 +366,7 @@ impl DescriptorProto_ExtensionRange {
     }
 }
 impl pecan::Message for DescriptorProto_ExtensionRange {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.start = Some(Varint::read_from(s)?),
@@ -377,7 +377,7 @@ impl pecan::Message for DescriptorProto_ExtensionRange {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -464,7 +464,7 @@ impl DescriptorProto_ReservedRange {
     }
 }
 impl pecan::Message for DescriptorProto_ReservedRange {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.start = Some(Varint::read_from(s)?),
@@ -474,7 +474,7 @@ impl pecan::Message for DescriptorProto_ReservedRange {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -576,7 +576,7 @@ impl DescriptorProto {
     }
 }
 impl pecan::Message for DescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -594,7 +594,7 @@ impl pecan::Message for DescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -723,7 +723,7 @@ impl ExtensionRangeOptions {
     }
 }
 impl pecan::Message for ExtensionRangeOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
@@ -738,7 +738,7 @@ impl pecan::Message for ExtensionRangeOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
@@ -1054,7 +1054,7 @@ impl FieldDescriptorProto {
     }
 }
 impl pecan::Message for FieldDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1073,7 +1073,7 @@ impl pecan::Message for FieldDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1222,7 +1222,7 @@ impl OneofDescriptorProto {
     }
 }
 impl pecan::Message for OneofDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1232,7 +1232,7 @@ impl pecan::Message for OneofDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1312,7 +1312,7 @@ impl EnumDescriptorProto_EnumReservedRange {
     }
 }
 impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.start = Some(Varint::read_from(s)?),
@@ -1322,7 +1322,7 @@ impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -1415,7 +1415,7 @@ impl EnumDescriptorProto {
     }
 }
 impl pecan::Message for EnumDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1428,7 +1428,7 @@ impl pecan::Message for EnumDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1555,7 +1555,7 @@ impl EnumValueDescriptorProto {
     }
 }
 impl pecan::Message for EnumValueDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1566,7 +1566,7 @@ impl pecan::Message for EnumValueDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1661,7 +1661,7 @@ impl ServiceDescriptorProto {
     }
 }
 impl pecan::Message for ServiceDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1672,7 +1672,7 @@ impl pecan::Message for ServiceDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1829,7 +1829,7 @@ impl MethodDescriptorProto {
     }
 }
 impl pecan::Message for MethodDescriptorProto {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1843,7 +1843,7 @@ impl pecan::Message for MethodDescriptorProto {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -2267,7 +2267,7 @@ impl FileOptions {
     }
 }
 impl pecan::Message for FileOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.java_package = Some(LengthPrefixed::read_from(s)?),
@@ -2302,7 +2302,7 @@ impl pecan::Message for FileOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = &self.java_package {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -2556,7 +2556,7 @@ impl MessageOptions {
     }
 }
 impl pecan::Message for MessageOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.message_set_wire_format = Some(Varint::read_from(s)?),
@@ -2575,7 +2575,7 @@ impl pecan::Message for MessageOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.message_set_wire_format {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2805,7 +2805,7 @@ impl FieldOptions {
     }
 }
 impl pecan::Message for FieldOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.ctype = Some(Varint::read_from(s)?),
@@ -2826,7 +2826,7 @@ impl pecan::Message for FieldOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.ctype {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2926,7 +2926,7 @@ impl OneofOptions {
     }
 }
 impl pecan::Message for OneofOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
@@ -2941,7 +2941,7 @@ impl pecan::Message for OneofOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
@@ -3027,7 +3027,7 @@ impl EnumOptions {
     }
 }
 impl pecan::Message for EnumOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 16 => self.allow_alias = Some(Varint::read_from(s)?),
@@ -3044,7 +3044,7 @@ impl pecan::Message for EnumOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.allow_alias {
             s.write_tag(16)?;
             Varint::write_to(v, s)?;
@@ -3130,7 +3130,7 @@ impl EnumValueOptions {
     }
 }
 impl pecan::Message for EnumValueOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.deprecated = Some(Varint::read_from(s)?),
@@ -3146,7 +3146,7 @@ impl pecan::Message for EnumValueOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -3225,7 +3225,7 @@ impl ServiceOptions {
     }
 }
 impl pecan::Message for ServiceOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
@@ -3241,7 +3241,7 @@ impl pecan::Message for ServiceOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
             Varint::write_to(v, s)?;
@@ -3365,7 +3365,7 @@ impl MethodOptions {
     }
 }
 impl pecan::Message for MethodOptions {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
@@ -3382,7 +3382,7 @@ impl pecan::Message for MethodOptions {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
             Varint::write_to(v, s)?;
@@ -3454,7 +3454,7 @@ impl UninterpretedOption_NamePart {
     }
 }
 impl pecan::Message for UninterpretedOption_NamePart {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name_part = LengthPrefixed::read_from(s)?,
@@ -3464,7 +3464,7 @@ impl pecan::Message for UninterpretedOption_NamePart {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.name_part.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name_part, s)?;
@@ -3511,7 +3511,7 @@ pub struct UninterpretedOption {
     pub positive_int_value: Option<u64>,
     pub negative_int_value: Option<i64>,
     pub double_value: Option<f64>,
-    pub string_value: Option<bytes::Bytes>,
+    pub string_value: Option<pecan::Bytes>,
     pub aggregate_value: Option<String>,
     _unknown: Vec<u8>,
 }
@@ -3579,19 +3579,19 @@ impl UninterpretedOption {
     pub fn set_double_value(&mut self, val: f64) {
         self.double_value = Some(val);
     }
-    pub fn string_value(&self) -> &bytes::Bytes {
+    pub fn string_value(&self) -> &pecan::Bytes {
         match &self.string_value {
             Some(v) => v,
-            None => bytes::Bytes::default_instance(),
+            None => pecan::Bytes::default_instance(),
         }
     }
-    pub fn string_value_mut(&mut self) -> &mut bytes::Bytes {
+    pub fn string_value_mut(&mut self) -> &mut pecan::Bytes {
         if self.string_value.is_none() {
-            self.string_value = Some(bytes::Bytes::new());
+            self.string_value = Some(pecan::Bytes::new());
         }
         self.string_value.as_mut().unwrap()
     }
-    pub fn set_string_value(&mut self, val: bytes::Bytes) {
+    pub fn set_string_value(&mut self, val: pecan::Bytes) {
         self.string_value = Some(val);
     }
     pub fn aggregate_value(&self) -> &String {
@@ -3611,7 +3611,7 @@ impl UninterpretedOption {
     }
 }
 impl pecan::Message for UninterpretedOption {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 18 => LengthPrefixedArray::merge_from(&mut self.name, s)?,
@@ -3626,7 +3626,7 @@ impl pecan::Message for UninterpretedOption {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.name.is_empty() {
             for i in &self.name {
                 s.write_tag(18)?;
@@ -3755,7 +3755,7 @@ impl SourceCodeInfo_Location {
     }
 }
 impl pecan::Message for SourceCodeInfo_Location {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => VarintArray::merge_from(&mut self.path, s)?,
@@ -3768,7 +3768,7 @@ impl pecan::Message for SourceCodeInfo_Location {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
             VarintArray::write_to(&self.path, s)?;
@@ -3846,7 +3846,7 @@ impl SourceCodeInfo {
     }
 }
 impl pecan::Message for SourceCodeInfo {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.location, s)?,
@@ -3855,7 +3855,7 @@ impl pecan::Message for SourceCodeInfo {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.location.is_empty() {
             for i in &self.location {
                 s.write_tag(10)?;
@@ -3949,7 +3949,7 @@ impl GeneratedCodeInfo_Annotation {
     }
 }
 impl pecan::Message for GeneratedCodeInfo_Annotation {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => VarintArray::merge_from(&mut self.path, s)?,
@@ -3961,7 +3961,7 @@ impl pecan::Message for GeneratedCodeInfo_Annotation {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
             VarintArray::write_to(&self.path, s)?;
@@ -4029,7 +4029,7 @@ impl GeneratedCodeInfo {
     }
 }
 impl pecan::Message for GeneratedCodeInfo {
-    fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.annotation, s)?,
@@ -4038,7 +4038,7 @@ impl pecan::Message for GeneratedCodeInfo {
             }
         }
     }
-    fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
         if !self.annotation.is_empty() {
             for i in &self.annotation {
                 s.write_tag(10)?;

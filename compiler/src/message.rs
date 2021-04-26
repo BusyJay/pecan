@@ -114,7 +114,7 @@ impl MessageGenerator {
             }
         };
         quote! {
-            fn merge_from<B: bytes::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+            fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
                 loop {
                     match s.read_tag()? {
                         #(#merge_from)*
@@ -141,7 +141,7 @@ impl MessageGenerator {
             }
         };
         quote! {
-            fn write_to<B: bytes::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+            fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
                 #(#write_to)*
                 #extension
                 if !self._unknown.is_empty() {
