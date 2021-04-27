@@ -193,6 +193,7 @@ mod tests {
             ("a123_BCD123", "A123_BcD123"),
             ("ABcd", "ABcd"),
             ("ABCd", "AbCd"),
+            ("_abcd", "_Abcd"),
         ];
         for (s, t) in cases {
             let res = super::camel_name(s);

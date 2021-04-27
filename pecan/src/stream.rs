@@ -11,8 +11,9 @@ pub struct CodedInputStream<'a, B: Buf> {
     last_len: usize,
     flushed: u64,
     limit: u64,
-    depth: usize,
-    depth_limit: usize,
+    depth: u32,
+    depth_limit: u32,
+    last_tag: u64,
 }
 
 impl<'a, B: Buf> CodedInputStream<'a, B> {
@@ -26,10 +27,11 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
             buf,
             depth: 0,
             depth_limit: 20,
+            last_tag: 0,
         }
     }
 
-    pub fn set_depth_limit(&mut self, limit: usize) {
+    pub fn set_depth_limit(&mut self, limit: u32) {
         self.depth_limit = limit;
     }
 
@@ -52,7 +54,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
     pub fn read_tag(&mut self) -> Result<u64> {
         if self.progress() < self.limit {
             let tag = self.read_var_u64_raw()?;
-            if self.progress() < self.limit && tag != 0 {
+            if self.progress() <= self.limit && tag != 0 {
                 Ok(tag)
             } else {
                 Err(Error::corrupted())
@@ -186,6 +188,19 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         let last_limit = self.push_limit(size)?;
         f(self)?;
         self.pop_limit(last_limit)
+    }
+
+    pub fn set_last_tag(&mut self, tag: u64) {
+        self.last_tag = tag;
+    }
+
+    pub fn check_last_tag(&mut self, expect: u64) -> Result<()> {
+        if self.last_tag == expect {
+            self.last_tag = 0;
+            Ok(())
+        } else {
+            Err(Error::corrupted())
+        }
     }
 }
 

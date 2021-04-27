@@ -83,10 +83,17 @@ impl<'a> Generator<'a> {
 
     fn generate_message(&self, d: &DescriptorProto) -> TokenStream {
         let msg_name = type_name(d.name(), "");
-        self.generate_message_impl(&msg_name, d)
+        let prefix = package_prefix(self.file.proto());
+        let type_id = format!("{}{}", prefix, d.name());
+        self.generate_message_impl(&msg_name, &type_id, d)
     }
 
-    fn generate_message_impl(&self, msg_name: &str, d: &DescriptorProto) -> TokenStream {
+    fn generate_message_impl(
+        &self,
+        msg_name: &str,
+        type_id: &str,
+        d: &DescriptorProto,
+    ) -> TokenStream {
         let mut token = TokenStream::new();
         for e in &d.enum_type {
             let name = type_name(e.name(), msg_name);
@@ -94,9 +101,10 @@ impl<'a> Generator<'a> {
         }
         for e in &d.nested_type {
             let name = type_name(e.name(), msg_name);
-            token.extend(self.generate_message_impl(&name, e));
+            let type_id = format!("{}.{}", type_id, e.name());
+            token.extend(self.generate_message_impl(&name, &type_id, e));
         }
-        if let Some(g) = MessageGenerator::new(self, d, msg_name) {
+        if let Some(g) = MessageGenerator::new(self, d, type_id, msg_name) {
             token.extend(g.generate());
         }
         token

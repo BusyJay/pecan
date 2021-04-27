@@ -22,10 +22,7 @@ impl Version {
         self.major.unwrap_or_default()
     }
     pub fn major_mut(&mut self) -> &mut i32 {
-        if self.major.is_none() {
-            self.major = Some(0);
-        }
-        self.major.as_mut().unwrap()
+        self.major.get_or_insert_with(Default::default)
     }
     pub fn set_major(&mut self, val: i32) {
         self.major = Some(val);
@@ -34,10 +31,7 @@ impl Version {
         self.minor.unwrap_or_default()
     }
     pub fn minor_mut(&mut self) -> &mut i32 {
-        if self.minor.is_none() {
-            self.minor = Some(0);
-        }
-        self.minor.as_mut().unwrap()
+        self.minor.get_or_insert_with(Default::default)
     }
     pub fn set_minor(&mut self, val: i32) {
         self.minor = Some(val);
@@ -46,10 +40,7 @@ impl Version {
         self.patch.unwrap_or_default()
     }
     pub fn patch_mut(&mut self) -> &mut i32 {
-        if self.patch.is_none() {
-            self.patch = Some(0);
-        }
-        self.patch.as_mut().unwrap()
+        self.patch.get_or_insert_with(Default::default)
     }
     pub fn set_patch(&mut self, val: i32) {
         self.patch = Some(val);
@@ -57,14 +48,11 @@ impl Version {
     pub fn suffix(&self) -> &String {
         match &self.suffix {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn suffix_mut(&mut self) -> &mut String {
-        if self.suffix.is_none() {
-            self.suffix = Some(String::new());
-        }
-        self.suffix.as_mut().unwrap()
+        self.suffix.get_or_insert_with(Default::default)
     }
     pub fn set_suffix(&mut self, val: String) {
         self.suffix = Some(val);
@@ -150,22 +138,19 @@ impl CodeGeneratorRequest {
         CodeGeneratorRequest {
             file_to_generate: Vec::new(),
             parameter: None,
-            compiler_version: None,
             proto_file: Vec::new(),
+            compiler_version: None,
             _unknown: Vec::new(),
         }
     }
     pub fn parameter(&self) -> &String {
         match &self.parameter {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn parameter_mut(&mut self) -> &mut String {
-        if self.parameter.is_none() {
-            self.parameter = Some(String::new());
-        }
-        self.parameter.as_mut().unwrap()
+        self.parameter.get_or_insert_with(Default::default)
     }
     pub fn set_parameter(&mut self, val: String) {
         self.parameter = Some(val);
@@ -173,14 +158,11 @@ impl CodeGeneratorRequest {
     pub fn compiler_version(&self) -> &Version {
         match &self.compiler_version {
             Some(v) => v,
-            None => Version::default_instance(),
+            _ => Version::default_instance(),
         }
     }
     pub fn compiler_version_mut(&mut self) -> &mut Version {
-        if self.compiler_version.is_none() {
-            self.compiler_version = Some(Version::new());
-        }
-        self.compiler_version.as_mut().unwrap()
+        self.compiler_version.get_or_insert_with(Default::default)
     }
     pub fn set_compiler_version(&mut self, val: Version) {
         self.compiler_version = Some(val);
@@ -308,14 +290,11 @@ impl CodeGeneratorResponse_File {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -323,14 +302,11 @@ impl CodeGeneratorResponse_File {
     pub fn insertion_point(&self) -> &String {
         match &self.insertion_point {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn insertion_point_mut(&mut self) -> &mut String {
-        if self.insertion_point.is_none() {
-            self.insertion_point = Some(String::new());
-        }
-        self.insertion_point.as_mut().unwrap()
+        self.insertion_point.get_or_insert_with(Default::default)
     }
     pub fn set_insertion_point(&mut self, val: String) {
         self.insertion_point = Some(val);
@@ -338,14 +314,11 @@ impl CodeGeneratorResponse_File {
     pub fn content(&self) -> &String {
         match &self.content {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn content_mut(&mut self) -> &mut String {
-        if self.content.is_none() {
-            self.content = Some(String::new());
-        }
-        self.content.as_mut().unwrap()
+        self.content.get_or_insert_with(Default::default)
     }
     pub fn set_content(&mut self, val: String) {
         self.content = Some(val);
@@ -355,17 +328,14 @@ impl CodeGeneratorResponse_File {
     ) -> &crate::google::protobuf::descriptor_pb::GeneratedCodeInfo {
         match &self.generated_code_info {
             Some(v) => v,
-            None => crate::google::protobuf::descriptor_pb::GeneratedCodeInfo::default_instance(),
+            _ => crate::google::protobuf::descriptor_pb::GeneratedCodeInfo::default_instance(),
         }
     }
     pub fn generated_code_info_mut(
         &mut self,
     ) -> &mut crate::google::protobuf::descriptor_pb::GeneratedCodeInfo {
-        if self.generated_code_info.is_none() {
-            self.generated_code_info =
-                Some(crate::google::protobuf::descriptor_pb::GeneratedCodeInfo::new());
-        }
-        self.generated_code_info.as_mut().unwrap()
+        self.generated_code_info
+            .get_or_insert_with(Default::default)
     }
     pub fn set_generated_code_info(
         &mut self,
@@ -460,14 +430,11 @@ impl CodeGeneratorResponse {
     pub fn error(&self) -> &String {
         match &self.error {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn error_mut(&mut self) -> &mut String {
-        if self.error.is_none() {
-            self.error = Some(String::new());
-        }
-        self.error.as_mut().unwrap()
+        self.error.get_or_insert_with(Default::default)
     }
     pub fn set_error(&mut self, val: String) {
         self.error = Some(val);
@@ -476,10 +443,7 @@ impl CodeGeneratorResponse {
         self.supported_features.unwrap_or_default()
     }
     pub fn supported_features_mut(&mut self) -> &mut u64 {
-        if self.supported_features.is_none() {
-            self.supported_features = Some(0);
-        }
-        self.supported_features.as_mut().unwrap()
+        self.supported_features.get_or_insert_with(Default::default)
     }
     pub fn set_supported_features(&mut self, val: u64) {
         self.supported_features = Some(val);

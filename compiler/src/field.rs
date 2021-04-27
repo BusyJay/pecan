@@ -14,6 +14,7 @@ enum FieldKind {
     Bytes,
     Message,
     HashMap(Box<FieldGenerator>, Box<FieldGenerator>),
+    Group,
 }
 
 impl FieldKind {
@@ -24,6 +25,17 @@ impl FieldKind {
     fn is_hash_map(&self) -> bool {
         matches!(self, FieldKind::HashMap(..))
     }
+
+    fn is_message(&self) -> bool {
+        matches!(self, FieldKind::Message | FieldKind::Group)
+    }
+}
+
+fn is_message_type(e: &FieldDescriptorProto) -> bool {
+    matches!(
+        e.r#type(),
+        FieldDescriptorProto_Type::TYPE_MESSAGE | FieldDescriptorProto_Type::TYPE_GROUP
+    )
 }
 
 fn wire_type(e: &FieldDescriptorProto) -> (u8, Ident) {
@@ -46,6 +58,7 @@ fn wire_type(e: &FieldDescriptorProto) -> (u8, Ident) {
         FieldDescriptorProto_Type::TYPE_FLOAT
         | FieldDescriptorProto_Type::TYPE_FIXED32
         | FieldDescriptorProto_Type::TYPE_SFIXED32 => (5, "Fixed32"),
+        FieldDescriptorProto_Type::TYPE_GROUP => (3, "Group"),
         ty => panic!("unsupported type {:?}", ty),
     };
     if e.label() == FieldDescriptorProto_Label::LABEL_REPEATED {
@@ -113,12 +126,16 @@ fn field_type_name(
                 )
             }
         }
+        FieldDescriptorProto_Type::TYPE_GROUP => {
+            let p = g.db().r#type(e.type_name()).unwrap();
+            (p.name().parse().unwrap(), FieldKind::Group)
+        }
         FieldDescriptorProto_Type::TYPE_BYTES => (quote!(pecan::Bytes), FieldKind::Bytes),
         FieldDescriptorProto_Type::TYPE_STRING => (quote!(String), FieldKind::Bytes),
         ty => panic!("unsupported type {:?}", ty),
     };
 
-    let mut wrap_type = if e.r#type() == FieldDescriptorProto_Type::TYPE_MESSAGE
+    let mut wrap_type = if is_message_type(e)
         && e.label() != FieldDescriptorProto_Label::LABEL_REPEATED
         && opt.box_field
     {
@@ -128,7 +145,7 @@ fn field_type_name(
         ty.clone()
     };
     if e.label() == FieldDescriptorProto_Label::LABEL_OPTIONAL
-        && (!g.file().proto3() || e.r#type() == FieldDescriptorProto_Type::TYPE_MESSAGE)
+        && (!g.file().proto3() || is_message_type(e))
     {
         wrap_type = quote! { Option<#wrap_type> };
     } else if e.label() == FieldDescriptorProto_Label::LABEL_REPEATED {
@@ -147,7 +164,8 @@ fn default_value(
         FieldDescriptorProto_Type::TYPE_ENUM
         | FieldDescriptorProto_Type::TYPE_BYTES
         | FieldDescriptorProto_Type::TYPE_STRING
-        | FieldDescriptorProto_Type::TYPE_MESSAGE => {
+        | FieldDescriptorProto_Type::TYPE_MESSAGE
+        | FieldDescriptorProto_Type::TYPE_GROUP => {
             if matches!(kind, FieldKind::HashMap(..)) {
                 quote!(pecan::HashMap::new())
             } else {
@@ -218,6 +236,18 @@ impl FieldGenerator {
         Literal::u64_unsuffixed(self.tag)
     }
 
+    fn end_tag_value(&self) -> u64 {
+        (self.tag & (!0x7)) | 4
+    }
+
+    pub fn group_end_tag(&self) -> Literal {
+        Literal::u64_unsuffixed(self.end_tag_value())
+    }
+
+    pub fn group_end_tag_len(&self) -> u64 {
+        Varint::len(self.end_tag_value())
+    }
+
     pub fn one_of_index(&self) -> Option<usize> {
         self.one_of_index
     }
@@ -227,7 +257,7 @@ impl FieldGenerator {
         let codec = &self.codec;
         if matches!(self.kind, FieldKind::Message) {
             quote! {
-                #tag => #codec::merge_from(#ident, s)?,
+                #tag => #codec::merge_from(&mut #ident, s)?,
             }
         } else {
             quote! {
@@ -283,6 +313,20 @@ impl FieldGenerator {
             quote! {
                 #tag => #codec::merge_from(#accessor, s)?,
             }
+        } else if matches!(self.kind, FieldKind::Group) {
+            let accessor = if !self.optional {
+                quote! { self.#name }
+            } else {
+                let method = format_ident!("{}_mut", self.name);
+                quote! { self.#method() }
+            };
+            let end_tag = self.group_end_tag();
+            quote! {
+                #tag => {
+                    #accessor.merge_from(s)?;
+                    s.check_last_tag(#end_tag)?;
+                },
+            }
         } else if self.optional {
             quote! {
                 #tag => self.#name = Some(#codec::read_from(s)?),
@@ -325,7 +369,7 @@ impl FieldGenerator {
                 quote! { if !self.#name.is_empty() { #t } }
             } else if matches!(self.kind, FieldKind::Boolean) {
                 quote! { if self.#name { #t } }
-            } else if matches!(self.kind, FieldKind::Message) {
+            } else if self.kind.is_message() {
                 let val = &self.default_value;
                 quote! { if self.#name != #val { #t } }
             } else {
@@ -371,19 +415,38 @@ impl FieldGenerator {
         }
         let tag = self.tag();
         let codec = &self.codec;
+        let end_tag = self.group_end_tag();
         if !self.repeated {
-            self.check_empty(|_, v| {
-                quote! {
-                    s.write_tag(#tag)?;
-                    #codec::write_to(#v, s)?;
+            self.check_empty(|v, v_ref| {
+                if matches!(self.kind, FieldKind::Group) {
+                    quote! {
+                        s.write_tag(#tag)?;
+                        #v.write_to(s)?;
+                        s.write_tag(#end_tag)?;
+                    }
+                } else {
+                    quote! {
+                        s.write_tag(#tag)?;
+                        #codec::write_to(#v_ref, s)?;
+                    }
                 }
             })
         } else if !self.kind.can_copy() {
-            self.check_empty(|_, v| {
-                quote! {
-                    for i in #v {
-                        s.write_tag(#tag)?;
-                        LengthPrefixed::write_to(i, s)?;
+            self.check_empty(|_, v_ref| {
+                if matches!(self.kind, FieldKind::Group) {
+                    quote! {
+                        for i in #v_ref {
+                            s.write_tag(#tag)?;
+                            i.write_to(s)?;
+                            s.write_tag(#end_tag)?;
+                        }
+                    }
+                } else {
+                    quote! {
+                        for i in #v_ref {
+                            s.write_tag(#tag)?;
+                            LengthPrefixed::write_to(i, s)?;
+                        }
                     }
                 }
             })
@@ -431,10 +494,16 @@ impl FieldGenerator {
             return self.map_len(kg, vg);
         }
         let (len_raw, tag_len) = self.tag_len();
+        let end_tag_len_raw = self.group_end_tag_len();
+        let group_tag_len = Literal::u64_unsuffixed(len_raw + end_tag_len_raw);
         let codec = &self.codec;
         if !self.repeated {
-            self.check_empty(|_, v| {
-                quote! { l += #tag_len + #codec::len(#v); }
+            self.check_empty(|v, v_ref| {
+                if matches!(self.kind, FieldKind::Group) {
+                    quote! { l += #group_tag_len + #v.len(); }
+                } else {
+                    quote! { l += #tag_len + #codec::len(#v_ref); }
+                }
             })
         } else if !self.kind.can_copy() {
             self.check_empty(|v, v_ref| {
@@ -443,8 +512,17 @@ impl FieldGenerator {
                 } else {
                     quote! { #tag_len * #v.len() as u64 }
                 };
-                quote! {
-                    l += #vector_len + #codec::len(#v_ref);
+                if matches!(self.kind, FieldKind::Group) {
+                    quote! {
+                        l += #group_tag_len * #v.len() as u64;
+                        for i in #v_ref {
+                            l += i.len();
+                        }
+                    }
+                } else {
+                    quote! {
+                        l += #vector_len + #codec::len(#v_ref);
+                    }
                 }
             })
         } else {
@@ -492,7 +570,9 @@ impl FieldGenerator {
     }
 
     fn one_of_item(&self) -> Ident {
-        format_ident!("{}", util::camel_name(&self.name))
+        let mut name = util::camel_name(&self.name);
+        name.retain(|c| c != '_');
+        format_ident!("{}", name)
     }
 
     fn getter_impl(

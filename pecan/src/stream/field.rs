@@ -7,34 +7,20 @@ use crate::{
 use crate::{Error, Result};
 use bytes::{buf::UninitSlice, Buf, BufMut, Bytes};
 
-pub trait ReadFieldCodec<Field>: WireCodec {
+pub trait ReadFieldCodec<Field> {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Field>;
 }
 
-pub trait WireCodec {
-    #[inline]
-    fn wire() -> u8 {
-        0
-    }
-
-    #[inline]
-    fn tag(number: u32) -> u64 {
-        ((number as u64) << 3) | Self::wire() as u64
-    }
-}
-
-pub trait MergeFieldCodec<Field>: WireCodec {
+pub trait MergeFieldCodec<Field> {
     fn merge_from<B: Buf>(current: &mut Field, buf: &mut CodedInputStream<B>) -> Result<()>;
 }
 
-pub trait WriteFieldCodec<Field>: WireCodec {
+pub trait WriteFieldCodec<Field> {
     fn write_to<B: BufMut>(val: Field, buf: &mut CodedOutputStream<B>) -> Result<()>;
     fn len(val: Field) -> u64;
 }
 
 pub struct Varint;
-
-impl WireCodec for Varint {}
 
 impl ReadFieldCodec<bool> for Varint {
     #[inline]
@@ -80,13 +66,6 @@ impl WriteFieldCodec<bool> for Varint {
 
 pub struct LengthPrefixed;
 
-impl WireCodec for LengthPrefixed {
-    #[inline]
-    fn wire() -> u8 {
-        2
-    }
-}
-
 impl ReadFieldCodec<Bytes> for LengthPrefixed {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Bytes> {
         let len = buf.read_var_u64_raw()?;
@@ -110,21 +89,7 @@ impl<'a> WriteFieldCodec<&'a [u8]> for LengthPrefixed {
 
 pub struct Fixed32;
 
-impl WireCodec for Fixed32 {
-    #[inline]
-    fn wire() -> u8 {
-        5
-    }
-}
-
 pub struct Fixed64;
-
-impl WireCodec for Fixed64 {
-    #[inline]
-    fn wire() -> u8 {
-        1
-    }
-}
 
 impl ReadFieldCodec<f64> for Fixed64 {
     #[inline]
@@ -381,8 +346,6 @@ impl_length_prefix!(Bytes, as_ref);
 
 pub struct ZigZag;
 
-impl WireCodec for ZigZag {}
-
 impl ReadFieldCodec<i32> for ZigZag {
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<i32> {
@@ -527,13 +490,6 @@ impl<'a, M: Message> WriteFieldCodec<&'a M> for LengthPrefixed {
 
 pub struct LengthPrefixedArray;
 
-impl WireCodec for LengthPrefixedArray {
-    #[inline]
-    fn wire() -> u8 {
-        2
-    }
-}
-
 impl<Item> MergeFieldCodec<Vec<Item>> for LengthPrefixedArray
 where
     LengthPrefixed: ReadFieldCodec<Item>,
@@ -571,13 +527,6 @@ where
 
 pub struct PackedArray<ItemCodec> {
     _marker: PhantomData<ItemCodec>,
-}
-
-impl<ItemCodec> WireCodec for PackedArray<ItemCodec> {
-    #[inline]
-    fn wire() -> u8 {
-        2
-    }
 }
 
 impl<Item, ItemCodec> MergeFieldCodec<Vec<Item>> for PackedArray<ItemCodec>

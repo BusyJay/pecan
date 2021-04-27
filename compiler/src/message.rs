@@ -17,10 +17,16 @@ pub struct MessageGenerator {
     decl_order: Vec<Field>,
     one_of_fields: Vec<OneOfGenerator>,
     extension_range: Vec<(i32, i32)>,
+    group: i32,
 }
 
 impl MessageGenerator {
-    pub fn new(g: &Generator, proto: &DescriptorProto, name: &str) -> Option<MessageGenerator> {
+    pub fn new(
+        g: &Generator,
+        proto: &DescriptorProto,
+        type_id: &str,
+        name: &str,
+    ) -> Option<MessageGenerator> {
         if proto.options().map_entry() {
             return None;
         }
@@ -57,6 +63,7 @@ impl MessageGenerator {
             decl_order,
             fields,
             extension_range,
+            group: g.db().r#type(type_id).expect(&type_id).group(),
         })
     }
 
@@ -147,12 +154,21 @@ impl MessageGenerator {
                 }
             }
         };
+        let end = if self.group == 0 {
+            quote!(0 => return Ok(()),)
+        } else {
+            let tag = Literal::u64_unsuffixed(((self.group as u64) << 3) | 4);
+            quote!(0 | #tag => {
+                s.set_last_tag(#tag);
+                return Ok(());
+            })
+        };
         quote! {
             fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
                 loop {
                     match s.read_tag()? {
                         #(#merge_from)*
-                        0 => return Ok(()),
+                        #end
                         #extension
                     }
                 }

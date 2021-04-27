@@ -3,7 +3,7 @@ pub enum Error {
     WantMore(u64, u8),
     Corrupted,
     Eof,
-    DepthExcceedLimit(usize),
+    DepthExcceedLimit(u32),
 }
 
 impl Error {

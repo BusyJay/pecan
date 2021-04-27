@@ -53,6 +53,7 @@ pub struct TypeReference {
     package: String,
     name: String,
     proto: Proto,
+    group: i32,
 }
 
 impl TypeReference {
@@ -61,6 +62,7 @@ impl TypeReference {
             package,
             name,
             proto,
+            group: 0,
         }
     }
 
@@ -77,6 +79,10 @@ impl TypeReference {
             Proto::Message(m) => Some(m),
             _ => None,
         }
+    }
+
+    pub fn group(&self) -> i32 {
+        self.group
     }
 }
 
@@ -156,6 +162,13 @@ impl Database {
         }
         for e in &e.enum_type {
             self.register_enum_impl(&sub_prefix, &ty_name, file, e);
+        }
+        if !e.nested_type.is_empty() {
+            for f in &e.field {
+                if f.r#type() == FieldDescriptorProto_Type::TYPE_GROUP {
+                    self.types.get_mut(f.type_name()).unwrap().group = f.number();
+                }
+            }
         }
     }
 

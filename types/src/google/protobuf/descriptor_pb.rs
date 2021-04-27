@@ -80,14 +80,14 @@ impl FileDescriptorProto {
             name: None,
             package: None,
             dependency: Vec::new(),
+            public_dependency: Vec::new(),
+            weak_dependency: Vec::new(),
             message_type: Vec::new(),
             enum_type: Vec::new(),
             service: Vec::new(),
             extension: Vec::new(),
             options: None,
             source_code_info: None,
-            public_dependency: Vec::new(),
-            weak_dependency: Vec::new(),
             syntax: None,
             _unknown: Vec::new(),
         }
@@ -95,14 +95,11 @@ impl FileDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -110,14 +107,11 @@ impl FileDescriptorProto {
     pub fn package(&self) -> &String {
         match &self.package {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn package_mut(&mut self) -> &mut String {
-        if self.package.is_none() {
-            self.package = Some(String::new());
-        }
-        self.package.as_mut().unwrap()
+        self.package.get_or_insert_with(Default::default)
     }
     pub fn set_package(&mut self, val: String) {
         self.package = Some(val);
@@ -125,14 +119,11 @@ impl FileDescriptorProto {
     pub fn options(&self) -> &FileOptions {
         match &self.options {
             Some(v) => v,
-            None => FileOptions::default_instance(),
+            _ => FileOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut FileOptions {
-        if self.options.is_none() {
-            self.options = Some(FileOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: FileOptions) {
         self.options = Some(val);
@@ -140,14 +131,11 @@ impl FileDescriptorProto {
     pub fn source_code_info(&self) -> &SourceCodeInfo {
         match &self.source_code_info {
             Some(v) => v,
-            None => SourceCodeInfo::default_instance(),
+            _ => SourceCodeInfo::default_instance(),
         }
     }
     pub fn source_code_info_mut(&mut self) -> &mut SourceCodeInfo {
-        if self.source_code_info.is_none() {
-            self.source_code_info = Some(SourceCodeInfo::new());
-        }
-        self.source_code_info.as_mut().unwrap()
+        self.source_code_info.get_or_insert_with(Default::default)
     }
     pub fn set_source_code_info(&mut self, val: SourceCodeInfo) {
         self.source_code_info = Some(val);
@@ -155,14 +143,11 @@ impl FileDescriptorProto {
     pub fn syntax(&self) -> &String {
         match &self.syntax {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn syntax_mut(&mut self) -> &mut String {
-        if self.syntax.is_none() {
-            self.syntax = Some(String::new());
-        }
-        self.syntax.as_mut().unwrap()
+        self.syntax.get_or_insert_with(Default::default)
     }
     pub fn set_syntax(&mut self, val: String) {
         self.syntax = Some(val);
@@ -329,10 +314,7 @@ impl DescriptorProto_ExtensionRange {
         self.start.unwrap_or_default()
     }
     pub fn start_mut(&mut self) -> &mut i32 {
-        if self.start.is_none() {
-            self.start = Some(0);
-        }
-        self.start.as_mut().unwrap()
+        self.start.get_or_insert_with(Default::default)
     }
     pub fn set_start(&mut self, val: i32) {
         self.start = Some(val);
@@ -341,10 +323,7 @@ impl DescriptorProto_ExtensionRange {
         self.end.unwrap_or_default()
     }
     pub fn end_mut(&mut self) -> &mut i32 {
-        if self.end.is_none() {
-            self.end = Some(0);
-        }
-        self.end.as_mut().unwrap()
+        self.end.get_or_insert_with(Default::default)
     }
     pub fn set_end(&mut self, val: i32) {
         self.end = Some(val);
@@ -352,14 +331,11 @@ impl DescriptorProto_ExtensionRange {
     pub fn options(&self) -> &ExtensionRangeOptions {
         match &self.options {
             Some(v) => v,
-            None => ExtensionRangeOptions::default_instance(),
+            _ => ExtensionRangeOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut ExtensionRangeOptions {
-        if self.options.is_none() {
-            self.options = Some(ExtensionRangeOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: ExtensionRangeOptions) {
         self.options = Some(val);
@@ -442,10 +418,7 @@ impl DescriptorProto_ReservedRange {
         self.start.unwrap_or_default()
     }
     pub fn start_mut(&mut self) -> &mut i32 {
-        if self.start.is_none() {
-            self.start = Some(0);
-        }
-        self.start.as_mut().unwrap()
+        self.start.get_or_insert_with(Default::default)
     }
     pub fn set_start(&mut self, val: i32) {
         self.start = Some(val);
@@ -454,10 +427,7 @@ impl DescriptorProto_ReservedRange {
         self.end.unwrap_or_default()
     }
     pub fn end_mut(&mut self) -> &mut i32 {
-        if self.end.is_none() {
-            self.end = Some(0);
-        }
-        self.end.as_mut().unwrap()
+        self.end.get_or_insert_with(Default::default)
     }
     pub fn set_end(&mut self, val: i32) {
         self.end = Some(val);
@@ -533,12 +503,12 @@ impl DescriptorProto {
         DescriptorProto {
             name: None,
             field: Vec::new(),
+            extension: Vec::new(),
             nested_type: Vec::new(),
             enum_type: Vec::new(),
             extension_range: Vec::new(),
-            extension: Vec::new(),
-            options: None,
             oneof_decl: Vec::new(),
+            options: None,
             reserved_range: Vec::new(),
             reserved_name: Vec::new(),
             _unknown: Vec::new(),
@@ -547,14 +517,11 @@ impl DescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -562,14 +529,11 @@ impl DescriptorProto {
     pub fn options(&self) -> &MessageOptions {
         match &self.options {
             Some(v) => v,
-            None => MessageOptions::default_instance(),
+            _ => MessageOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut MessageOptions {
-        if self.options.is_none() {
-            self.options = Some(MessageOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: MessageOptions) {
         self.options = Some(val);
@@ -889,15 +853,15 @@ impl FieldDescriptorProto {
     pub const fn new() -> FieldDescriptorProto {
         FieldDescriptorProto {
             name: None,
-            extendee: None,
             number: None,
             label: None,
             r#type: None,
             type_name: None,
+            extendee: None,
             default_value: None,
-            options: None,
             oneof_index: None,
             json_name: None,
+            options: None,
             proto3_optional: None,
             _unknown: Vec::new(),
         }
@@ -905,41 +869,20 @@ impl FieldDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
-    }
-    pub fn extendee(&self) -> &String {
-        match &self.extendee {
-            Some(v) => v,
-            None => String::default_instance(),
-        }
-    }
-    pub fn extendee_mut(&mut self) -> &mut String {
-        if self.extendee.is_none() {
-            self.extendee = Some(String::new());
-        }
-        self.extendee.as_mut().unwrap()
-    }
-    pub fn set_extendee(&mut self, val: String) {
-        self.extendee = Some(val);
     }
     pub fn number(&self) -> i32 {
         self.number.unwrap_or_default()
     }
     pub fn number_mut(&mut self) -> &mut i32 {
-        if self.number.is_none() {
-            self.number = Some(0);
-        }
-        self.number.as_mut().unwrap()
+        self.number.get_or_insert_with(Default::default)
     }
     pub fn set_number(&mut self, val: i32) {
         self.number = Some(val);
@@ -948,10 +891,7 @@ impl FieldDescriptorProto {
         self.label.unwrap_or_default()
     }
     pub fn label_mut(&mut self) -> &mut FieldDescriptorProto_Label {
-        if self.label.is_none() {
-            self.label = Some(FieldDescriptorProto_Label::new());
-        }
-        self.label.as_mut().unwrap()
+        self.label.get_or_insert_with(Default::default)
     }
     pub fn set_label(&mut self, val: FieldDescriptorProto_Label) {
         self.label = Some(val);
@@ -960,10 +900,7 @@ impl FieldDescriptorProto {
         self.r#type.unwrap_or_default()
     }
     pub fn type_mut(&mut self) -> &mut FieldDescriptorProto_Type {
-        if self.r#type.is_none() {
-            self.r#type = Some(FieldDescriptorProto_Type::new());
-        }
-        self.r#type.as_mut().unwrap()
+        self.r#type.get_or_insert_with(Default::default)
     }
     pub fn set_type(&mut self, val: FieldDescriptorProto_Type) {
         self.r#type = Some(val);
@@ -971,56 +908,44 @@ impl FieldDescriptorProto {
     pub fn type_name(&self) -> &String {
         match &self.type_name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn type_name_mut(&mut self) -> &mut String {
-        if self.type_name.is_none() {
-            self.type_name = Some(String::new());
-        }
-        self.type_name.as_mut().unwrap()
+        self.type_name.get_or_insert_with(Default::default)
     }
     pub fn set_type_name(&mut self, val: String) {
         self.type_name = Some(val);
     }
+    pub fn extendee(&self) -> &String {
+        match &self.extendee {
+            Some(v) => v,
+            _ => String::default_instance(),
+        }
+    }
+    pub fn extendee_mut(&mut self) -> &mut String {
+        self.extendee.get_or_insert_with(Default::default)
+    }
+    pub fn set_extendee(&mut self, val: String) {
+        self.extendee = Some(val);
+    }
     pub fn default_value(&self) -> &String {
         match &self.default_value {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn default_value_mut(&mut self) -> &mut String {
-        if self.default_value.is_none() {
-            self.default_value = Some(String::new());
-        }
-        self.default_value.as_mut().unwrap()
+        self.default_value.get_or_insert_with(Default::default)
     }
     pub fn set_default_value(&mut self, val: String) {
         self.default_value = Some(val);
-    }
-    pub fn options(&self) -> &FieldOptions {
-        match &self.options {
-            Some(v) => v,
-            None => FieldOptions::default_instance(),
-        }
-    }
-    pub fn options_mut(&mut self) -> &mut FieldOptions {
-        if self.options.is_none() {
-            self.options = Some(FieldOptions::new());
-        }
-        self.options.as_mut().unwrap()
-    }
-    pub fn set_options(&mut self, val: FieldOptions) {
-        self.options = Some(val);
     }
     pub fn oneof_index(&self) -> i32 {
         self.oneof_index.unwrap_or_default()
     }
     pub fn oneof_index_mut(&mut self) -> &mut i32 {
-        if self.oneof_index.is_none() {
-            self.oneof_index = Some(0);
-        }
-        self.oneof_index.as_mut().unwrap()
+        self.oneof_index.get_or_insert_with(Default::default)
     }
     pub fn set_oneof_index(&mut self, val: i32) {
         self.oneof_index = Some(val);
@@ -1028,26 +953,32 @@ impl FieldDescriptorProto {
     pub fn json_name(&self) -> &String {
         match &self.json_name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn json_name_mut(&mut self) -> &mut String {
-        if self.json_name.is_none() {
-            self.json_name = Some(String::new());
-        }
-        self.json_name.as_mut().unwrap()
+        self.json_name.get_or_insert_with(Default::default)
     }
     pub fn set_json_name(&mut self, val: String) {
         self.json_name = Some(val);
+    }
+    pub fn options(&self) -> &FieldOptions {
+        match &self.options {
+            Some(v) => v,
+            _ => FieldOptions::default_instance(),
+        }
+    }
+    pub fn options_mut(&mut self) -> &mut FieldOptions {
+        self.options.get_or_insert_with(Default::default)
+    }
+    pub fn set_options(&mut self, val: FieldOptions) {
+        self.options = Some(val);
     }
     pub fn proto3_optional(&self) -> bool {
         self.proto3_optional.unwrap_or_default()
     }
     pub fn proto3_optional_mut(&mut self) -> &mut bool {
-        if self.proto3_optional.is_none() {
-            self.proto3_optional = Some(false);
-        }
-        self.proto3_optional.as_mut().unwrap()
+        self.proto3_optional.get_or_insert_with(Default::default)
     }
     pub fn set_proto3_optional(&mut self, val: bool) {
         self.proto3_optional = Some(val);
@@ -1193,14 +1124,11 @@ impl OneofDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -1208,14 +1136,11 @@ impl OneofDescriptorProto {
     pub fn options(&self) -> &OneofOptions {
         match &self.options {
             Some(v) => v,
-            None => OneofOptions::default_instance(),
+            _ => OneofOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut OneofOptions {
-        if self.options.is_none() {
-            self.options = Some(OneofOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: OneofOptions) {
         self.options = Some(val);
@@ -1290,10 +1215,7 @@ impl EnumDescriptorProto_EnumReservedRange {
         self.start.unwrap_or_default()
     }
     pub fn start_mut(&mut self) -> &mut i32 {
-        if self.start.is_none() {
-            self.start = Some(0);
-        }
-        self.start.as_mut().unwrap()
+        self.start.get_or_insert_with(Default::default)
     }
     pub fn set_start(&mut self, val: i32) {
         self.start = Some(val);
@@ -1302,10 +1224,7 @@ impl EnumDescriptorProto_EnumReservedRange {
         self.end.unwrap_or_default()
     }
     pub fn end_mut(&mut self) -> &mut i32 {
-        if self.end.is_none() {
-            self.end = Some(0);
-        }
-        self.end.as_mut().unwrap()
+        self.end.get_or_insert_with(Default::default)
     }
     pub fn set_end(&mut self, val: i32) {
         self.end = Some(val);
@@ -1386,14 +1305,11 @@ impl EnumDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -1401,14 +1317,11 @@ impl EnumDescriptorProto {
     pub fn options(&self) -> &EnumOptions {
         match &self.options {
             Some(v) => v,
-            None => EnumOptions::default_instance(),
+            _ => EnumOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut EnumOptions {
-        if self.options.is_none() {
-            self.options = Some(EnumOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: EnumOptions) {
         self.options = Some(val);
@@ -1514,14 +1427,11 @@ impl EnumValueDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -1530,10 +1440,7 @@ impl EnumValueDescriptorProto {
         self.number.unwrap_or_default()
     }
     pub fn number_mut(&mut self) -> &mut i32 {
-        if self.number.is_none() {
-            self.number = Some(0);
-        }
-        self.number.as_mut().unwrap()
+        self.number.get_or_insert_with(Default::default)
     }
     pub fn set_number(&mut self, val: i32) {
         self.number = Some(val);
@@ -1541,14 +1448,11 @@ impl EnumValueDescriptorProto {
     pub fn options(&self) -> &EnumValueOptions {
         match &self.options {
             Some(v) => v,
-            None => EnumValueOptions::default_instance(),
+            _ => EnumValueOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut EnumValueOptions {
-        if self.options.is_none() {
-            self.options = Some(EnumValueOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: EnumValueOptions) {
         self.options = Some(val);
@@ -1632,14 +1536,11 @@ impl ServiceDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -1647,14 +1548,11 @@ impl ServiceDescriptorProto {
     pub fn options(&self) -> &ServiceOptions {
         match &self.options {
             Some(v) => v,
-            None => ServiceOptions::default_instance(),
+            _ => ServiceOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut ServiceOptions {
-        if self.options.is_none() {
-            self.options = Some(ServiceOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: ServiceOptions) {
         self.options = Some(val);
@@ -1746,14 +1644,11 @@ impl MethodDescriptorProto {
     pub fn name(&self) -> &String {
         match &self.name {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn name_mut(&mut self) -> &mut String {
-        if self.name.is_none() {
-            self.name = Some(String::new());
-        }
-        self.name.as_mut().unwrap()
+        self.name.get_or_insert_with(Default::default)
     }
     pub fn set_name(&mut self, val: String) {
         self.name = Some(val);
@@ -1761,14 +1656,11 @@ impl MethodDescriptorProto {
     pub fn input_type(&self) -> &String {
         match &self.input_type {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn input_type_mut(&mut self) -> &mut String {
-        if self.input_type.is_none() {
-            self.input_type = Some(String::new());
-        }
-        self.input_type.as_mut().unwrap()
+        self.input_type.get_or_insert_with(Default::default)
     }
     pub fn set_input_type(&mut self, val: String) {
         self.input_type = Some(val);
@@ -1776,14 +1668,11 @@ impl MethodDescriptorProto {
     pub fn output_type(&self) -> &String {
         match &self.output_type {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn output_type_mut(&mut self) -> &mut String {
-        if self.output_type.is_none() {
-            self.output_type = Some(String::new());
-        }
-        self.output_type.as_mut().unwrap()
+        self.output_type.get_or_insert_with(Default::default)
     }
     pub fn set_output_type(&mut self, val: String) {
         self.output_type = Some(val);
@@ -1791,14 +1680,11 @@ impl MethodDescriptorProto {
     pub fn options(&self) -> &MethodOptions {
         match &self.options {
             Some(v) => v,
-            None => MethodOptions::default_instance(),
+            _ => MethodOptions::default_instance(),
         }
     }
     pub fn options_mut(&mut self) -> &mut MethodOptions {
-        if self.options.is_none() {
-            self.options = Some(MethodOptions::new());
-        }
-        self.options.as_mut().unwrap()
+        self.options.get_or_insert_with(Default::default)
     }
     pub fn set_options(&mut self, val: MethodOptions) {
         self.options = Some(val);
@@ -1807,10 +1693,7 @@ impl MethodDescriptorProto {
         self.client_streaming.unwrap_or_default()
     }
     pub fn client_streaming_mut(&mut self) -> &mut bool {
-        if self.client_streaming.is_none() {
-            self.client_streaming = Some(false);
-        }
-        self.client_streaming.as_mut().unwrap()
+        self.client_streaming.get_or_insert_with(Default::default)
     }
     pub fn set_client_streaming(&mut self, val: bool) {
         self.client_streaming = Some(val);
@@ -1819,10 +1702,7 @@ impl MethodDescriptorProto {
         self.server_streaming.unwrap_or_default()
     }
     pub fn server_streaming_mut(&mut self) -> &mut bool {
-        if self.server_streaming.is_none() {
-            self.server_streaming = Some(false);
-        }
-        self.server_streaming.as_mut().unwrap()
+        self.server_streaming.get_or_insert_with(Default::default)
     }
     pub fn set_server_streaming(&mut self, val: bool) {
         self.server_streaming = Some(val);
@@ -1972,22 +1852,22 @@ impl FileOptions {
         FileOptions {
             java_package: None,
             java_outer_classname: None,
-            optimize_for: None,
             java_multiple_files: None,
+            java_generate_equals_and_hash: None,
+            java_string_check_utf8: None,
+            optimize_for: None,
             go_package: None,
             cc_generic_services: None,
             java_generic_services: None,
             py_generic_services: None,
-            java_generate_equals_and_hash: None,
+            php_generic_services: None,
             deprecated: None,
-            java_string_check_utf8: None,
             cc_enable_arenas: None,
             objc_class_prefix: None,
             csharp_namespace: None,
             swift_prefix: None,
             php_class_prefix: None,
             php_namespace: None,
-            php_generic_services: None,
             php_metadata_namespace: None,
             ruby_package: None,
             uninterpreted_option: Vec::new(),
@@ -1998,14 +1878,11 @@ impl FileOptions {
     pub fn java_package(&self) -> &String {
         match &self.java_package {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn java_package_mut(&mut self) -> &mut String {
-        if self.java_package.is_none() {
-            self.java_package = Some(String::new());
-        }
-        self.java_package.as_mut().unwrap()
+        self.java_package.get_or_insert_with(Default::default)
     }
     pub fn set_java_package(&mut self, val: String) {
         self.java_package = Some(val);
@@ -2013,53 +1890,63 @@ impl FileOptions {
     pub fn java_outer_classname(&self) -> &String {
         match &self.java_outer_classname {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn java_outer_classname_mut(&mut self) -> &mut String {
-        if self.java_outer_classname.is_none() {
-            self.java_outer_classname = Some(String::new());
-        }
-        self.java_outer_classname.as_mut().unwrap()
+        self.java_outer_classname
+            .get_or_insert_with(Default::default)
     }
     pub fn set_java_outer_classname(&mut self, val: String) {
         self.java_outer_classname = Some(val);
-    }
-    pub fn optimize_for(&self) -> FileOptions_OptimizeMode {
-        self.optimize_for.unwrap_or_default()
-    }
-    pub fn optimize_for_mut(&mut self) -> &mut FileOptions_OptimizeMode {
-        if self.optimize_for.is_none() {
-            self.optimize_for = Some(FileOptions_OptimizeMode::new());
-        }
-        self.optimize_for.as_mut().unwrap()
-    }
-    pub fn set_optimize_for(&mut self, val: FileOptions_OptimizeMode) {
-        self.optimize_for = Some(val);
     }
     pub fn java_multiple_files(&self) -> bool {
         self.java_multiple_files.unwrap_or_default()
     }
     pub fn java_multiple_files_mut(&mut self) -> &mut bool {
-        if self.java_multiple_files.is_none() {
-            self.java_multiple_files = Some(false);
-        }
-        self.java_multiple_files.as_mut().unwrap()
+        self.java_multiple_files
+            .get_or_insert_with(Default::default)
     }
     pub fn set_java_multiple_files(&mut self, val: bool) {
         self.java_multiple_files = Some(val);
     }
+    pub fn java_generate_equals_and_hash(&self) -> bool {
+        self.java_generate_equals_and_hash.unwrap_or_default()
+    }
+    pub fn java_generate_equals_and_hash_mut(&mut self) -> &mut bool {
+        self.java_generate_equals_and_hash
+            .get_or_insert_with(Default::default)
+    }
+    pub fn set_java_generate_equals_and_hash(&mut self, val: bool) {
+        self.java_generate_equals_and_hash = Some(val);
+    }
+    pub fn java_string_check_utf8(&self) -> bool {
+        self.java_string_check_utf8.unwrap_or_default()
+    }
+    pub fn java_string_check_utf8_mut(&mut self) -> &mut bool {
+        self.java_string_check_utf8
+            .get_or_insert_with(Default::default)
+    }
+    pub fn set_java_string_check_utf8(&mut self, val: bool) {
+        self.java_string_check_utf8 = Some(val);
+    }
+    pub fn optimize_for(&self) -> FileOptions_OptimizeMode {
+        self.optimize_for.unwrap_or_default()
+    }
+    pub fn optimize_for_mut(&mut self) -> &mut FileOptions_OptimizeMode {
+        self.optimize_for.get_or_insert_with(Default::default)
+    }
+    pub fn set_optimize_for(&mut self, val: FileOptions_OptimizeMode) {
+        self.optimize_for = Some(val);
+    }
     pub fn go_package(&self) -> &String {
         match &self.go_package {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn go_package_mut(&mut self) -> &mut String {
-        if self.go_package.is_none() {
-            self.go_package = Some(String::new());
-        }
-        self.go_package.as_mut().unwrap()
+        self.go_package.get_or_insert_with(Default::default)
     }
     pub fn set_go_package(&mut self, val: String) {
         self.go_package = Some(val);
@@ -2068,10 +1955,8 @@ impl FileOptions {
         self.cc_generic_services.unwrap_or_default()
     }
     pub fn cc_generic_services_mut(&mut self) -> &mut bool {
-        if self.cc_generic_services.is_none() {
-            self.cc_generic_services = Some(false);
-        }
-        self.cc_generic_services.as_mut().unwrap()
+        self.cc_generic_services
+            .get_or_insert_with(Default::default)
     }
     pub fn set_cc_generic_services(&mut self, val: bool) {
         self.cc_generic_services = Some(val);
@@ -2080,10 +1965,8 @@ impl FileOptions {
         self.java_generic_services.unwrap_or_default()
     }
     pub fn java_generic_services_mut(&mut self) -> &mut bool {
-        if self.java_generic_services.is_none() {
-            self.java_generic_services = Some(false);
-        }
-        self.java_generic_services.as_mut().unwrap()
+        self.java_generic_services
+            .get_or_insert_with(Default::default)
     }
     pub fn set_java_generic_services(&mut self, val: bool) {
         self.java_generic_services = Some(val);
@@ -2092,58 +1975,36 @@ impl FileOptions {
         self.py_generic_services.unwrap_or_default()
     }
     pub fn py_generic_services_mut(&mut self) -> &mut bool {
-        if self.py_generic_services.is_none() {
-            self.py_generic_services = Some(false);
-        }
-        self.py_generic_services.as_mut().unwrap()
+        self.py_generic_services
+            .get_or_insert_with(Default::default)
     }
     pub fn set_py_generic_services(&mut self, val: bool) {
         self.py_generic_services = Some(val);
     }
-    pub fn java_generate_equals_and_hash(&self) -> bool {
-        self.java_generate_equals_and_hash.unwrap_or_default()
+    pub fn php_generic_services(&self) -> bool {
+        self.php_generic_services.unwrap_or_default()
     }
-    pub fn java_generate_equals_and_hash_mut(&mut self) -> &mut bool {
-        if self.java_generate_equals_and_hash.is_none() {
-            self.java_generate_equals_and_hash = Some(false);
-        }
-        self.java_generate_equals_and_hash.as_mut().unwrap()
+    pub fn php_generic_services_mut(&mut self) -> &mut bool {
+        self.php_generic_services
+            .get_or_insert_with(Default::default)
     }
-    pub fn set_java_generate_equals_and_hash(&mut self, val: bool) {
-        self.java_generate_equals_and_hash = Some(val);
+    pub fn set_php_generic_services(&mut self, val: bool) {
+        self.php_generic_services = Some(val);
     }
     pub fn deprecated(&self) -> bool {
         self.deprecated.unwrap_or_default()
     }
     pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
+        self.deprecated.get_or_insert_with(Default::default)
     }
     pub fn set_deprecated(&mut self, val: bool) {
         self.deprecated = Some(val);
-    }
-    pub fn java_string_check_utf8(&self) -> bool {
-        self.java_string_check_utf8.unwrap_or_default()
-    }
-    pub fn java_string_check_utf8_mut(&mut self) -> &mut bool {
-        if self.java_string_check_utf8.is_none() {
-            self.java_string_check_utf8 = Some(false);
-        }
-        self.java_string_check_utf8.as_mut().unwrap()
-    }
-    pub fn set_java_string_check_utf8(&mut self, val: bool) {
-        self.java_string_check_utf8 = Some(val);
     }
     pub fn cc_enable_arenas(&self) -> bool {
         self.cc_enable_arenas.unwrap_or_default()
     }
     pub fn cc_enable_arenas_mut(&mut self) -> &mut bool {
-        if self.cc_enable_arenas.is_none() {
-            self.cc_enable_arenas = Some(false);
-        }
-        self.cc_enable_arenas.as_mut().unwrap()
+        self.cc_enable_arenas.get_or_insert_with(Default::default)
     }
     pub fn set_cc_enable_arenas(&mut self, val: bool) {
         self.cc_enable_arenas = Some(val);
@@ -2151,14 +2012,11 @@ impl FileOptions {
     pub fn objc_class_prefix(&self) -> &String {
         match &self.objc_class_prefix {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn objc_class_prefix_mut(&mut self) -> &mut String {
-        if self.objc_class_prefix.is_none() {
-            self.objc_class_prefix = Some(String::new());
-        }
-        self.objc_class_prefix.as_mut().unwrap()
+        self.objc_class_prefix.get_or_insert_with(Default::default)
     }
     pub fn set_objc_class_prefix(&mut self, val: String) {
         self.objc_class_prefix = Some(val);
@@ -2166,14 +2024,11 @@ impl FileOptions {
     pub fn csharp_namespace(&self) -> &String {
         match &self.csharp_namespace {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn csharp_namespace_mut(&mut self) -> &mut String {
-        if self.csharp_namespace.is_none() {
-            self.csharp_namespace = Some(String::new());
-        }
-        self.csharp_namespace.as_mut().unwrap()
+        self.csharp_namespace.get_or_insert_with(Default::default)
     }
     pub fn set_csharp_namespace(&mut self, val: String) {
         self.csharp_namespace = Some(val);
@@ -2181,14 +2036,11 @@ impl FileOptions {
     pub fn swift_prefix(&self) -> &String {
         match &self.swift_prefix {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn swift_prefix_mut(&mut self) -> &mut String {
-        if self.swift_prefix.is_none() {
-            self.swift_prefix = Some(String::new());
-        }
-        self.swift_prefix.as_mut().unwrap()
+        self.swift_prefix.get_or_insert_with(Default::default)
     }
     pub fn set_swift_prefix(&mut self, val: String) {
         self.swift_prefix = Some(val);
@@ -2196,14 +2048,11 @@ impl FileOptions {
     pub fn php_class_prefix(&self) -> &String {
         match &self.php_class_prefix {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn php_class_prefix_mut(&mut self) -> &mut String {
-        if self.php_class_prefix.is_none() {
-            self.php_class_prefix = Some(String::new());
-        }
-        self.php_class_prefix.as_mut().unwrap()
+        self.php_class_prefix.get_or_insert_with(Default::default)
     }
     pub fn set_php_class_prefix(&mut self, val: String) {
         self.php_class_prefix = Some(val);
@@ -2211,41 +2060,24 @@ impl FileOptions {
     pub fn php_namespace(&self) -> &String {
         match &self.php_namespace {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn php_namespace_mut(&mut self) -> &mut String {
-        if self.php_namespace.is_none() {
-            self.php_namespace = Some(String::new());
-        }
-        self.php_namespace.as_mut().unwrap()
+        self.php_namespace.get_or_insert_with(Default::default)
     }
     pub fn set_php_namespace(&mut self, val: String) {
         self.php_namespace = Some(val);
     }
-    pub fn php_generic_services(&self) -> bool {
-        self.php_generic_services.unwrap_or_default()
-    }
-    pub fn php_generic_services_mut(&mut self) -> &mut bool {
-        if self.php_generic_services.is_none() {
-            self.php_generic_services = Some(false);
-        }
-        self.php_generic_services.as_mut().unwrap()
-    }
-    pub fn set_php_generic_services(&mut self, val: bool) {
-        self.php_generic_services = Some(val);
-    }
     pub fn php_metadata_namespace(&self) -> &String {
         match &self.php_metadata_namespace {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn php_metadata_namespace_mut(&mut self) -> &mut String {
-        if self.php_metadata_namespace.is_none() {
-            self.php_metadata_namespace = Some(String::new());
-        }
-        self.php_metadata_namespace.as_mut().unwrap()
+        self.php_metadata_namespace
+            .get_or_insert_with(Default::default)
     }
     pub fn set_php_metadata_namespace(&mut self, val: String) {
         self.php_metadata_namespace = Some(val);
@@ -2253,14 +2085,11 @@ impl FileOptions {
     pub fn ruby_package(&self) -> &String {
         match &self.ruby_package {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn ruby_package_mut(&mut self) -> &mut String {
-        if self.ruby_package.is_none() {
-            self.ruby_package = Some(String::new());
-        }
-        self.ruby_package.as_mut().unwrap()
+        self.ruby_package.get_or_insert_with(Default::default)
     }
     pub fn set_ruby_package(&mut self, val: String) {
         self.ruby_package = Some(val);
@@ -2510,10 +2339,8 @@ impl MessageOptions {
         self.message_set_wire_format.unwrap_or_default()
     }
     pub fn message_set_wire_format_mut(&mut self) -> &mut bool {
-        if self.message_set_wire_format.is_none() {
-            self.message_set_wire_format = Some(false);
-        }
-        self.message_set_wire_format.as_mut().unwrap()
+        self.message_set_wire_format
+            .get_or_insert_with(Default::default)
     }
     pub fn set_message_set_wire_format(&mut self, val: bool) {
         self.message_set_wire_format = Some(val);
@@ -2522,10 +2349,8 @@ impl MessageOptions {
         self.no_standard_descriptor_accessor.unwrap_or_default()
     }
     pub fn no_standard_descriptor_accessor_mut(&mut self) -> &mut bool {
-        if self.no_standard_descriptor_accessor.is_none() {
-            self.no_standard_descriptor_accessor = Some(false);
-        }
-        self.no_standard_descriptor_accessor.as_mut().unwrap()
+        self.no_standard_descriptor_accessor
+            .get_or_insert_with(Default::default)
     }
     pub fn set_no_standard_descriptor_accessor(&mut self, val: bool) {
         self.no_standard_descriptor_accessor = Some(val);
@@ -2534,10 +2359,7 @@ impl MessageOptions {
         self.deprecated.unwrap_or_default()
     }
     pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
+        self.deprecated.get_or_insert_with(Default::default)
     }
     pub fn set_deprecated(&mut self, val: bool) {
         self.deprecated = Some(val);
@@ -2546,10 +2368,7 @@ impl MessageOptions {
         self.map_entry.unwrap_or_default()
     }
     pub fn map_entry_mut(&mut self) -> &mut bool {
-        if self.map_entry.is_none() {
-            self.map_entry = Some(false);
-        }
-        self.map_entry.as_mut().unwrap()
+        self.map_entry.get_or_insert_with(Default::default)
     }
     pub fn set_map_entry(&mut self, val: bool) {
         self.map_entry = Some(val);
@@ -2722,9 +2541,9 @@ impl FieldOptions {
         FieldOptions {
             ctype: None,
             packed: None,
-            deprecated: None,
-            lazy: None,
             jstype: None,
+            lazy: None,
+            deprecated: None,
             weak: None,
             uninterpreted_option: Vec::new(),
             extensions: pecan::ExtensionMap::new(),
@@ -2735,10 +2554,7 @@ impl FieldOptions {
         self.ctype.unwrap_or_default()
     }
     pub fn ctype_mut(&mut self) -> &mut FieldOptions_CType {
-        if self.ctype.is_none() {
-            self.ctype = Some(FieldOptions_CType::new());
-        }
-        self.ctype.as_mut().unwrap()
+        self.ctype.get_or_insert_with(Default::default)
     }
     pub fn set_ctype(&mut self, val: FieldOptions_CType) {
         self.ctype = Some(val);
@@ -2747,58 +2563,43 @@ impl FieldOptions {
         self.packed.unwrap_or_default()
     }
     pub fn packed_mut(&mut self) -> &mut bool {
-        if self.packed.is_none() {
-            self.packed = Some(false);
-        }
-        self.packed.as_mut().unwrap()
+        self.packed.get_or_insert_with(Default::default)
     }
     pub fn set_packed(&mut self, val: bool) {
         self.packed = Some(val);
-    }
-    pub fn deprecated(&self) -> bool {
-        self.deprecated.unwrap_or_default()
-    }
-    pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
-    }
-    pub fn set_deprecated(&mut self, val: bool) {
-        self.deprecated = Some(val);
-    }
-    pub fn lazy(&self) -> bool {
-        self.lazy.unwrap_or_default()
-    }
-    pub fn lazy_mut(&mut self) -> &mut bool {
-        if self.lazy.is_none() {
-            self.lazy = Some(false);
-        }
-        self.lazy.as_mut().unwrap()
-    }
-    pub fn set_lazy(&mut self, val: bool) {
-        self.lazy = Some(val);
     }
     pub fn jstype(&self) -> FieldOptions_JsType {
         self.jstype.unwrap_or_default()
     }
     pub fn jstype_mut(&mut self) -> &mut FieldOptions_JsType {
-        if self.jstype.is_none() {
-            self.jstype = Some(FieldOptions_JsType::new());
-        }
-        self.jstype.as_mut().unwrap()
+        self.jstype.get_or_insert_with(Default::default)
     }
     pub fn set_jstype(&mut self, val: FieldOptions_JsType) {
         self.jstype = Some(val);
+    }
+    pub fn lazy(&self) -> bool {
+        self.lazy.unwrap_or_default()
+    }
+    pub fn lazy_mut(&mut self) -> &mut bool {
+        self.lazy.get_or_insert_with(Default::default)
+    }
+    pub fn set_lazy(&mut self, val: bool) {
+        self.lazy = Some(val);
+    }
+    pub fn deprecated(&self) -> bool {
+        self.deprecated.unwrap_or_default()
+    }
+    pub fn deprecated_mut(&mut self) -> &mut bool {
+        self.deprecated.get_or_insert_with(Default::default)
+    }
+    pub fn set_deprecated(&mut self, val: bool) {
+        self.deprecated = Some(val);
     }
     pub fn weak(&self) -> bool {
         self.weak.unwrap_or_default()
     }
     pub fn weak_mut(&mut self) -> &mut bool {
-        if self.weak.is_none() {
-            self.weak = Some(false);
-        }
-        self.weak.as_mut().unwrap()
+        self.weak.get_or_insert_with(Default::default)
     }
     pub fn set_weak(&mut self, val: bool) {
         self.weak = Some(val);
@@ -3005,10 +2806,7 @@ impl EnumOptions {
         self.allow_alias.unwrap_or_default()
     }
     pub fn allow_alias_mut(&mut self) -> &mut bool {
-        if self.allow_alias.is_none() {
-            self.allow_alias = Some(false);
-        }
-        self.allow_alias.as_mut().unwrap()
+        self.allow_alias.get_or_insert_with(Default::default)
     }
     pub fn set_allow_alias(&mut self, val: bool) {
         self.allow_alias = Some(val);
@@ -3017,10 +2815,7 @@ impl EnumOptions {
         self.deprecated.unwrap_or_default()
     }
     pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
+        self.deprecated.get_or_insert_with(Default::default)
     }
     pub fn set_deprecated(&mut self, val: bool) {
         self.deprecated = Some(val);
@@ -3120,10 +2915,7 @@ impl EnumValueOptions {
         self.deprecated.unwrap_or_default()
     }
     pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
+        self.deprecated.get_or_insert_with(Default::default)
     }
     pub fn set_deprecated(&mut self, val: bool) {
         self.deprecated = Some(val);
@@ -3215,10 +3007,7 @@ impl ServiceOptions {
         self.deprecated.unwrap_or_default()
     }
     pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
+        self.deprecated.get_or_insert_with(Default::default)
     }
     pub fn set_deprecated(&mut self, val: bool) {
         self.deprecated = Some(val);
@@ -3343,10 +3132,7 @@ impl MethodOptions {
         self.deprecated.unwrap_or_default()
     }
     pub fn deprecated_mut(&mut self) -> &mut bool {
-        if self.deprecated.is_none() {
-            self.deprecated = Some(false);
-        }
-        self.deprecated.as_mut().unwrap()
+        self.deprecated.get_or_insert_with(Default::default)
     }
     pub fn set_deprecated(&mut self, val: bool) {
         self.deprecated = Some(val);
@@ -3355,10 +3141,7 @@ impl MethodOptions {
         self.idempotency_level.unwrap_or_default()
     }
     pub fn idempotency_level_mut(&mut self) -> &mut MethodOptions_IdempotencyLevel {
-        if self.idempotency_level.is_none() {
-            self.idempotency_level = Some(MethodOptions_IdempotencyLevel::new());
-        }
-        self.idempotency_level.as_mut().unwrap()
+        self.idempotency_level.get_or_insert_with(Default::default)
     }
     pub fn set_idempotency_level(&mut self, val: MethodOptions_IdempotencyLevel) {
         self.idempotency_level = Some(val);
@@ -3531,14 +3314,11 @@ impl UninterpretedOption {
     pub fn identifier_value(&self) -> &String {
         match &self.identifier_value {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn identifier_value_mut(&mut self) -> &mut String {
-        if self.identifier_value.is_none() {
-            self.identifier_value = Some(String::new());
-        }
-        self.identifier_value.as_mut().unwrap()
+        self.identifier_value.get_or_insert_with(Default::default)
     }
     pub fn set_identifier_value(&mut self, val: String) {
         self.identifier_value = Some(val);
@@ -3547,10 +3327,7 @@ impl UninterpretedOption {
         self.positive_int_value.unwrap_or_default()
     }
     pub fn positive_int_value_mut(&mut self) -> &mut u64 {
-        if self.positive_int_value.is_none() {
-            self.positive_int_value = Some(0);
-        }
-        self.positive_int_value.as_mut().unwrap()
+        self.positive_int_value.get_or_insert_with(Default::default)
     }
     pub fn set_positive_int_value(&mut self, val: u64) {
         self.positive_int_value = Some(val);
@@ -3559,10 +3336,7 @@ impl UninterpretedOption {
         self.negative_int_value.unwrap_or_default()
     }
     pub fn negative_int_value_mut(&mut self) -> &mut i64 {
-        if self.negative_int_value.is_none() {
-            self.negative_int_value = Some(0);
-        }
-        self.negative_int_value.as_mut().unwrap()
+        self.negative_int_value.get_or_insert_with(Default::default)
     }
     pub fn set_negative_int_value(&mut self, val: i64) {
         self.negative_int_value = Some(val);
@@ -3571,10 +3345,7 @@ impl UninterpretedOption {
         self.double_value.unwrap_or_default()
     }
     pub fn double_value_mut(&mut self) -> &mut f64 {
-        if self.double_value.is_none() {
-            self.double_value = Some(0f64);
-        }
-        self.double_value.as_mut().unwrap()
+        self.double_value.get_or_insert_with(Default::default)
     }
     pub fn set_double_value(&mut self, val: f64) {
         self.double_value = Some(val);
@@ -3582,14 +3353,11 @@ impl UninterpretedOption {
     pub fn string_value(&self) -> &pecan::Bytes {
         match &self.string_value {
             Some(v) => v,
-            None => pecan::Bytes::default_instance(),
+            _ => pecan::Bytes::default_instance(),
         }
     }
     pub fn string_value_mut(&mut self) -> &mut pecan::Bytes {
-        if self.string_value.is_none() {
-            self.string_value = Some(pecan::Bytes::new());
-        }
-        self.string_value.as_mut().unwrap()
+        self.string_value.get_or_insert_with(Default::default)
     }
     pub fn set_string_value(&mut self, val: pecan::Bytes) {
         self.string_value = Some(val);
@@ -3597,14 +3365,11 @@ impl UninterpretedOption {
     pub fn aggregate_value(&self) -> &String {
         match &self.aggregate_value {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn aggregate_value_mut(&mut self) -> &mut String {
-        if self.aggregate_value.is_none() {
-            self.aggregate_value = Some(String::new());
-        }
-        self.aggregate_value.as_mut().unwrap()
+        self.aggregate_value.get_or_insert_with(Default::default)
     }
     pub fn set_aggregate_value(&mut self, val: String) {
         self.aggregate_value = Some(val);
@@ -3726,14 +3491,11 @@ impl SourceCodeInfo_Location {
     pub fn leading_comments(&self) -> &String {
         match &self.leading_comments {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn leading_comments_mut(&mut self) -> &mut String {
-        if self.leading_comments.is_none() {
-            self.leading_comments = Some(String::new());
-        }
-        self.leading_comments.as_mut().unwrap()
+        self.leading_comments.get_or_insert_with(Default::default)
     }
     pub fn set_leading_comments(&mut self, val: String) {
         self.leading_comments = Some(val);
@@ -3741,14 +3503,11 @@ impl SourceCodeInfo_Location {
     pub fn trailing_comments(&self) -> &String {
         match &self.trailing_comments {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn trailing_comments_mut(&mut self) -> &mut String {
-        if self.trailing_comments.is_none() {
-            self.trailing_comments = Some(String::new());
-        }
-        self.trailing_comments.as_mut().unwrap()
+        self.trailing_comments.get_or_insert_with(Default::default)
     }
     pub fn set_trailing_comments(&mut self, val: String) {
         self.trailing_comments = Some(val);
@@ -3911,14 +3670,11 @@ impl GeneratedCodeInfo_Annotation {
     pub fn source_file(&self) -> &String {
         match &self.source_file {
             Some(v) => v,
-            None => String::default_instance(),
+            _ => String::default_instance(),
         }
     }
     pub fn source_file_mut(&mut self) -> &mut String {
-        if self.source_file.is_none() {
-            self.source_file = Some(String::new());
-        }
-        self.source_file.as_mut().unwrap()
+        self.source_file.get_or_insert_with(Default::default)
     }
     pub fn set_source_file(&mut self, val: String) {
         self.source_file = Some(val);
@@ -3927,10 +3683,7 @@ impl GeneratedCodeInfo_Annotation {
         self.begin.unwrap_or_default()
     }
     pub fn begin_mut(&mut self) -> &mut i32 {
-        if self.begin.is_none() {
-            self.begin = Some(0);
-        }
-        self.begin.as_mut().unwrap()
+        self.begin.get_or_insert_with(Default::default)
     }
     pub fn set_begin(&mut self, val: i32) {
         self.begin = Some(val);
@@ -3939,10 +3692,7 @@ impl GeneratedCodeInfo_Annotation {
         self.end.unwrap_or_default()
     }
     pub fn end_mut(&mut self) -> &mut i32 {
-        if self.end.is_none() {
-            self.end = Some(0);
-        }
-        self.end.as_mut().unwrap()
+        self.end.get_or_insert_with(Default::default)
     }
     pub fn set_end(&mut self, val: i32) {
         self.end = Some(val);
