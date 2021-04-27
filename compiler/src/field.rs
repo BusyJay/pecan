@@ -172,6 +172,7 @@ pub struct FieldGenerator {
     opt: pecan_types::pecan::options_pb::FieldOptions,
     repeated: bool,
     optional: bool,
+    one_of_index: Option<usize>,
 }
 
 impl FieldGenerator {
@@ -205,6 +206,7 @@ impl FieldGenerator {
             kind,
             repeated,
             optional,
+            one_of_index: f.oneof_index.map(|v| v as usize),
         }
     }
 
@@ -214,6 +216,10 @@ impl FieldGenerator {
 
     pub fn tag(&self) -> Literal {
         Literal::u64_unsuffixed(self.tag)
+    }
+
+    pub fn one_of_index(&self) -> Option<usize> {
+        self.one_of_index
     }
 
     fn map_entry_merge_from(&self, ident: TokenStream) -> TokenStream {
@@ -485,65 +491,141 @@ impl FieldGenerator {
         self.tag
     }
 
-    pub fn accessor(&self) -> Option<TokenStream> {
-        if !self.optional {
-            return None;
+    fn one_of_item(&self) -> Ident {
+        format_ident!("{}", util::camel_name(&self.name))
+    }
+
+    fn getter_impl(
+        &self,
+        field_name: &Ident,
+        container: TokenStream,
+        field_copy: bool,
+    ) -> TokenStream {
+        let ty = self.inner_type.clone();
+        let mut ty_ref = ty.clone();
+        if !self.kind.can_copy() {
+            ty_ref = quote!(&#ty);
         }
         let name = self.name();
-        let mutter = format_ident!("{}_mut", self.name);
-        let setter = format_ident!("set_{}", self.name);
-        let val = &self.default_value;
+        let (accessor, v) = if field_copy {
+            (quote!(self.#field_name), quote!(v))
+        } else if self.kind.can_copy() {
+            (quote!(&self.#field_name), quote!(*v))
+        } else {
+            (quote!(&self.#field_name), quote!(v))
+        };
+        let default_value = if self.kind.can_copy() {
+            self.default_value.clone()
+        } else if self.kind.is_hash_map() {
+            quote! {{
+                pecan::lazy_static! {
+                    static ref DEFAULT: #ty = pecan::HashMap::default();
+                }
+
+                &*DEFAULT
+            }}
+        } else {
+            quote! { #ty::default_instance() }
+        };
+        quote! {
+            pub fn #name(&self) -> #ty_ref {
+                match #accessor {
+                    #container(v) => #v,
+                    _ => #default_value
+                }
+            }
+        }
+    }
+
+    fn one_of_getter(&self, field_name: &Ident, full_type: &Ident, ty_copy: bool) -> TokenStream {
+        let item = self.one_of_item();
+        self.getter_impl(field_name, quote!(#full_type::#item), ty_copy)
+    }
+
+    fn getter(&self) -> TokenStream {
+        let name = self.name();
+        let ty = self.inner_type.clone();
+        if self.kind.can_copy() {
+            return quote! {
+                pub fn #name(&self) -> #ty {
+                    self.#name.unwrap_or_default()
+                }
+            };
+        }
+
+        self.getter_impl(&name, quote!(Some), false)
+    }
+
+    fn setter_impl(&self, field_name: &Ident, container: TokenStream) -> TokenStream {
+        let method = format_ident!("set_{}", self.name);
         let ty = &self.r#inner_type;
         let set_ty = if self.opt.box_field && !self.repeated {
             quote! { Box<#ty> }
         } else {
-            self.inner_type.clone()
+            ty.clone()
         };
-        let getter = if self.kind.can_copy() {
-            quote! {
-                pub fn #name(&self) -> #ty {
-                    self.#name.unwrap_or_default()
-                }
+        quote! {
+            pub fn #method(&mut self, val: #set_ty) {
+                self.#field_name = #container(val);
             }
-        } else if self.kind.is_hash_map() {
-            quote! {
-                pub fn #name(&self) -> &#ty {
-                    match &self.#name {
-                        Some(v) => v,
-                        None => {
-                            pecan::lazy_static! {
-                                static ref DEFAULT: #ty = pecan::HashMap::default();
-                            }
+        }
+    }
 
-                            &*DEFAULT
-                        }
-                    }
+    fn one_of_setter(&self, field_name: &Ident, full_type: &Ident) -> TokenStream {
+        let item = self.one_of_item();
+        self.setter_impl(field_name, quote!(#full_type::#item))
+    }
+
+    fn setter(&self) -> TokenStream {
+        let name = self.name();
+        self.setter_impl(&name, quote!(Some))
+    }
+
+    fn one_of_mutter(&self, field_name: &Ident, full_type: &Ident) -> TokenStream {
+        let item = self.one_of_item();
+        let default_val = &self.default_value;
+        let method = format_ident!("{}_mut", self.name);
+        let ty = &self.r#inner_type;
+
+        quote! {
+            pub fn #method(&mut self) -> &mut #ty {
+                if !matches!(self.#field_name, #full_type::#item(_)) {
+                    self.#field_name = #full_type::#item(#default_val);
+                }
+
+                match &mut self.#field_name {
+                    #full_type::#item(v) => v,
+                    _ => unreachable!()
                 }
             }
-        } else {
-            quote! {
-                pub fn #name(&self) -> &#ty {
-                    match &self.#name {
-                        Some(v) => v,
-                        None => #ty::default_instance(),
-                    }
-                }
+        }
+    }
+
+    fn mutter(&self) -> TokenStream {
+        let name = self.name();
+        let method = format_ident!("{}_mut", self.name);
+        let ty = &self.r#inner_type;
+
+        quote! {
+            pub fn #method(&mut self) -> &mut #ty {
+                self.#name.get_or_insert_with(Default::default)
             }
-        };
+        }
+    }
+
+    pub fn accessor(&self) -> Option<TokenStream> {
+        if !self.optional {
+            return None;
+        }
+        let getter = self.getter();
+        let mutter = self.mutter();
+        let setter = self.setter();
         Some(quote! {
             #getter
 
-            pub fn #mutter(&mut self) -> &mut #ty {
-                if self.#name.is_none() {
-                    self.#name = Some(#val);
-                }
+            #mutter
 
-                self.#name.as_mut().unwrap()
-            }
-
-            pub fn #setter(&mut self, val: #set_ty) {
-                self.#name = Some(val);
-            }
+            #setter
         })
     }
 
@@ -559,6 +641,179 @@ impl FieldGenerator {
         let codec = &self.codec;
         quote! {
             pub const #name_ident: pecan::Extension<#ty, #codec> = pecan::Extension::new(#tag);
+        }
+    }
+}
+
+pub struct OneOfGenerator {
+    type_name: String,
+    field_name: String,
+    options: Vec<FieldGenerator>,
+}
+
+impl OneOfGenerator {
+    pub fn new(prefix: &str, oneof: &OneofDescriptorProto) -> OneOfGenerator {
+        let type_name = util::camel_name(&format!("{}_{}", prefix, oneof.name()));
+        let field_name = util::escape(&util::snake_name(oneof.name()));
+        OneOfGenerator {
+            type_name,
+            field_name,
+            options: vec![],
+        }
+    }
+
+    fn field_name(&self) -> Ident {
+        format_ident!("{}", self.field_name)
+    }
+
+    fn type_name(&self) -> Ident {
+        format_ident!("{}", self.type_name)
+    }
+
+    pub fn register(&mut self, g: FieldGenerator) {
+        self.options.push(g);
+    }
+
+    pub fn field_decl(&self) -> TokenStream {
+        let name = self.field_name();
+        let ty = self.type_name();
+        quote! {
+            pub #name: #ty,
+        }
+    }
+
+    pub fn field_init(&self) -> TokenStream {
+        let name = self.field_name();
+        let ty = self.type_name();
+        quote! {
+            #name: #ty::None,
+        }
+    }
+
+    pub fn fn_merge_from(&self) -> impl Iterator<Item = (u64, TokenStream)> + '_ {
+        let ty = self.type_name();
+        let name = self.field_name();
+        self.options.iter().map(move |g| {
+            let tag = g.tag();
+            let codec = &g.codec;
+            let val = g.tag_value();
+            let token = if matches!(g.kind, FieldKind::Message) {
+                let method = format_ident!("{}_mut", g.name);
+                quote! {
+                    #tag => #codec::merge_from(self.#method(), s)?,
+                }
+            } else {
+                // map field is not allowed in oneof.
+                let item = g.one_of_item();
+                quote! {
+                    #tag => self.#name = #ty::#item(#codec::read_from(s)?),
+                }
+            };
+            (val, token)
+        })
+    }
+
+    fn can_copy(&self) -> bool {
+        self.options.iter().all(|g| g.kind.can_copy())
+    }
+
+    fn check_empty(
+        &self,
+        action: impl Fn(&FieldGenerator, TokenStream) -> TokenStream,
+    ) -> TokenStream {
+        let ty = self.type_name();
+        let name = self.field_name();
+        let ty_copy = self.can_copy();
+        let name = if !ty_copy {
+            quote! { &self.#name }
+        } else {
+            quote! { self.#name }
+        };
+        let branches = self.options.iter().map(|g| {
+            let item = g.one_of_item();
+            let val = if g.kind.can_copy() && !ty_copy {
+                quote! { *v }
+            } else {
+                quote! { v }
+            };
+            let handle = action(g, val);
+            quote! {
+                #ty::#item(v) => #handle,
+            }
+        });
+        quote! {
+            match #name {
+                #ty::None => (),
+                #(#branches)*
+            }
+        }
+    }
+
+    pub fn fn_write_to(&self) -> (u64, TokenStream) {
+        let token = self.check_empty(|g, val| {
+            let tag = g.tag();
+            let codec = &g.codec;
+            quote! {{
+                s.write_tag(#tag)?;
+                #codec::write_to(#val, s)?;
+            }}
+        });
+        (self.options[0].tag_value(), token)
+    }
+
+    pub fn fn_len(&self) -> (u64, TokenStream) {
+        let token = self.check_empty(|g, val| {
+            let (_, tag_len) = g.tag_len();
+            let codec = &g.codec;
+            quote!(l += #tag_len + #codec::len(#val))
+        });
+        (self.options[0].tag_value(), token)
+    }
+
+    pub fn accessor(&self) -> TokenStream {
+        let ty = self.type_name();
+        let name = self.field_name();
+        let ty_copy = self.can_copy();
+        let mut token = quote! {};
+        for g in &self.options {
+            let getter = g.one_of_getter(&name, &ty, ty_copy);
+            let setter = g.one_of_setter(&name, &ty);
+            let mutter = g.one_of_mutter(&name, &ty);
+            token.extend(quote! {
+                #getter
+
+                #mutter
+
+                #setter
+            });
+        }
+        token
+    }
+
+    pub fn generate(&self) -> TokenStream {
+        let ty = self.type_name();
+        let mut derive = quote! {Debug, PartialEq, Clone};
+        if self.can_copy() {
+            derive = quote! {#derive, Copy}
+        }
+        let options = self.options.iter().map(|g| {
+            let item = g.one_of_item();
+            let ty = &g.inner_type;
+            quote!(#item(#ty),)
+        });
+        quote! {
+            #[derive(#derive)]
+            pub enum #ty {
+                #(#options)*
+                None,
+            }
+
+            impl Default for #ty {
+                #[inline]
+                fn default() -> #ty {
+                    #ty::None
+                }
+            }
         }
     }
 }
