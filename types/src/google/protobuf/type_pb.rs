@@ -76,9 +76,9 @@ impl pecan::Message for Type {
         loop {
             match s.read_tag()? {
                 10 => self.name = LengthPrefixed::read_from(s)?,
-                18 => LengthPrefixedArray::merge_from(&mut self.fields, s)?,
-                26 => LengthPrefixedArray::merge_from(&mut self.oneofs, s)?,
-                34 => LengthPrefixedArray::merge_from(&mut self.options, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.fields, s)?,
+                26 => RefArray::<LengthPrefixed>::merge_from(&mut self.oneofs, s)?,
+                34 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 42 => LengthPrefixed::merge_from(self.source_context_mut(), s)?,
                 48 => self.syntax = Varint::read_from(s)?,
                 0 => return Ok(()),
@@ -128,13 +128,13 @@ impl pecan::Message for Type {
             l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.fields.is_empty() {
-            l += self.fields.len() as u64 + LengthPrefixedArray::size(&self.fields);
+            l += self.fields.len() as u64 + RefArray::<LengthPrefixed>::size(&self.fields);
         }
         if !self.oneofs.is_empty() {
-            l += self.oneofs.len() as u64 + LengthPrefixedArray::size(&self.oneofs);
+            l += self.oneofs.len() as u64 + RefArray::<LengthPrefixed>::size(&self.oneofs);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
+            l += self.options.len() as u64 + RefArray::<LengthPrefixed>::size(&self.options);
         }
         if let Some(v) = &self.source_context {
             l += 1 + LengthPrefixed::size(v);
@@ -296,7 +296,7 @@ impl pecan::Message for Field {
                 50 => self.type_url = LengthPrefixed::read_from(s)?,
                 56 => self.oneof_index = Varint::read_from(s)?,
                 64 => self.packed = Varint::read_from(s)?,
-                74 => LengthPrefixedArray::merge_from(&mut self.options, s)?,
+                74 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 82 => self.json_name = LengthPrefixed::read_from(s)?,
                 90 => self.default_value = LengthPrefixed::read_from(s)?,
                 0 => return Ok(()),
@@ -376,7 +376,7 @@ impl pecan::Message for Field {
             l += 1 + Varint::size(self.packed);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
+            l += self.options.len() as u64 + RefArray::<LengthPrefixed>::size(&self.options);
         }
         if !self.json_name.is_empty() {
             l += 1 + LengthPrefixed::size(&self.json_name);
@@ -446,8 +446,8 @@ impl pecan::Message for Enum {
         loop {
             match s.read_tag()? {
                 10 => self.name = LengthPrefixed::read_from(s)?,
-                18 => LengthPrefixedArray::merge_from(&mut self.enumvalue, s)?,
-                26 => LengthPrefixedArray::merge_from(&mut self.options, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.enumvalue, s)?,
+                26 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 34 => LengthPrefixed::merge_from(self.source_context_mut(), s)?,
                 40 => self.syntax = Varint::read_from(s)?,
                 0 => return Ok(()),
@@ -491,10 +491,10 @@ impl pecan::Message for Enum {
             l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.enumvalue.is_empty() {
-            l += self.enumvalue.len() as u64 + LengthPrefixedArray::size(&self.enumvalue);
+            l += self.enumvalue.len() as u64 + RefArray::<LengthPrefixed>::size(&self.enumvalue);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
+            l += self.options.len() as u64 + RefArray::<LengthPrefixed>::size(&self.options);
         }
         if let Some(v) = &self.source_context {
             l += 1 + LengthPrefixed::size(v);
@@ -543,7 +543,7 @@ impl pecan::Message for EnumValue {
             match s.read_tag()? {
                 10 => self.name = LengthPrefixed::read_from(s)?,
                 16 => self.number = Varint::read_from(s)?,
-                26 => LengthPrefixedArray::merge_from(&mut self.options, s)?,
+                26 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -578,7 +578,7 @@ impl pecan::Message for EnumValue {
             l += 1 + Varint::size(self.number);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
+            l += self.options.len() as u64 + RefArray::<LengthPrefixed>::size(&self.options);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

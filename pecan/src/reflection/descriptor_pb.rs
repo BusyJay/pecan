@@ -19,7 +19,7 @@ impl crate::Message for FileDescriptorSet {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => LengthPrefixedArray::merge_from(&mut self.file, s)?,
+                10 => RefArray::<LengthPrefixed>::merge_from(&mut self.file, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -40,7 +40,7 @@ impl crate::Message for FileDescriptorSet {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.file.is_empty() {
-            l += self.file.len() as u64 + LengthPrefixedArray::size(&self.file);
+            l += self.file.len() as u64 + RefArray::<LengthPrefixed>::size(&self.file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -161,15 +161,17 @@ impl crate::Message for FileDescriptorProto {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
                 18 => self.package = Some(LengthPrefixed::read_from(s)?),
-                26 => LengthPrefixedArray::merge_from(&mut self.dependency, s)?,
-                34 => LengthPrefixedArray::merge_from(&mut self.message_type, s)?,
-                42 => LengthPrefixedArray::merge_from(&mut self.enum_type, s)?,
-                50 => LengthPrefixedArray::merge_from(&mut self.service, s)?,
-                58 => LengthPrefixedArray::merge_from(&mut self.extension, s)?,
+                26 => RefArray::<LengthPrefixed>::merge_from(&mut self.dependency, s)?,
+                34 => RefArray::<LengthPrefixed>::merge_from(&mut self.message_type, s)?,
+                42 => RefArray::<LengthPrefixed>::merge_from(&mut self.enum_type, s)?,
+                50 => RefArray::<LengthPrefixed>::merge_from(&mut self.service, s)?,
+                58 => RefArray::<LengthPrefixed>::merge_from(&mut self.extension, s)?,
                 66 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 74 => LengthPrefixed::merge_from(self.source_code_info_mut(), s)?,
-                82 => VarintArray::merge_from(&mut self.public_dependency, s)?,
-                90 => VarintArray::merge_from(&mut self.weak_dependency, s)?,
+                80 => CopyArray::<Varint>::merge_from(&mut self.public_dependency, s)?,
+                82 => PackedArray::<Varint>::merge_from(&mut self.public_dependency, s)?,
+                88 => CopyArray::<Varint>::merge_from(&mut self.weak_dependency, s)?,
+                90 => PackedArray::<Varint>::merge_from(&mut self.weak_dependency, s)?,
                 98 => self.syntax = Some(LengthPrefixed::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -224,12 +226,16 @@ impl crate::Message for FileDescriptorProto {
             LengthPrefixed::write_to(v, s)?;
         }
         if !self.public_dependency.is_empty() {
-            s.write_tag(82)?;
-            VarintArray::write_to(&self.public_dependency, s)?;
+            for i in &self.public_dependency {
+                s.write_tag(80)?;
+                Varint::write_to(*i, s)?;
+            }
         }
         if !self.weak_dependency.is_empty() {
-            s.write_tag(90)?;
-            VarintArray::write_to(&self.weak_dependency, s)?;
+            for i in &self.weak_dependency {
+                s.write_tag(88)?;
+                Varint::write_to(*i, s)?;
+            }
         }
         if let Some(v) = &self.syntax {
             s.write_tag(98)?;
@@ -249,19 +255,20 @@ impl crate::Message for FileDescriptorProto {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.dependency.is_empty() {
-            l += self.dependency.len() as u64 + LengthPrefixedArray::size(&self.dependency);
+            l += self.dependency.len() as u64 + RefArray::<LengthPrefixed>::size(&self.dependency);
         }
         if !self.message_type.is_empty() {
-            l += self.message_type.len() as u64 + LengthPrefixedArray::size(&self.message_type);
+            l += self.message_type.len() as u64
+                + RefArray::<LengthPrefixed>::size(&self.message_type);
         }
         if !self.enum_type.is_empty() {
-            l += self.enum_type.len() as u64 + LengthPrefixedArray::size(&self.enum_type);
+            l += self.enum_type.len() as u64 + RefArray::<LengthPrefixed>::size(&self.enum_type);
         }
         if !self.service.is_empty() {
-            l += self.service.len() as u64 + LengthPrefixedArray::size(&self.service);
+            l += self.service.len() as u64 + RefArray::<LengthPrefixed>::size(&self.service);
         }
         if !self.extension.is_empty() {
-            l += self.extension.len() as u64 + LengthPrefixedArray::size(&self.extension);
+            l += self.extension.len() as u64 + RefArray::<LengthPrefixed>::size(&self.extension);
         }
         if let Some(v) = &self.options {
             l += 1 + LengthPrefixed::size(v);
@@ -270,10 +277,12 @@ impl crate::Message for FileDescriptorProto {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.public_dependency.is_empty() {
-            l += 1 + VarintArray::size(&self.public_dependency);
+            l += self.public_dependency.len() as u64
+                + CopyArray::<Varint>::size(&self.public_dependency);
         }
         if !self.weak_dependency.is_empty() {
-            l += 1 + VarintArray::size(&self.weak_dependency);
+            l += self.weak_dependency.len() as u64
+                + CopyArray::<Varint>::size(&self.weak_dependency);
         }
         if let Some(v) = &self.syntax {
             l += 1 + LengthPrefixed::size(v);
@@ -546,15 +555,15 @@ impl crate::Message for DescriptorProto {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => LengthPrefixedArray::merge_from(&mut self.field, s)?,
-                26 => LengthPrefixedArray::merge_from(&mut self.nested_type, s)?,
-                34 => LengthPrefixedArray::merge_from(&mut self.enum_type, s)?,
-                42 => LengthPrefixedArray::merge_from(&mut self.extension_range, s)?,
-                50 => LengthPrefixedArray::merge_from(&mut self.extension, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.field, s)?,
+                26 => RefArray::<LengthPrefixed>::merge_from(&mut self.nested_type, s)?,
+                34 => RefArray::<LengthPrefixed>::merge_from(&mut self.enum_type, s)?,
+                42 => RefArray::<LengthPrefixed>::merge_from(&mut self.extension_range, s)?,
+                50 => RefArray::<LengthPrefixed>::merge_from(&mut self.extension, s)?,
                 58 => LengthPrefixed::merge_from(self.options_mut(), s)?,
-                66 => LengthPrefixedArray::merge_from(&mut self.oneof_decl, s)?,
-                74 => LengthPrefixedArray::merge_from(&mut self.reserved_range, s)?,
-                82 => LengthPrefixedArray::merge_from(&mut self.reserved_name, s)?,
+                66 => RefArray::<LengthPrefixed>::merge_from(&mut self.oneof_decl, s)?,
+                74 => RefArray::<LengthPrefixed>::merge_from(&mut self.reserved_range, s)?,
+                82 => RefArray::<LengthPrefixed>::merge_from(&mut self.reserved_name, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -628,32 +637,35 @@ impl crate::Message for DescriptorProto {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.field.is_empty() {
-            l += self.field.len() as u64 + LengthPrefixedArray::size(&self.field);
+            l += self.field.len() as u64 + RefArray::<LengthPrefixed>::size(&self.field);
         }
         if !self.nested_type.is_empty() {
-            l += self.nested_type.len() as u64 + LengthPrefixedArray::size(&self.nested_type);
+            l +=
+                self.nested_type.len() as u64 + RefArray::<LengthPrefixed>::size(&self.nested_type);
         }
         if !self.enum_type.is_empty() {
-            l += self.enum_type.len() as u64 + LengthPrefixedArray::size(&self.enum_type);
+            l += self.enum_type.len() as u64 + RefArray::<LengthPrefixed>::size(&self.enum_type);
         }
         if !self.extension_range.is_empty() {
             l += self.extension_range.len() as u64
-                + LengthPrefixedArray::size(&self.extension_range);
+                + RefArray::<LengthPrefixed>::size(&self.extension_range);
         }
         if !self.extension.is_empty() {
-            l += self.extension.len() as u64 + LengthPrefixedArray::size(&self.extension);
+            l += self.extension.len() as u64 + RefArray::<LengthPrefixed>::size(&self.extension);
         }
         if let Some(v) = &self.options {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.oneof_decl.is_empty() {
-            l += self.oneof_decl.len() as u64 + LengthPrefixedArray::size(&self.oneof_decl);
+            l += self.oneof_decl.len() as u64 + RefArray::<LengthPrefixed>::size(&self.oneof_decl);
         }
         if !self.reserved_range.is_empty() {
-            l += self.reserved_range.len() as u64 + LengthPrefixedArray::size(&self.reserved_range);
+            l += self.reserved_range.len() as u64
+                + RefArray::<LengthPrefixed>::size(&self.reserved_range);
         }
         if !self.reserved_name.is_empty() {
-            l += self.reserved_name.len() as u64 + LengthPrefixedArray::size(&self.reserved_name);
+            l += self.reserved_name.len() as u64
+                + RefArray::<LengthPrefixed>::size(&self.reserved_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -692,7 +704,7 @@ impl crate::Message for ExtensionRangeOptions {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -723,7 +735,7 @@ impl crate::Message for ExtensionRangeOptions {
         let mut l = 0;
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -1334,10 +1346,10 @@ impl crate::Message for EnumDescriptorProto {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => LengthPrefixedArray::merge_from(&mut self.value, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.value, s)?,
                 26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
-                34 => LengthPrefixedArray::merge_from(&mut self.reserved_range, s)?,
-                42 => LengthPrefixedArray::merge_from(&mut self.reserved_name, s)?,
+                34 => RefArray::<LengthPrefixed>::merge_from(&mut self.reserved_range, s)?,
+                42 => RefArray::<LengthPrefixed>::merge_from(&mut self.reserved_name, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1381,16 +1393,18 @@ impl crate::Message for EnumDescriptorProto {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.value.is_empty() {
-            l += self.value.len() as u64 + LengthPrefixedArray::size(&self.value);
+            l += self.value.len() as u64 + RefArray::<LengthPrefixed>::size(&self.value);
         }
         if let Some(v) = &self.options {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.reserved_range.is_empty() {
-            l += self.reserved_range.len() as u64 + LengthPrefixedArray::size(&self.reserved_range);
+            l += self.reserved_range.len() as u64
+                + RefArray::<LengthPrefixed>::size(&self.reserved_range);
         }
         if !self.reserved_name.is_empty() {
-            l += self.reserved_name.len() as u64 + LengthPrefixedArray::size(&self.reserved_name);
+            l += self.reserved_name.len() as u64
+                + RefArray::<LengthPrefixed>::size(&self.reserved_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1565,7 +1579,7 @@ impl crate::Message for ServiceDescriptorProto {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => LengthPrefixedArray::merge_from(&mut self.method, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.method, s)?,
                 26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -1598,7 +1612,7 @@ impl crate::Message for ServiceDescriptorProto {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.method.is_empty() {
-            l += self.method.len() as u64 + LengthPrefixedArray::size(&self.method);
+            l += self.method.len() as u64 + RefArray::<LengthPrefixed>::size(&self.method);
         }
         if let Some(v) = &self.options {
             l += 1 + LengthPrefixed::size(v);
@@ -2121,7 +2135,7 @@ impl crate::Message for FileOptions {
                 336 => self.php_generic_services = Some(Varint::read_from(s)?),
                 354 => self.php_metadata_namespace = Some(LengthPrefixed::read_from(s)?),
                 362 => self.ruby_package = Some(LengthPrefixed::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -2292,7 +2306,7 @@ impl crate::Message for FileOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -2384,7 +2398,7 @@ impl crate::Message for MessageOptions {
                 16 => self.no_standard_descriptor_accessor = Some(Varint::read_from(s)?),
                 24 => self.deprecated = Some(Varint::read_from(s)?),
                 56 => self.map_entry = Some(Varint::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -2443,7 +2457,7 @@ impl crate::Message for MessageOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -2617,7 +2631,7 @@ impl crate::Message for FieldOptions {
                 40 => self.lazy = Some(Varint::read_from(s)?),
                 48 => self.jstype = Some(Varint::read_from(s)?),
                 80 => self.weak = Some(Varint::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -2690,7 +2704,7 @@ impl crate::Message for FieldOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -2732,7 +2746,7 @@ impl crate::Message for OneofOptions {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -2763,7 +2777,7 @@ impl crate::Message for OneofOptions {
         let mut l = 0;
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -2829,7 +2843,7 @@ impl crate::Message for EnumOptions {
             match s.read_tag()? {
                 16 => self.allow_alias = Some(Varint::read_from(s)?),
                 24 => self.deprecated = Some(Varint::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -2874,7 +2888,7 @@ impl crate::Message for EnumOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -2928,7 +2942,7 @@ impl crate::Message for EnumValueOptions {
         loop {
             match s.read_tag()? {
                 8 => self.deprecated = Some(Varint::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -2966,7 +2980,7 @@ impl crate::Message for EnumValueOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -3020,7 +3034,7 @@ impl crate::Message for ServiceOptions {
         loop {
             match s.read_tag()? {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -3058,7 +3072,7 @@ impl crate::Message for ServiceOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -3155,7 +3169,7 @@ impl crate::Message for MethodOptions {
             match s.read_tag()? {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
                 272 => self.idempotency_level = Some(Varint::read_from(s)?),
-                7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
+                7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
                     if (8000..=4294967303).contains(&tag) {
@@ -3200,7 +3214,7 @@ impl crate::Message for MethodOptions {
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::size(&self.uninterpreted_option);
+                + RefArray::<LengthPrefixed>::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
             l += self.extensions.size();
@@ -3381,7 +3395,7 @@ impl crate::Message for UninterpretedOption {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                18 => LengthPrefixedArray::merge_from(&mut self.name, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.name, s)?,
                 26 => self.identifier_value = Some(LengthPrefixed::read_from(s)?),
                 32 => self.positive_int_value = Some(Varint::read_from(s)?),
                 40 => self.negative_int_value = Some(Varint::read_from(s)?),
@@ -3432,7 +3446,7 @@ impl crate::Message for UninterpretedOption {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += self.name.len() as u64 + LengthPrefixedArray::size(&self.name);
+            l += self.name.len() as u64 + RefArray::<LengthPrefixed>::size(&self.name);
         }
         if let Some(v) = &self.identifier_value {
             l += 1 + LengthPrefixed::size(v);
@@ -3519,11 +3533,15 @@ impl crate::Message for SourceCodeInfo_Location {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => VarintArray::merge_from(&mut self.path, s)?,
-                18 => VarintArray::merge_from(&mut self.span, s)?,
+                10 => PackedArray::<Varint>::merge_from(&mut self.path, s)?,
+                8 => CopyArray::<Varint>::merge_from(&mut self.path, s)?,
+                18 => PackedArray::<Varint>::merge_from(&mut self.span, s)?,
+                16 => CopyArray::<Varint>::merge_from(&mut self.span, s)?,
                 26 => self.leading_comments = Some(LengthPrefixed::read_from(s)?),
                 34 => self.trailing_comments = Some(LengthPrefixed::read_from(s)?),
-                50 => LengthPrefixedArray::merge_from(&mut self.leading_detached_comments, s)?,
+                50 => {
+                    RefArray::<LengthPrefixed>::merge_from(&mut self.leading_detached_comments, s)?
+                }
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3532,11 +3550,11 @@ impl crate::Message for SourceCodeInfo_Location {
     fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
-            VarintArray::write_to(&self.path, s)?;
+            PackedArray::<Varint>::write_to(&self.path, s)?
         }
         if !self.span.is_empty() {
             s.write_tag(18)?;
-            VarintArray::write_to(&self.span, s)?;
+            PackedArray::<Varint>::write_to(&self.span, s)?
         }
         if let Some(v) = &self.leading_comments {
             s.write_tag(26)?;
@@ -3560,10 +3578,10 @@ impl crate::Message for SourceCodeInfo_Location {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.path.is_empty() {
-            l += 1 + VarintArray::size(&self.path);
+            l += 1 + PackedArray::<Varint>::size(&self.path);
         }
         if !self.span.is_empty() {
-            l += 1 + VarintArray::size(&self.span);
+            l += 1 + PackedArray::<Varint>::size(&self.span);
         }
         if let Some(v) = &self.leading_comments {
             l += 1 + LengthPrefixed::size(v);
@@ -3573,7 +3591,7 @@ impl crate::Message for SourceCodeInfo_Location {
         }
         if !self.leading_detached_comments.is_empty() {
             l += self.leading_detached_comments.len() as u64
-                + LengthPrefixedArray::size(&self.leading_detached_comments);
+                + RefArray::<LengthPrefixed>::size(&self.leading_detached_comments);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3610,7 +3628,7 @@ impl crate::Message for SourceCodeInfo {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => LengthPrefixedArray::merge_from(&mut self.location, s)?,
+                10 => RefArray::<LengthPrefixed>::merge_from(&mut self.location, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3631,7 +3649,7 @@ impl crate::Message for SourceCodeInfo {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.location.is_empty() {
-            l += self.location.len() as u64 + LengthPrefixedArray::size(&self.location);
+            l += self.location.len() as u64 + RefArray::<LengthPrefixed>::size(&self.location);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3704,7 +3722,8 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => VarintArray::merge_from(&mut self.path, s)?,
+                10 => PackedArray::<Varint>::merge_from(&mut self.path, s)?,
+                8 => CopyArray::<Varint>::merge_from(&mut self.path, s)?,
                 18 => self.source_file = Some(LengthPrefixed::read_from(s)?),
                 24 => self.begin = Some(Varint::read_from(s)?),
                 32 => self.end = Some(Varint::read_from(s)?),
@@ -3716,7 +3735,7 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
     fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
-            VarintArray::write_to(&self.path, s)?;
+            PackedArray::<Varint>::write_to(&self.path, s)?
         }
         if let Some(v) = &self.source_file {
             s.write_tag(18)?;
@@ -3738,7 +3757,7 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.path.is_empty() {
-            l += 1 + VarintArray::size(&self.path);
+            l += 1 + PackedArray::<Varint>::size(&self.path);
         }
         if let Some(v) = &self.source_file {
             l += 1 + LengthPrefixed::size(v);
@@ -3784,7 +3803,7 @@ impl crate::Message for GeneratedCodeInfo {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => LengthPrefixedArray::merge_from(&mut self.annotation, s)?,
+                10 => RefArray::<LengthPrefixed>::merge_from(&mut self.annotation, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3805,7 +3824,7 @@ impl crate::Message for GeneratedCodeInfo {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.annotation.is_empty() {
-            l += self.annotation.len() as u64 + LengthPrefixedArray::size(&self.annotation);
+            l += self.annotation.len() as u64 + RefArray::<LengthPrefixed>::size(&self.annotation);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

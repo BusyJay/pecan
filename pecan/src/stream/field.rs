@@ -471,32 +471,23 @@ impl<'a, M: Message> WriteFieldCodec<&'a M> for LengthPrefixed {
     }
 }
 
-pub struct LengthPrefixedArray;
+pub struct RefArray<Codec> {
+    _marker: PhantomData<Codec>,
+}
 
-impl<Item> MergeFieldCodec<Vec<Item>> for LengthPrefixedArray
+impl<Item, Codec> MergeFieldCodec<Vec<Item>> for RefArray<Codec>
 where
-    LengthPrefixed: ReadFieldCodec<Item>,
+    Codec: ReadFieldCodec<Item>,
 {
     fn merge_from<B: Buf>(current: &mut Vec<Item>, buf: &mut CodedInputStream<B>) -> Result<()> {
-        current.push(LengthPrefixed::read_from(buf)?);
+        current.push(Codec::read_from(buf)?);
         Ok(())
     }
 }
 
-impl<Item> ReadFieldCodec<Vec<Item>> for LengthPrefixedArray
+impl<'a, Item, Codec> WriteFieldCodec<&'a [Item]> for RefArray<Codec>
 where
-    LengthPrefixed: ReadFieldCodec<Item>,
-{
-    fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Item>> {
-        let mut v = Vec::new();
-        LengthPrefixedArray::merge_from(&mut v, buf)?;
-        Ok(v)
-    }
-}
-
-impl<'a, Item> WriteFieldCodec<&'a [Item]> for LengthPrefixedArray
-where
-    LengthPrefixed: WriteFieldCodec<&'a Item>,
+    Codec: WriteFieldCodec<&'a Item>,
 {
     fn write_to<B: BufMut>(_: &'a [Item], _: &mut CodedOutputStream<B>) -> Result<()> {
         unimplemented!("Writting repeated string/bytes/message requires tag");
@@ -504,7 +495,36 @@ where
 
     #[inline]
     fn size(val: &'a [Item]) -> u64 {
-        val.iter().map(LengthPrefixed::size).sum()
+        val.iter().map(Codec::size).sum()
+    }
+}
+
+pub struct CopyArray<Codec> {
+    _marker: PhantomData<Codec>,
+}
+
+impl<Item, Codec> MergeFieldCodec<Vec<Item>> for CopyArray<Codec>
+where
+    Codec: ReadFieldCodec<Item>,
+{
+    fn merge_from<B: Buf>(current: &mut Vec<Item>, buf: &mut CodedInputStream<B>) -> Result<()> {
+        current.push(Codec::read_from(buf)?);
+        Ok(())
+    }
+}
+
+impl<'a, Item, Codec> WriteFieldCodec<&'a [Item]> for CopyArray<Codec>
+where
+    Item: Copy,
+    Codec: WriteFieldCodec<Item>,
+{
+    fn write_to<B: BufMut>(_: &'a [Item], _: &mut CodedOutputStream<B>) -> Result<()> {
+        unimplemented!("Writting repeated primitive requires tag");
+    }
+
+    #[inline]
+    fn size(val: &'a [Item]) -> u64 {
+        val.iter().map(|i| Codec::size(*i)).sum()
     }
 }
 
@@ -560,8 +580,3 @@ where
         Varint::size(l) + l
     }
 }
-
-pub type VarintArray = PackedArray<Varint>;
-pub type ZigZagArray = PackedArray<ZigZag>;
-pub type Fixed32Array = PackedArray<Fixed32>;
-pub type Fixed64Array = PackedArray<Fixed64>;

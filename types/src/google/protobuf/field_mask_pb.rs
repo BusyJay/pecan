@@ -19,7 +19,7 @@ impl pecan::Message for FieldMask {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => LengthPrefixedArray::merge_from(&mut self.paths, s)?,
+                10 => RefArray::<LengthPrefixed>::merge_from(&mut self.paths, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -40,7 +40,7 @@ impl pecan::Message for FieldMask {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.paths.is_empty() {
-            l += self.paths.len() as u64 + LengthPrefixedArray::size(&self.paths);
+            l += self.paths.len() as u64 + RefArray::<LengthPrefixed>::size(&self.paths);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

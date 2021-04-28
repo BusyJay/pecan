@@ -38,7 +38,7 @@ fn is_message_type(e: &FieldDescriptorProto) -> bool {
     )
 }
 
-fn wire_type(e: &FieldDescriptorProto) -> (u8, Ident) {
+fn wire_type(e: &FieldDescriptorProto, proto3: bool) -> (u8, u8, TokenStream, TokenStream) {
     let (wire, codec) = match e.r#type() {
         FieldDescriptorProto_Type::TYPE_BOOL
         | FieldDescriptorProto_Type::TYPE_INT32
@@ -61,10 +61,18 @@ fn wire_type(e: &FieldDescriptorProto) -> (u8, Ident) {
         FieldDescriptorProto_Type::TYPE_GROUP => (3, "Group"),
         ty => panic!("unsupported type {:?}", ty),
     };
+    let codec = format_ident!("{}", codec);
+    let codec = quote!(#codec);
     if e.label() == FieldDescriptorProto_Label::LABEL_REPEATED {
-        (2, format_ident!("{}Array", codec))
+        if ![0, 1, 5].contains(&wire) {
+            (wire, wire, quote! {RefArray::<#codec>}, codec)
+        } else if e.options().packed() || proto3 && e.options.is_none() {
+            (2, wire, quote! {PackedArray::<#codec>}, codec)
+        } else {
+            (wire, 2, quote! {CopyArray::<#codec>}, codec)
+        }
     } else {
-        (wire, format_ident!("{}", codec))
+        (wire, wire, codec.clone(), codec)
     }
 }
 
@@ -194,7 +202,9 @@ pub struct FieldGenerator {
     r#type: TokenStream,
     inner_type: TokenStream,
     tag: u64,
-    codec: Ident,
+    second_tag: u64,
+    codec: TokenStream,
+    inner_codec: TokenStream,
     default_value: TokenStream,
     kind: FieldKind,
     opt: crate::options_pb::FieldOptions,
@@ -206,7 +216,7 @@ pub struct FieldGenerator {
 impl FieldGenerator {
     pub fn new(generator: &Generator, f: &FieldDescriptorProto) -> FieldGenerator {
         let name = util::snake_name(f.name());
-        let (wire_ty, codec) = wire_type(f);
+        let (wire_ty, sec_wire_ty, codec, inner_codec) = wire_type(f, generator.file().proto3());
         let mut opt = f
             .options()
             .extensions
@@ -229,7 +239,9 @@ impl FieldGenerator {
             opt,
             inner_type,
             tag,
+            second_tag: ((f.number() as u64) << 3) | sec_wire_ty as u64,
             codec,
+            inner_codec,
             default_value,
             kind,
             repeated,
@@ -339,9 +351,22 @@ impl FieldGenerator {
                 #tag => self.#name = Some(#codec::read_from(s)?),
             }
         } else if self.repeated {
-            quote! {
+            let mut q = quote! {
                 #tag => #codec::merge_from(&mut self.#name, s)?,
+            };
+            if self.tag != self.second_tag {
+                let second_tag = Literal::u64_unsuffixed(self.second_tag);
+                let inner_codec = &self.inner_codec;
+                let codec = if self.second_tag & 0x7 == 2 {
+                    quote! {PackedArray::<#inner_codec>}
+                } else {
+                    quote! {CopyArray::<#inner_codec>}
+                };
+                q.extend(quote! {
+                    #second_tag => #codec::merge_from(&mut self.#name, s)?,
+                })
             }
+            q
         } else {
             quote! {
                 #tag => self.#name = #codec::read_from(s)?,
@@ -438,7 +463,7 @@ impl FieldGenerator {
                     }
                 }
             })
-        } else if !self.kind.can_copy() {
+        } else {
             self.check_empty(|_, v_ref| {
                 if matches!(self.kind, FieldKind::Group) {
                     quote! {
@@ -448,20 +473,24 @@ impl FieldGenerator {
                             s.write_tag(#end_tag)?;
                         }
                     }
+                } else if self.tag & 0x7 == 2 && self.kind.can_copy() {
+                    quote! {
+                        s.write_tag(#tag)?;
+                        #codec::write_to(#v_ref, s)?
+                    }
                 } else {
+                    let item = if self.kind.can_copy() {
+                        quote!(*i)
+                    } else {
+                        quote!(i)
+                    };
+                    let inner_codec = &self.inner_codec;
                     quote! {
                         for i in #v_ref {
                             s.write_tag(#tag)?;
-                            LengthPrefixed::write_to(i, s)?;
+                            #inner_codec::write_to(#item, s)?;
                         }
                     }
-                }
-            })
-        } else {
-            self.check_empty(|_, v| {
-                quote! {
-                    s.write_tag(#tag)?;
-                    #codec::write_to(#v, s)?;
                 }
             })
         }
@@ -512,7 +541,7 @@ impl FieldGenerator {
                     quote! { l += #tag_len + #codec::size(#v_ref); }
                 }
             })
-        } else if !self.kind.can_copy() {
+        } else if !self.kind.can_copy() || self.tag & 0x7 != 2 {
             self.check_empty(|v, v_ref| {
                 let vector_len = if len_raw == 1 {
                     quote! { #v.len() as u64 }

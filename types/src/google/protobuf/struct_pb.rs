@@ -356,7 +356,7 @@ impl pecan::Message for ListValue {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => LengthPrefixedArray::merge_from(&mut self.values, s)?,
+                10 => RefArray::<LengthPrefixed>::merge_from(&mut self.values, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -377,7 +377,7 @@ impl pecan::Message for ListValue {
     fn size(&self) -> u64 {
         let mut l = 0;
         if !self.values.is_empty() {
-            l += self.values.len() as u64 + LengthPrefixedArray::size(&self.values);
+            l += self.values.len() as u64 + RefArray::<LengthPrefixed>::size(&self.values);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

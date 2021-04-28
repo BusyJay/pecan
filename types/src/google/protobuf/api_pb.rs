@@ -49,11 +49,11 @@ impl pecan::Message for Api {
         loop {
             match s.read_tag()? {
                 10 => self.name = LengthPrefixed::read_from(s)?,
-                18 => LengthPrefixedArray::merge_from(&mut self.methods, s)?,
-                26 => LengthPrefixedArray::merge_from(&mut self.options, s)?,
+                18 => RefArray::<LengthPrefixed>::merge_from(&mut self.methods, s)?,
+                26 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 34 => self.version = LengthPrefixed::read_from(s)?,
                 42 => LengthPrefixed::merge_from(self.source_context_mut(), s)?,
-                50 => LengthPrefixedArray::merge_from(&mut self.mixins, s)?,
+                50 => RefArray::<LengthPrefixed>::merge_from(&mut self.mixins, s)?,
                 56 => self.syntax = Varint::read_from(s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -106,10 +106,10 @@ impl pecan::Message for Api {
             l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.methods.is_empty() {
-            l += self.methods.len() as u64 + LengthPrefixedArray::size(&self.methods);
+            l += self.methods.len() as u64 + RefArray::<LengthPrefixed>::size(&self.methods);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
+            l += self.options.len() as u64 + RefArray::<LengthPrefixed>::size(&self.options);
         }
         if !self.version.is_empty() {
             l += 1 + LengthPrefixed::size(&self.version);
@@ -118,7 +118,7 @@ impl pecan::Message for Api {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.mixins.is_empty() {
-            l += self.mixins.len() as u64 + LengthPrefixedArray::size(&self.mixins);
+            l += self.mixins.len() as u64 + RefArray::<LengthPrefixed>::size(&self.mixins);
         }
         if self.syntax != crate::google::protobuf::type_pb::Syntax::new() {
             l += 1 + Varint::size(self.syntax);
@@ -175,7 +175,7 @@ impl pecan::Message for Method {
                 24 => self.request_streaming = Varint::read_from(s)?,
                 34 => self.response_type_url = LengthPrefixed::read_from(s)?,
                 40 => self.response_streaming = Varint::read_from(s)?,
-                50 => LengthPrefixedArray::merge_from(&mut self.options, s)?,
+                50 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 56 => self.syntax = Varint::read_from(s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -236,7 +236,7 @@ impl pecan::Message for Method {
             l += 1 + Varint::size(self.response_streaming);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
+            l += self.options.len() as u64 + RefArray::<LengthPrefixed>::size(&self.options);
         }
         if self.syntax != crate::google::protobuf::type_pb::Syntax::new() {
             l += 1 + Varint::size(self.syntax);

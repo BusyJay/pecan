@@ -174,10 +174,10 @@ impl pecan::Message for CodeGeneratorRequest {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => LengthPrefixedArray::merge_from(&mut self.file_to_generate, s)?,
+                10 => RefArray::<LengthPrefixed>::merge_from(&mut self.file_to_generate, s)?,
                 18 => self.parameter = Some(LengthPrefixed::read_from(s)?),
                 26 => LengthPrefixed::merge_from(self.compiler_version_mut(), s)?,
-                122 => LengthPrefixedArray::merge_from(&mut self.proto_file, s)?,
+                122 => RefArray::<LengthPrefixed>::merge_from(&mut self.proto_file, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -213,7 +213,7 @@ impl pecan::Message for CodeGeneratorRequest {
         let mut l = 0;
         if !self.file_to_generate.is_empty() {
             l += self.file_to_generate.len() as u64
-                + LengthPrefixedArray::size(&self.file_to_generate);
+                + RefArray::<LengthPrefixed>::size(&self.file_to_generate);
         }
         if let Some(v) = &self.parameter {
             l += 1 + LengthPrefixed::size(v);
@@ -222,7 +222,7 @@ impl pecan::Message for CodeGeneratorRequest {
             l += 1 + LengthPrefixed::size(v);
         }
         if !self.proto_file.is_empty() {
-            l += self.proto_file.len() as u64 + LengthPrefixedArray::size(&self.proto_file);
+            l += self.proto_file.len() as u64 + RefArray::<LengthPrefixed>::size(&self.proto_file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -450,7 +450,7 @@ impl pecan::Message for CodeGeneratorResponse {
             match s.read_tag()? {
                 10 => self.error = Some(LengthPrefixed::read_from(s)?),
                 16 => self.supported_features = Some(Varint::read_from(s)?),
-                122 => LengthPrefixedArray::merge_from(&mut self.file, s)?,
+                122 => RefArray::<LengthPrefixed>::merge_from(&mut self.file, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -485,7 +485,7 @@ impl pecan::Message for CodeGeneratorResponse {
             l += 1 + Varint::size(v);
         }
         if !self.file.is_empty() {
-            l += self.file.len() as u64 + LengthPrefixedArray::size(&self.file);
+            l += self.file.len() as u64 + RefArray::<LengthPrefixed>::size(&self.file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
