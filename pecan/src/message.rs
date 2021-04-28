@@ -4,7 +4,7 @@ use bytes::{Buf, BufMut, Bytes};
 pub trait Message {
     fn merge_from<B: Buf>(&mut self, s: &mut CodedInputStream<B>) -> Result<()>;
     fn write_to<B: BufMut>(&self, s: &mut CodedOutputStream<B>) -> Result<()>;
-    fn len(&self) -> u64;
+    fn size(&self) -> u64;
 
     fn merge_from_buf<B: Buf>(&mut self, s: &mut B) -> Result<()> {
         let mut input = CodedInputStream::new(s);

@@ -35,10 +35,10 @@ impl pecan::Message for SourceContext {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.file_name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.file_name);
+            l += 1 + LengthPrefixed::size(&self.file_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

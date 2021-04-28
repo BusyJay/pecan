@@ -207,29 +207,29 @@ impl MessageGenerator {
         }
     }
 
-    pub fn len(&self) -> TokenStream {
-        let mut len = vec![];
+    pub fn size(&self) -> TokenStream {
+        let mut size = vec![];
         for (tag, g) in &self.fields {
-            len.push((*tag, g.fn_len()));
+            size.push((*tag, g.fn_len()));
         }
         for g in &self.one_of_fields {
-            len.push(g.fn_len());
+            size.push(g.fn_len());
         }
-        len.sort_by_key(|i| i.0);
-        let len = len.into_iter().map(|i| i.1);
+        size.sort_by_key(|i| i.0);
+        let size = size.into_iter().map(|i| i.1);
         let extension = if self.extension_range.is_empty() {
             quote! {}
         } else {
             quote! {
                 if !self.extensions.is_empty() {
-                    l += self.extensions.len();
+                    l += self.extensions.size();
                 }
             }
         };
         quote! {
-            fn len(&self) -> u64 {
+            fn size(&self) -> u64 {
                 let mut l = 0;
-                #(#len)*
+                #(#size)*
                 #extension
                 if !self._unknown.is_empty() {
                     l += self._unknown.len() as u64;
@@ -261,7 +261,7 @@ impl MessageGenerator {
         let init = self.init();
         let merge_from = self.merge_from();
         let write_to = self.write_to();
-        let len = self.len();
+        let size = self.size();
         let accessors = self.accessors();
         let one_of_enums = self.one_of_fields.iter().map(|g| g.generate());
 
@@ -281,7 +281,7 @@ impl MessageGenerator {
 
                 #write_to
 
-                #len
+                #size
             }
 
             impl pecan::DefaultInstance for #name {

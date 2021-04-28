@@ -98,27 +98,27 @@ impl pecan::Message for Api {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.methods.is_empty() {
-            l += self.methods.len() as u64 + LengthPrefixedArray::len(&self.methods);
+            l += self.methods.len() as u64 + LengthPrefixedArray::size(&self.methods);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::len(&self.options);
+            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
         if !self.version.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.version);
+            l += 1 + LengthPrefixed::size(&self.version);
         }
         if let Some(v) = &self.source_context {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.mixins.is_empty() {
-            l += self.mixins.len() as u64 + LengthPrefixedArray::len(&self.mixins);
+            l += self.mixins.len() as u64 + LengthPrefixedArray::size(&self.mixins);
         }
-        l += 1 + Varint::len(self.syntax);
+        l += 1 + Varint::size(self.syntax);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -212,27 +212,27 @@ impl pecan::Message for Method {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.request_type_url.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.request_type_url);
+            l += 1 + LengthPrefixed::size(&self.request_type_url);
         }
         if self.request_streaming {
-            l += 1 + Varint::len(self.request_streaming);
+            l += 1 + Varint::size(self.request_streaming);
         }
         if !self.response_type_url.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.response_type_url);
+            l += 1 + LengthPrefixed::size(&self.response_type_url);
         }
         if self.response_streaming {
-            l += 1 + Varint::len(self.response_streaming);
+            l += 1 + Varint::size(self.response_streaming);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::len(&self.options);
+            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
-        l += 1 + Varint::len(self.syntax);
+        l += 1 + Varint::size(self.syntax);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -291,13 +291,13 @@ impl pecan::Message for Mixin {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.root.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.root);
+            l += 1 + LengthPrefixed::size(&self.root);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

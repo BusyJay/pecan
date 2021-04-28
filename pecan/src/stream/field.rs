@@ -17,7 +17,7 @@ pub trait MergeFieldCodec<Field> {
 
 pub trait WriteFieldCodec<Field> {
     fn write_to<B: BufMut>(val: Field, buf: &mut CodedOutputStream<B>) -> Result<()>;
-    fn len(val: Field) -> u64;
+    fn size(val: Field) -> u64;
 }
 
 pub struct Varint;
@@ -59,7 +59,7 @@ impl WriteFieldCodec<bool> for Varint {
     }
 
     #[inline]
-    fn len(_: bool) -> u64 {
+    fn size(_: bool) -> u64 {
         1
     }
 }
@@ -82,8 +82,9 @@ impl<'a> WriteFieldCodec<&'a [u8]> for LengthPrefixed {
         buf.write_raw_bytes(val)
     }
 
-    fn len(val: &[u8]) -> u64 {
-        Varint::len(val.len() as u64) + val.len() as u64
+    #[inline]
+    fn size(val: &[u8]) -> u64 {
+        Varint::size(val.len() as u64) + val.len() as u64
     }
 }
 
@@ -107,7 +108,7 @@ impl WriteFieldCodec<f64> for Fixed64 {
     }
 
     #[inline]
-    fn len(_: f64) -> u64 {
+    fn size(_: f64) -> u64 {
         8
     }
 }
@@ -145,7 +146,7 @@ impl WriteFieldCodec<u32> for Fixed32 {
     }
 
     #[inline]
-    fn len(_: u32) -> u64 {
+    fn size(_: u32) -> u64 {
         4
     }
 }
@@ -183,7 +184,7 @@ impl WriteFieldCodec<u64> for Fixed64 {
     }
 
     #[inline]
-    fn len(_: u64) -> u64 {
+    fn size(_: u64) -> u64 {
         8
     }
 }
@@ -204,7 +205,7 @@ impl WriteFieldCodec<f32> for Fixed32 {
     }
 
     #[inline]
-    fn len(_: f32) -> u64 {
+    fn size(_: f32) -> u64 {
         4
     }
 }
@@ -228,8 +229,8 @@ impl WriteFieldCodec<i32> for Varint {
     }
 
     #[inline]
-    fn len(val: i32) -> u64 {
-        Varint::len(val as i64)
+    fn size(val: i32) -> u64 {
+        Varint::size(val as i64)
     }
 }
 
@@ -248,8 +249,8 @@ impl WriteFieldCodec<i64> for Varint {
     }
 
     #[inline]
-    fn len(val: i64) -> u64 {
-        Varint::len(val as u64)
+    fn size(val: i64) -> u64 {
+        Varint::size(val as u64)
     }
 }
 
@@ -268,7 +269,7 @@ impl WriteFieldCodec<i32> for Fixed32 {
     }
 
     #[inline]
-    fn len(_: i32) -> u64 {
+    fn size(_: i32) -> u64 {
         4
     }
 }
@@ -288,7 +289,7 @@ impl WriteFieldCodec<i64> for Fixed64 {
     }
 
     #[inline]
-    fn len(_: i64) -> u64 {
+    fn size(_: i64) -> u64 {
         8
     }
 }
@@ -327,8 +328,8 @@ macro_rules! impl_length_prefix {
             }
 
             #[inline]
-            fn len(val: &$type) -> u64 {
-                LengthPrefixed::len(impl_length_prefix!(eval val, $method))
+            fn size(val: &$type) -> u64 {
+                LengthPrefixed::size(impl_length_prefix!(eval val, $method))
             }
         }
     };
@@ -365,8 +366,8 @@ impl WriteFieldCodec<i32> for ZigZag {
     }
 
     #[inline]
-    fn len(val: i32) -> u64 {
-        ZigZag::len(val as i64)
+    fn size(val: i32) -> u64 {
+        ZigZag::size(val as i64)
     }
 }
 
@@ -385,8 +386,8 @@ impl WriteFieldCodec<i64> for ZigZag {
     }
 
     #[inline]
-    fn len(val: i64) -> u64 {
-        Varint::len(val.rotate_left(1) as u64)
+    fn size(val: i64) -> u64 {
+        Varint::size(val.rotate_left(1) as u64)
     }
 }
 
@@ -409,8 +410,8 @@ impl WriteFieldCodec<u32> for Varint {
     }
 
     #[inline]
-    fn len(val: u32) -> u64 {
-        Varint::len(val as u64)
+    fn size(val: u32) -> u64 {
+        Varint::size(val as u64)
     }
 }
 
@@ -427,7 +428,7 @@ impl WriteFieldCodec<u64> for Varint {
         buf.write_var_u64_raw(val)
     }
 
-    fn len(mut val: u64) -> u64 {
+    fn size(mut val: u64) -> u64 {
         for i in 1..=9 {
             val >>= 7;
             if val == 0 {
@@ -453,8 +454,8 @@ impl<E: Enumerate> WriteFieldCodec<E> for Varint {
     }
 
     #[inline]
-    fn len(val: E) -> u64 {
-        Varint::len(val.value())
+    fn size(val: E) -> u64 {
+        Varint::size(val.value())
     }
 }
 
@@ -476,15 +477,15 @@ impl<M: Message + Default> ReadFieldCodec<M> for LengthPrefixed {
 impl<'a, M: Message> WriteFieldCodec<&'a M> for LengthPrefixed {
     #[inline]
     fn write_to<B: BufMut>(val: &M, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        let l = val.len();
+        let l = val.size();
         Varint::write_to(l, buf)?;
         val.write_to(buf)
     }
 
     #[inline]
-    fn len(val: &M) -> u64 {
-        let l = val.len();
-        Varint::len(l) + l
+    fn size(val: &M) -> u64 {
+        let l = val.size();
+        Varint::size(l) + l
     }
 }
 
@@ -520,8 +521,8 @@ where
     }
 
     #[inline]
-    fn len(val: &'a [Item]) -> u64 {
-        val.iter().map(LengthPrefixed::len).sum()
+    fn size(val: &'a [Item]) -> u64 {
+        val.iter().map(LengthPrefixed::size).sum()
     }
 }
 
@@ -564,7 +565,7 @@ where
     ItemCodec: WriteFieldCodec<Item>,
 {
     fn write_to<B: BufMut>(val: &'a [Item], buf: &mut CodedOutputStream<B>) -> Result<()> {
-        let l: u64 = val.iter().map(|v| ItemCodec::len(*v)).sum();
+        let l: u64 = val.iter().map(|v| ItemCodec::size(*v)).sum();
         Varint::write_to(l, buf)?;
         for v in val {
             ItemCodec::write_to(*v, buf)?;
@@ -572,9 +573,9 @@ where
         Ok(())
     }
 
-    fn len(val: &'a [Item]) -> u64 {
-        let l: u64 = val.iter().map(|v| ItemCodec::len(*v)).sum();
-        Varint::len(l) + l
+    fn size(val: &'a [Item]) -> u64 {
+        let l: u64 = val.iter().map(|v| ItemCodec::size(*v)).sum();
+        Varint::size(l) + l
     }
 }
 

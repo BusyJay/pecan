@@ -37,10 +37,10 @@ impl pecan::Message for FieldMask {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.paths.is_empty() {
-            l += self.paths.len() as u64 + LengthPrefixedArray::len(&self.paths);
+            l += self.paths.len() as u64 + LengthPrefixedArray::size(&self.paths);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

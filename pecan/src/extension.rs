@@ -60,7 +60,7 @@ impl ExtensionMap {
         T: Copy,
         C: WriteFieldCodec<T>,
     {
-        let mut bytes = BytesMut::with_capacity(C::len(t) as usize);
+        let mut bytes = BytesMut::with_capacity(C::size(t) as usize);
         let mut output = CodedOutputStream::new(&mut bytes);
         C::write_to(t, &mut output)?;
         drop(output);
@@ -73,7 +73,7 @@ impl ExtensionMap {
         T: Copy,
         C: WriteFieldCodec<&'a T>,
     {
-        let mut bytes = BytesMut::with_capacity(C::len(t) as usize);
+        let mut bytes = BytesMut::with_capacity(C::size(t) as usize);
         let mut output = CodedOutputStream::new(&mut bytes);
         C::write_to(t, &mut output)?;
         drop(output);
@@ -94,7 +94,7 @@ impl ExtensionMap {
         self.map.as_ref().map(|m| m.values())
     }
 
-    pub fn len(&self) -> u64 {
+    pub fn size(&self) -> u64 {
         self.values_raw()
             .map_or(0, |v| v.map(|b| b.len() as u64).sum())
     }

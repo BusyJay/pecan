@@ -95,19 +95,19 @@ impl pecan::Message for Version {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.major {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.minor {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.patch {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = &self.suffix {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -209,20 +209,20 @@ impl pecan::Message for CodeGeneratorRequest {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.file_to_generate.is_empty() {
             l += self.file_to_generate.len() as u64
-                + LengthPrefixedArray::len(&self.file_to_generate);
+                + LengthPrefixedArray::size(&self.file_to_generate);
         }
         if let Some(v) = &self.parameter {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.compiler_version {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.proto_file.is_empty() {
-            l += self.proto_file.len() as u64 + LengthPrefixedArray::len(&self.proto_file);
+            l += self.proto_file.len() as u64 + LengthPrefixedArray::size(&self.proto_file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -374,19 +374,19 @@ impl pecan::Message for CodeGeneratorResponse_File {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.insertion_point {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.content {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.generated_code_info {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -476,16 +476,16 @@ impl pecan::Message for CodeGeneratorResponse {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.error {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.supported_features {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self.file.is_empty() {
-            l += self.file.len() as u64 + LengthPrefixedArray::len(&self.file);
+            l += self.file.len() as u64 + LengthPrefixedArray::size(&self.file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

@@ -37,10 +37,10 @@ impl crate::Message for FileDescriptorSet {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.file.is_empty() {
-            l += self.file.len() as u64 + LengthPrefixedArray::len(&self.file);
+            l += self.file.len() as u64 + LengthPrefixedArray::size(&self.file);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -240,43 +240,43 @@ impl crate::Message for FileDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.package {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.dependency.is_empty() {
-            l += self.dependency.len() as u64 + LengthPrefixedArray::len(&self.dependency);
+            l += self.dependency.len() as u64 + LengthPrefixedArray::size(&self.dependency);
         }
         if !self.message_type.is_empty() {
-            l += self.message_type.len() as u64 + LengthPrefixedArray::len(&self.message_type);
+            l += self.message_type.len() as u64 + LengthPrefixedArray::size(&self.message_type);
         }
         if !self.enum_type.is_empty() {
-            l += self.enum_type.len() as u64 + LengthPrefixedArray::len(&self.enum_type);
+            l += self.enum_type.len() as u64 + LengthPrefixedArray::size(&self.enum_type);
         }
         if !self.service.is_empty() {
-            l += self.service.len() as u64 + LengthPrefixedArray::len(&self.service);
+            l += self.service.len() as u64 + LengthPrefixedArray::size(&self.service);
         }
         if !self.extension.is_empty() {
-            l += self.extension.len() as u64 + LengthPrefixedArray::len(&self.extension);
+            l += self.extension.len() as u64 + LengthPrefixedArray::size(&self.extension);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.source_code_info {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.public_dependency.is_empty() {
-            l += 1 + VarintArray::len(&self.public_dependency);
+            l += 1 + VarintArray::size(&self.public_dependency);
         }
         if !self.weak_dependency.is_empty() {
-            l += 1 + VarintArray::len(&self.weak_dependency);
+            l += 1 + VarintArray::size(&self.weak_dependency);
         }
         if let Some(v) = &self.syntax {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -373,16 +373,16 @@ impl crate::Message for DescriptorProto_ExtensionRange {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.start {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.end {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -460,13 +460,13 @@ impl crate::Message for DescriptorProto_ReservedRange {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.start {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.end {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -622,38 +622,38 @@ impl crate::Message for DescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.field.is_empty() {
-            l += self.field.len() as u64 + LengthPrefixedArray::len(&self.field);
+            l += self.field.len() as u64 + LengthPrefixedArray::size(&self.field);
         }
         if !self.nested_type.is_empty() {
-            l += self.nested_type.len() as u64 + LengthPrefixedArray::len(&self.nested_type);
+            l += self.nested_type.len() as u64 + LengthPrefixedArray::size(&self.nested_type);
         }
         if !self.enum_type.is_empty() {
-            l += self.enum_type.len() as u64 + LengthPrefixedArray::len(&self.enum_type);
+            l += self.enum_type.len() as u64 + LengthPrefixedArray::size(&self.enum_type);
         }
         if !self.extension_range.is_empty() {
-            l +=
-                self.extension_range.len() as u64 + LengthPrefixedArray::len(&self.extension_range);
+            l += self.extension_range.len() as u64
+                + LengthPrefixedArray::size(&self.extension_range);
         }
         if !self.extension.is_empty() {
-            l += self.extension.len() as u64 + LengthPrefixedArray::len(&self.extension);
+            l += self.extension.len() as u64 + LengthPrefixedArray::size(&self.extension);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.oneof_decl.is_empty() {
-            l += self.oneof_decl.len() as u64 + LengthPrefixedArray::len(&self.oneof_decl);
+            l += self.oneof_decl.len() as u64 + LengthPrefixedArray::size(&self.oneof_decl);
         }
         if !self.reserved_range.is_empty() {
-            l += self.reserved_range.len() as u64 + LengthPrefixedArray::len(&self.reserved_range);
+            l += self.reserved_range.len() as u64 + LengthPrefixedArray::size(&self.reserved_range);
         }
         if !self.reserved_name.is_empty() {
-            l += self.reserved_name.len() as u64 + LengthPrefixedArray::len(&self.reserved_name);
+            l += self.reserved_name.len() as u64 + LengthPrefixedArray::size(&self.reserved_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -719,14 +719,14 @@ impl crate::Message for ExtensionRangeOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1056,40 +1056,40 @@ impl crate::Message for FieldDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.extendee {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.number {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.label {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.r#type {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = &self.type_name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.default_value {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.oneof_index {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = &self.json_name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.proto3_optional {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1173,13 +1173,13 @@ impl crate::Message for OneofDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1257,13 +1257,13 @@ impl crate::Message for EnumDescriptorProto_EnumReservedRange {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.start {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.end {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1375,22 +1375,22 @@ impl crate::Message for EnumDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.value.is_empty() {
-            l += self.value.len() as u64 + LengthPrefixedArray::len(&self.value);
+            l += self.value.len() as u64 + LengthPrefixedArray::size(&self.value);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.reserved_range.is_empty() {
-            l += self.reserved_range.len() as u64 + LengthPrefixedArray::len(&self.reserved_range);
+            l += self.reserved_range.len() as u64 + LengthPrefixedArray::size(&self.reserved_range);
         }
         if !self.reserved_name.is_empty() {
-            l += self.reserved_name.len() as u64 + LengthPrefixedArray::len(&self.reserved_name);
+            l += self.reserved_name.len() as u64 + LengthPrefixedArray::size(&self.reserved_name);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1490,16 +1490,16 @@ impl crate::Message for EnumValueDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.number {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1592,16 +1592,16 @@ impl crate::Message for ServiceDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.method.is_empty() {
-            l += self.method.len() as u64 + LengthPrefixedArray::len(&self.method);
+            l += self.method.len() as u64 + LengthPrefixedArray::size(&self.method);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -1755,25 +1755,25 @@ impl crate::Message for MethodDescriptorProto {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.name {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.input_type {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.output_type {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.options {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.client_streaming {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.server_streaming {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2228,74 +2228,74 @@ impl crate::Message for FileOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.java_package {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.java_outer_classname {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.optimize_for {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.java_multiple_files {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = &self.go_package {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.cc_generic_services {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.java_generic_services {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.py_generic_services {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.java_generate_equals_and_hash {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.deprecated {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.java_string_check_utf8 {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.cc_enable_arenas {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = &self.objc_class_prefix {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.csharp_namespace {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.swift_prefix {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.php_class_prefix {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.php_namespace {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.php_generic_services {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = &self.php_metadata_namespace {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.ruby_package {
-            l += 2 + LengthPrefixed::len(v);
+            l += 2 + LengthPrefixed::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2427,26 +2427,26 @@ impl crate::Message for MessageOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.message_set_wire_format {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.no_standard_descriptor_accessor {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.deprecated {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.map_entry {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2668,32 +2668,32 @@ impl crate::Message for FieldOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.ctype {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.packed {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.deprecated {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.lazy {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.jstype {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.weak {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2759,14 +2759,14 @@ impl crate::Message for OneofOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2864,20 +2864,20 @@ impl crate::Message for EnumOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.allow_alias {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.deprecated {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -2959,17 +2959,17 @@ impl crate::Message for EnumValueOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.deprecated {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3051,17 +3051,17 @@ impl crate::Message for ServiceOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.deprecated {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3190,20 +3190,20 @@ impl crate::Message for MethodOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = self.deprecated {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if let Some(v) = self.idempotency_level {
-            l += 2 + Varint::len(v);
+            l += 2 + Varint::size(v);
         }
         if !self.uninterpreted_option.is_empty() {
             l += 2 * self.uninterpreted_option.len() as u64
-                + LengthPrefixedArray::len(&self.uninterpreted_option);
+                + LengthPrefixedArray::size(&self.uninterpreted_option);
         }
         if !self.extensions.is_empty() {
-            l += self.extensions.len();
+            l += self.extensions.size();
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3263,13 +3263,13 @@ impl crate::Message for UninterpretedOption_NamePart {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name_part.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name_part);
+            l += 1 + LengthPrefixed::size(&self.name_part);
         }
         if self.is_extension {
-            l += 1 + Varint::len(self.is_extension);
+            l += 1 + Varint::size(self.is_extension);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3429,28 +3429,28 @@ impl crate::Message for UninterpretedOption {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += self.name.len() as u64 + LengthPrefixedArray::len(&self.name);
+            l += self.name.len() as u64 + LengthPrefixedArray::size(&self.name);
         }
         if let Some(v) = &self.identifier_value {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.positive_int_value {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.negative_int_value {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.double_value {
-            l += 1 + Fixed64::len(v);
+            l += 1 + Fixed64::size(v);
         }
         if let Some(v) = &self.string_value {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.aggregate_value {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3557,23 +3557,23 @@ impl crate::Message for SourceCodeInfo_Location {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.path.is_empty() {
-            l += 1 + VarintArray::len(&self.path);
+            l += 1 + VarintArray::size(&self.path);
         }
         if !self.span.is_empty() {
-            l += 1 + VarintArray::len(&self.span);
+            l += 1 + VarintArray::size(&self.span);
         }
         if let Some(v) = &self.leading_comments {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = &self.trailing_comments {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self.leading_detached_comments.is_empty() {
             l += self.leading_detached_comments.len() as u64
-                + LengthPrefixedArray::len(&self.leading_detached_comments);
+                + LengthPrefixedArray::size(&self.leading_detached_comments);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3628,10 +3628,10 @@ impl crate::Message for SourceCodeInfo {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.location.is_empty() {
-            l += self.location.len() as u64 + LengthPrefixedArray::len(&self.location);
+            l += self.location.len() as u64 + LengthPrefixedArray::size(&self.location);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3735,19 +3735,19 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.path.is_empty() {
-            l += 1 + VarintArray::len(&self.path);
+            l += 1 + VarintArray::size(&self.path);
         }
         if let Some(v) = &self.source_file {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if let Some(v) = self.begin {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if let Some(v) = self.end {
-            l += 1 + Varint::len(v);
+            l += 1 + Varint::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -3802,10 +3802,10 @@ impl crate::Message for GeneratedCodeInfo {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.annotation.is_empty() {
-            l += self.annotation.len() as u64 + LengthPrefixedArray::len(&self.annotation);
+            l += self.annotation.len() as u64 + LengthPrefixedArray::size(&self.annotation);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

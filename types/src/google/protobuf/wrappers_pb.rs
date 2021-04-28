@@ -33,9 +33,9 @@ impl pecan::Message for DoubleValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Fixed64::len(self.value);
+        l += 1 + Fixed64::size(self.value);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -85,9 +85,9 @@ impl pecan::Message for FloatValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Fixed32::len(self.value);
+        l += 1 + Fixed32::size(self.value);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -137,9 +137,9 @@ impl pecan::Message for Int64Value {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::len(self.value);
+        l += 1 + Varint::size(self.value);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -189,9 +189,9 @@ impl pecan::Message for UInt64Value {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::len(self.value);
+        l += 1 + Varint::size(self.value);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -241,9 +241,9 @@ impl pecan::Message for Int32Value {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::len(self.value);
+        l += 1 + Varint::size(self.value);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -293,9 +293,9 @@ impl pecan::Message for UInt32Value {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::len(self.value);
+        l += 1 + Varint::size(self.value);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -347,10 +347,10 @@ impl pecan::Message for BoolValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if self.value {
-            l += 1 + Varint::len(self.value);
+            l += 1 + Varint::size(self.value);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -403,10 +403,10 @@ impl pecan::Message for StringValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.value.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.value);
+            l += 1 + LengthPrefixed::size(&self.value);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -459,10 +459,10 @@ impl pecan::Message for BytesValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.value.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.value);
+            l += 1 + LengthPrefixed::size(&self.value);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

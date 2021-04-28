@@ -36,10 +36,10 @@ impl pecan::Message for FieldOptions {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if self.box_field {
-            l += 1 + Varint::len(self.box_field);
+            l += 1 + Varint::size(self.box_field);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

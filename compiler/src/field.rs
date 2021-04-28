@@ -255,7 +255,7 @@ impl FieldGenerator {
     }
 
     pub fn group_end_tag_len(&self) -> u64 {
-        Varint::len(self.end_tag_value())
+        Varint::size(self.end_tag_value())
     }
 
     pub fn one_of_index(&self) -> Option<usize> {
@@ -473,7 +473,7 @@ impl FieldGenerator {
         if self.kind.can_copy() {
             ident = quote!(*#ident);
         }
-        quote!(#tag_len + #codec::len(#ident))
+        quote!(#tag_len + #codec::size(#ident))
     }
 
     fn map_len(&self, kg: &FieldGenerator, vg: &FieldGenerator) -> TokenStream {
@@ -489,7 +489,7 @@ impl FieldGenerator {
             token.extend(quote! {
                 for (key, val) in #v {
                     let el = #key_l + #val_l;
-                    l += Varint::len(el) + el;
+                    l += Varint::size(el) + el;
                 }
             });
             token
@@ -507,9 +507,9 @@ impl FieldGenerator {
         if !self.repeated {
             self.check_empty(|v, v_ref| {
                 if matches!(self.kind, FieldKind::Group) {
-                    quote! { l += #group_tag_len + #v.len(); }
+                    quote! { l += #group_tag_len + #v.size(); }
                 } else {
-                    quote! { l += #tag_len + #codec::len(#v_ref); }
+                    quote! { l += #tag_len + #codec::size(#v_ref); }
                 }
             })
         } else if !self.kind.can_copy() {
@@ -523,19 +523,19 @@ impl FieldGenerator {
                     quote! {
                         l += #group_tag_len * #v.len() as u64;
                         for i in #v_ref {
-                            l += i.len();
+                            l += i.size();
                         }
                     }
                 } else {
                     quote! {
-                        l += #vector_len + #codec::len(#v_ref);
+                        l += #vector_len + #codec::size(#v_ref);
                     }
                 }
             })
         } else {
             self.check_empty(|_, v| {
                 quote! {
-                    l += #tag_len + #codec::len(#v);
+                    l += #tag_len + #codec::size(#v);
                 }
             })
         }
@@ -568,7 +568,7 @@ impl FieldGenerator {
     }
 
     pub fn tag_len(&self) -> (u64, Literal) {
-        let len_raw = Varint::len(self.tag);
+        let len_raw = Varint::size(self.tag);
         (len_raw, Literal::u64_unsuffixed(len_raw))
     }
 
@@ -852,7 +852,7 @@ impl OneOfGenerator {
         let token = self.check_empty(|g, val| {
             let (_, tag_len) = g.tag_len();
             let codec = &g.codec;
-            quote!(l += #tag_len + #codec::len(#val))
+            quote!(l += #tag_len + #codec::size(#val))
         });
         (self.options[0].tag_value(), token)
     }

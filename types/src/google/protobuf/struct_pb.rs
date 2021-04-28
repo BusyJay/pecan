@@ -85,7 +85,7 @@ impl pecan::Message for Struct {
         if let Some(v) = &self.fields {
             for (key, val) in v {
                 s.write_tag(10)?;
-                let l = 1 + LengthPrefixed::len(key) + 1 + LengthPrefixed::len(val);
+                let l = 1 + LengthPrefixed::size(key) + 1 + LengthPrefixed::size(val);
                 Varint::write_to(l, s)?;
                 s.write_tag(10)?;
                 LengthPrefixed::write_to(key, s)?;
@@ -98,13 +98,13 @@ impl pecan::Message for Struct {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if let Some(v) = &self.fields {
             l += v.len() as u64;
             for (key, val) in v {
-                let el = 1 + LengthPrefixed::len(key) + 1 + LengthPrefixed::len(val);
-                l += Varint::len(el) + el;
+                let el = 1 + LengthPrefixed::size(key) + 1 + LengthPrefixed::size(val);
+                l += Varint::size(el) + el;
             }
         }
         if !self._unknown.is_empty() {
@@ -310,16 +310,16 @@ impl pecan::Message for Value {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         match &self.kind {
             Value_Kind::None => (),
-            Value_Kind::NullValue(v) => l += 1 + Varint::len(*v),
-            Value_Kind::NumberValue(v) => l += 1 + Fixed64::len(*v),
-            Value_Kind::StringValue(v) => l += 1 + LengthPrefixed::len(v),
-            Value_Kind::BoolValue(v) => l += 1 + Varint::len(*v),
-            Value_Kind::StructValue(v) => l += 1 + LengthPrefixed::len(v),
-            Value_Kind::ListValue(v) => l += 1 + LengthPrefixed::len(v),
+            Value_Kind::NullValue(v) => l += 1 + Varint::size(*v),
+            Value_Kind::NumberValue(v) => l += 1 + Fixed64::size(*v),
+            Value_Kind::StringValue(v) => l += 1 + LengthPrefixed::size(v),
+            Value_Kind::BoolValue(v) => l += 1 + Varint::size(*v),
+            Value_Kind::StructValue(v) => l += 1 + LengthPrefixed::size(v),
+            Value_Kind::ListValue(v) => l += 1 + LengthPrefixed::size(v),
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -374,10 +374,10 @@ impl pecan::Message for ListValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.values.is_empty() {
-            l += self.values.len() as u64 + LengthPrefixedArray::len(&self.values);
+            l += self.values.len() as u64 + LengthPrefixedArray::size(&self.values);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

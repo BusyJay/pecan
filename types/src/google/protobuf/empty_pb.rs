@@ -28,7 +28,7 @@ impl pecan::Message for Empty {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

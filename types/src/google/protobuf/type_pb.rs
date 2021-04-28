@@ -120,24 +120,24 @@ impl pecan::Message for Type {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.fields.is_empty() {
-            l += self.fields.len() as u64 + LengthPrefixedArray::len(&self.fields);
+            l += self.fields.len() as u64 + LengthPrefixedArray::size(&self.fields);
         }
         if !self.oneofs.is_empty() {
-            l += self.oneofs.len() as u64 + LengthPrefixedArray::len(&self.oneofs);
+            l += self.oneofs.len() as u64 + LengthPrefixedArray::size(&self.oneofs);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::len(&self.options);
+            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
         if let Some(v) = &self.source_context {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
-        l += 1 + Varint::len(self.syntax);
+        l += 1 + Varint::size(self.syntax);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -340,29 +340,29 @@ impl pecan::Message for Field {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::len(self.kind);
-        l += 1 + Varint::len(self.cardinality);
-        l += 1 + Varint::len(self.number);
+        l += 1 + Varint::size(self.kind);
+        l += 1 + Varint::size(self.cardinality);
+        l += 1 + Varint::size(self.number);
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.type_url.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.type_url);
+            l += 1 + LengthPrefixed::size(&self.type_url);
         }
-        l += 1 + Varint::len(self.oneof_index);
+        l += 1 + Varint::size(self.oneof_index);
         if self.packed {
-            l += 1 + Varint::len(self.packed);
+            l += 1 + Varint::size(self.packed);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::len(&self.options);
+            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
         if !self.json_name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.json_name);
+            l += 1 + LengthPrefixed::size(&self.json_name);
         }
         if !self.default_value.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.default_value);
+            l += 1 + LengthPrefixed::size(&self.default_value);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -463,21 +463,21 @@ impl pecan::Message for Enum {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.enumvalue.is_empty() {
-            l += self.enumvalue.len() as u64 + LengthPrefixedArray::len(&self.enumvalue);
+            l += self.enumvalue.len() as u64 + LengthPrefixedArray::size(&self.enumvalue);
         }
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::len(&self.options);
+            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
         if let Some(v) = &self.source_context {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
-        l += 1 + Varint::len(self.syntax);
+        l += 1 + Varint::size(self.syntax);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -543,14 +543,14 @@ impl pecan::Message for EnumValue {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
-        l += 1 + Varint::len(self.number);
+        l += 1 + Varint::size(self.number);
         if !self.options.is_empty() {
-            l += self.options.len() as u64 + LengthPrefixedArray::len(&self.options);
+            l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
@@ -622,13 +622,13 @@ impl pecan::Message for Option {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.name.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.name);
+            l += 1 + LengthPrefixed::size(&self.name);
         }
         if let Some(v) = &self.value {
-            l += 1 + LengthPrefixed::len(v);
+            l += 1 + LengthPrefixed::size(v);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

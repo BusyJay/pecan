@@ -42,13 +42,13 @@ impl pecan::Message for Any {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
         if !self.type_url.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.type_url);
+            l += 1 + LengthPrefixed::size(&self.type_url);
         }
         if !self.value.is_empty() {
-            l += 1 + LengthPrefixed::len(&self.value);
+            l += 1 + LengthPrefixed::size(&self.value);
         }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;

@@ -38,10 +38,10 @@ impl pecan::Message for Timestamp {
         }
         Ok(())
     }
-    fn len(&self) -> u64 {
+    fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::len(self.seconds);
-        l += 1 + Varint::len(self.nanos);
+        l += 1 + Varint::size(self.seconds);
+        l += 1 + Varint::size(self.nanos);
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
