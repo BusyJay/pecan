@@ -4,7 +4,9 @@ use crate::{
     field::FieldGenerator,
     message::MessageGenerator,
 };
-use pecan_types::google::protobuf::descriptor_pb::*;
+use bytes::BytesMut;
+use pecan::reflection::*;
+use pecan::Message;
 use proc_macro2::Literal;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -12,11 +14,26 @@ use quote::{format_ident, quote};
 pub struct Generator<'a> {
     db: &'a Database,
     file: &'a File,
+    escape_option: bool,
 }
 
 impl<'a> Generator<'a> {
     pub(crate) fn new(db: &'a Database, file: &'a File) -> Generator<'a> {
-        Generator { db, file }
+        let escape_option = file
+            .proto()
+            .enum_type
+            .iter()
+            .any(|e| e.name().eq_ignore_ascii_case("option"))
+            || file
+                .proto()
+                .message_type
+                .iter()
+                .any(|m| m.name().eq_ignore_ascii_case("option"));
+        Generator {
+            db,
+            file,
+            escape_option,
+        }
     }
 
     fn generate_enum(&self, e: &EnumDescriptorProto) -> TokenStream {
@@ -114,9 +131,22 @@ impl<'a> Generator<'a> {
         FieldGenerator::new(self, f).extension()
     }
 
+    fn descriptor(&self) -> TokenStream {
+        let mut desc = BytesMut::new();
+        self.file.proto().write_to_buf(&mut desc).unwrap();
+        let data = desc.freeze();
+        let data_slice = Literal::byte_string(&*data);
+        quote! {
+            static DESCRIPTOR_RAW: &[u8] = #data_slice;
+            pub static DESCRIPTOR: pecan::Bytes = pecan::Bytes::from_static(DESCRIPTOR_RAW);
+        }
+    }
+
     pub fn generate(&self) -> String {
         let mut token = quote! {
             #![allow(non_camel_case_types)]
+            #![allow(non_snake_case)]
+            #![allow(non_upper_case_globals)]
 
             use pecan::prelude::*;
         };
@@ -129,6 +159,7 @@ impl<'a> Generator<'a> {
         for e in &self.file.proto().message_type {
             token.extend(self.generate_message(e));
         }
+        token.extend(self.descriptor());
         rustfmt(&token.to_string())
     }
 
@@ -138,5 +169,9 @@ impl<'a> Generator<'a> {
 
     pub fn file(&self) -> &File {
         &self.file
+    }
+
+    pub fn escape_option(&self) -> bool {
+        self.escape_option
     }
 }

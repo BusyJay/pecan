@@ -1,25 +1,30 @@
 use crate::util::*;
 use crate::Generator;
-use pecan_types::google::protobuf::descriptor_pb::*;
+use bytes::Bytes;
+use pecan::reflection::*;
+use pecan::Message;
+use pecan_types::google::protobuf;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, Default)]
 pub struct File {
-    full_package: String,
+    module_prefix: String,
     target: String,
     proto: FileDescriptorProto,
     proto3: bool,
 }
 
 impl File {
-    fn new(p: FileDescriptorProto) -> File {
+    fn new(p: FileDescriptorProto, mut module_prefix: String) -> File {
         let proto_path = p.name();
         // TODO: load crate name from file.
         let module = rust_module(proto_path);
-        let full_package = format!("crate::{}", module.join("::"));
+        if module_prefix.is_empty() {
+            module_prefix = format!("crate::{}", module.join("::"));
+        }
         File {
             target: target_path(proto_path),
-            full_package,
+            module_prefix,
             proto3: p.syntax() == "proto3",
             proto: p,
         }
@@ -34,7 +39,7 @@ impl File {
     }
 
     pub fn full_package(&self) -> &str {
-        &self.full_package
+        &self.module_prefix
     }
 
     pub fn proto3(&self) -> bool {
@@ -57,9 +62,9 @@ pub struct TypeReference {
 }
 
 impl TypeReference {
-    pub fn new(package: String, name: String, proto: Proto) -> TypeReference {
+    pub fn new(package: impl Into<String>, name: String, proto: Proto) -> TypeReference {
         TypeReference {
-            package,
+            package: package.into(),
             name,
             proto,
             group: 0,
@@ -94,9 +99,52 @@ pub struct Database {
 }
 
 impl Database {
+    fn load_descriptor(&mut self, descriptor: &Bytes, pkg: impl Into<String>) {
+        let mut file = FileDescriptorProto::new();
+        file.merge_from_buf(&mut descriptor.clone()).unwrap();
+        self.load_impl(file, pkg.into());
+    }
+
+    pub fn load_reflection_descriptor(&mut self) {
+        self.load_descriptor(&pecan::reflection::DESCRIPTOR, "pecan::reflection");
+    }
+
+    pub fn load_complier_descriptor(&mut self) {
+        self.load_descriptor(&crate::options_pb::DESCRIPTOR, "pecan_compiler::options_pb");
+        self.load_descriptor(&crate::plugin_pb::DESCRIPTOR, "pecan_compiler::plugin_pb");
+    }
+
+    pub fn load_well_known_descriptor(&mut self) {
+        let well_known_descriptors = &[
+            (&protobuf::any_pb::DESCRIPTOR, "any_pb"),
+            (&protobuf::api_pb::DESCRIPTOR, "api_pb"),
+            (&protobuf::duration_pb::DESCRIPTOR, "duration_pb"),
+            (&protobuf::empty_pb::DESCRIPTOR, "empty_pb"),
+            (&protobuf::field_mask_pb::DESCRIPTOR, "field_mask_pb"),
+            (
+                &protobuf::source_context_pb::DESCRIPTOR,
+                "source_context_pb",
+            ),
+            (&protobuf::struct_pb::DESCRIPTOR, "struct_pb"),
+            (&protobuf::timestamp_pb::DESCRIPTOR, "timestamp_pb"),
+            (&protobuf::type_pb::DESCRIPTOR, "type_pb"),
+            (&protobuf::wrappers_pb::DESCRIPTOR, "wrappers_pb"),
+        ];
+        for (desc, pkg) in well_known_descriptors {
+            self.load_descriptor(desc, format!("pecan_types::google::protobuf::{}", pkg));
+        }
+    }
+
     pub fn load(&mut self, file: FileDescriptorProto) {
+        self.load_impl(file, String::new());
+    }
+
+    fn load_impl(&mut self, file: FileDescriptorProto, module_prefix: String) {
+        if self.files.contains_key(file.name()) {
+            return;
+        }
         let package_prefix = package_prefix(&file);
-        let f = File::new(file);
+        let f = File::new(file, module_prefix);
         let proto_path = f.proto.name();
         for e in &f.proto.enum_type {
             self.register_enum(&package_prefix, &f, e);
@@ -125,7 +173,7 @@ impl Database {
             .types
             .insert(
                 full_name,
-                TypeReference::new(file.full_package.clone(), ty_name, Proto::Enum(e.clone()))
+                TypeReference::new(file.full_package(), ty_name, Proto::Enum(e.clone()))
             )
             .is_none());
     }
@@ -149,7 +197,7 @@ impl Database {
             .insert(
                 full_name.clone(),
                 TypeReference::new(
-                    file.full_package.clone(),
+                    file.full_package(),
                     ty_name.clone(),
                     Proto::Message(e.clone())
                 )

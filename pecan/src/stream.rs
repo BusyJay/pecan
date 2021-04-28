@@ -52,17 +52,17 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
     }
 
     pub fn read_tag(&mut self) -> Result<u64> {
-        if self.progress() < self.limit {
-            let tag = self.read_var_u64_raw()?;
-            if self.progress() <= self.limit && tag != 0 {
-                Ok(tag)
-            } else {
-                Err(Error::corrupted())
+        match self.progress().cmp(&self.limit) {
+            std::cmp::Ordering::Less => {
+                let tag = self.read_var_u64_raw()?;
+                if self.progress() <= self.limit && tag != 0 {
+                    Ok(tag)
+                } else {
+                    Err(Error::corrupted())
+                }
             }
-        } else if self.progress() == self.limit {
-            Ok(0)
-        } else {
-            Err(Error::corrupted())
+            std::cmp::Ordering::Equal => Ok(0),
+            std::cmp::Ordering::Greater => Err(Error::corrupted()),
         }
     }
 
@@ -91,9 +91,9 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         self.flush();
         if self.buf.remaining() >= len {
             self.flushed += len as u64;
-            return Ok(self.buf.copy_to_bytes(len));
+            Ok(self.buf.copy_to_bytes(len))
         } else {
-            return Err(Error::Eof);
+            Err(Error::Eof)
         }
     }
 
@@ -139,12 +139,25 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
                 let bs: Bytes = LengthPrefixed::read_from(self)?;
                 LengthPrefixed::write_to(&bs, &mut os)
             }
-            3 | 4 => unimplemented!("{}", tag),
+            3 => {
+                drop(os);
+                let end_tag = (tag & !0x7) | 4;
+                self.read_group(end_tag, |s| loop {
+                    let tag = s.read_tag()?;
+                    if tag != end_tag && tag != 0 {
+                        s.read_unknown_field(tag, unknown)?;
+                        continue;
+                    }
+                    s.set_last_tag(tag);
+                    return Ok(());
+                })
+            }
+            4 => Err(Error::corrupted()),
             5 => {
                 let v: u32 = Fixed32::read_from(self)?;
                 Fixed32::write_to(v, &mut os)
             }
-            _ => return Err(Error::corrupted()),
+            _ => Err(Error::corrupted()),
         }
     }
 
@@ -160,12 +173,23 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
     }
 
     #[inline]
-    fn push_limit(&mut self, size: u64) -> Result<u64> {
+    fn start_recursive(&mut self) -> Result<()> {
         if self.depth < self.depth_limit {
             self.depth += 1;
+            Ok(())
         } else {
-            return Err(Error::DepthExcceedLimit(self.depth_limit));
+            Err(Error::DepthExcceedLimit(self.depth_limit))
         }
+    }
+
+    #[inline]
+    fn end_recursive(&mut self) {
+        self.depth -= 1;
+    }
+
+    #[inline]
+    fn push_limit(&mut self, size: u64) -> Result<u64> {
+        self.start_recursive()?;
         let last_limit = self.limit;
         self.limit = self.progress() + size;
         Ok(last_limit)
@@ -173,7 +197,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
 
     #[inline]
     fn pop_limit(&mut self, last_limit: u64) -> Result<()> {
-        self.depth -= 1;
+        self.end_recursive();
         if self.limit == self.progress() {
             self.limit = last_limit;
             Ok(())
@@ -190,17 +214,25 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         self.pop_limit(last_limit)
     }
 
-    pub fn set_last_tag(&mut self, tag: u64) {
-        self.last_tag = tag;
+    #[inline]
+    pub fn read_group(
+        &mut self,
+        end_tag: u64,
+        msg: impl FnOnce(&mut Self) -> Result<()>,
+    ) -> Result<()> {
+        self.start_recursive()?;
+        msg(self)?;
+        if self.last_tag == end_tag {
+            self.last_tag = 0;
+        } else {
+            return Err(Error::corrupted());
+        }
+        self.end_recursive();
+        Ok(())
     }
 
-    pub fn check_last_tag(&mut self, expect: u64) -> Result<()> {
-        if self.last_tag == expect {
-            self.last_tag = 0;
-            Ok(())
-        } else {
-            Err(Error::corrupted())
-        }
+    pub fn set_last_tag(&mut self, tag: u64) {
+        self.last_tag = tag;
     }
 }
 
@@ -235,7 +267,7 @@ impl<'a, B: BufMut> CodedOutputStream<'a, B> {
         if self.chunk.len() > 0 {
             Ok(())
         } else {
-            return Err(Error::Eof);
+            Err(Error::Eof)
         }
     }
 

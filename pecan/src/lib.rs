@@ -2,6 +2,7 @@ mod codec;
 mod error;
 mod extension;
 mod message;
+pub mod reflection;
 pub mod stream;
 
 pub use self::error::{Error, Result};

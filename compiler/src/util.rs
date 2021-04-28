@@ -1,4 +1,4 @@
-use pecan_types::google::protobuf::descriptor_pb::*;
+use pecan::reflection::*;
 use std::io::Write;
 use std::path::{Component, Path};
 use std::{

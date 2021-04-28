@@ -3,4 +3,5 @@ members = [
     "pecan",
     "compiler",
     "types",
+    "xtask",
 ]

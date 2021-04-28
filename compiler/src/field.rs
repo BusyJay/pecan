@@ -1,7 +1,7 @@
+use crate::options_pb::{FieldOptions, FIELD_OPT};
 use crate::{util, Generator};
 use pecan::prelude::*;
-use pecan_types::google::protobuf::descriptor_pb::*;
-use pecan_types::pecan::options_pb::{FieldOptions, FIELD_OPT};
+use pecan::reflection::*;
 use proc_macro2::{Literal, TokenStream};
 use quote::{format_ident, quote};
 use syn::Ident;
@@ -68,6 +68,14 @@ fn wire_type(e: &FieldDescriptorProto) -> (u8, Ident) {
     }
 }
 
+fn opt_type(g: &Generator) -> TokenStream {
+    if g.escape_option() {
+        quote! {std::option::Option}
+    } else {
+        quote! {Option}
+    }
+}
+
 fn field_type_name(
     g: &Generator,
     e: &FieldDescriptorProto,
@@ -109,7 +117,8 @@ fn field_type_name(
                 let key_ty = key_g.inner_type.clone();
                 let val_ty = val_g.inner_type.clone();
                 let m = quote!(pecan::HashMap<#key_ty, #val_ty>);
-                let wrapper = quote!(Option<#m>);
+                let container = opt_type(g);
+                let wrapper = quote!(#container<#m>);
                 return (
                     m,
                     wrapper,
@@ -147,7 +156,8 @@ fn field_type_name(
     if e.label() == FieldDescriptorProto_Label::LABEL_OPTIONAL
         && (!g.file().proto3() || is_message_type(e))
     {
-        wrap_type = quote! { Option<#wrap_type> };
+        let container = opt_type(g);
+        wrap_type = quote! { #container<#wrap_type> };
     } else if e.label() == FieldDescriptorProto_Label::LABEL_REPEATED {
         wrap_type = quote! { Vec<#ty> };
     }
@@ -187,7 +197,7 @@ pub struct FieldGenerator {
     codec: Ident,
     default_value: TokenStream,
     kind: FieldKind,
-    opt: pecan_types::pecan::options_pb::FieldOptions,
+    opt: crate::options_pb::FieldOptions,
     repeated: bool,
     optional: bool,
     one_of_index: Option<usize>,
@@ -322,10 +332,7 @@ impl FieldGenerator {
             };
             let end_tag = self.group_end_tag();
             quote! {
-                #tag => {
-                    #accessor.merge_from(s)?;
-                    s.check_last_tag(#end_tag)?;
-                },
+                #tag => s.read_group(#end_tag, |s| #accessor.merge_from(s))?,
             }
         } else if self.optional {
             quote! {

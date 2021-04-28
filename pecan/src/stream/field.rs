@@ -521,7 +521,7 @@ where
 
     #[inline]
     fn len(val: &'a [Item]) -> u64 {
-        val.into_iter().map(LengthPrefixed::len).sum()
+        val.iter().map(LengthPrefixed::len).sum()
     }
 }
 
@@ -564,7 +564,7 @@ where
     ItemCodec: WriteFieldCodec<Item>,
 {
     fn write_to<B: BufMut>(val: &'a [Item], buf: &mut CodedOutputStream<B>) -> Result<()> {
-        let l: u64 = val.into_iter().map(|v| ItemCodec::len(*v)).sum();
+        let l: u64 = val.iter().map(|v| ItemCodec::len(*v)).sum();
         Varint::write_to(l, buf)?;
         for v in val {
             ItemCodec::write_to(*v, buf)?;
@@ -573,7 +573,7 @@ where
     }
 
     fn len(val: &'a [Item]) -> u64 {
-        let l: u64 = val.into_iter().map(|v| ItemCodec::len(*v)).sum();
+        let l: u64 = val.iter().map(|v| ItemCodec::len(*v)).sum();
         Varint::len(l) + l
     }
 }

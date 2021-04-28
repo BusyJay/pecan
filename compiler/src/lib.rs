@@ -2,12 +2,14 @@ pub(crate) mod db;
 mod field;
 mod generator;
 mod message;
+pub mod options_pb;
+pub mod plugin_pb;
 mod util;
 
 pub use self::db::Database;
 pub use self::generator::Generator;
 
-use pecan_types::google::protobuf::descriptor_pb::FileDescriptorSet;
+use pecan::reflection::FileDescriptorSet;
 use std::fs;
 use std::io::Write;
 use std::path::Path;

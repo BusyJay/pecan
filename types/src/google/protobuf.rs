@@ -1,2 +1,10 @@
-pub mod compiler;
-pub mod descriptor_pb;
+pub mod any_pb;
+pub mod api_pb;
+pub mod duration_pb;
+pub mod empty_pb;
+pub mod field_mask_pb;
+pub mod source_context_pb;
+pub mod struct_pb;
+pub mod timestamp_pb;
+pub mod type_pb;
+pub mod wrappers_pb;

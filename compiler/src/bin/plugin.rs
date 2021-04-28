@@ -1,8 +1,8 @@
 use bytes::{Bytes, BytesMut};
 use pecan::prelude::*;
 use pecan::Message;
+use pecan_compiler::plugin_pb::*;
 use pecan_compiler::Database;
-use pecan_types::google::protobuf::compiler::plugin_pb::*;
 use std::io::{self, Read, Write};
 
 fn main() {
@@ -14,6 +14,15 @@ fn main() {
     req.merge_from(&mut input).unwrap();
 
     let mut db = Database::default();
+    if !req.parameter().contains("skip-builtin-reflection=true") {
+        db.load_reflection_descriptor();
+    }
+    if !req.parameter().contains("skip-builtin-compiler=true") {
+        db.load_complier_descriptor();
+    }
+    if !req.parameter().contains("skip-builtin-well-known=true") {
+        db.load_well_known_descriptor();
+    }
     for r in req.proto_file {
         db.load(r);
     }

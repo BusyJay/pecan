@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::field::{FieldGenerator, OneOfGenerator};
 use crate::Generator;
-use pecan_types::google::protobuf::descriptor_pb::*;
+use pecan::reflection::*;
 use proc_macro2::{Ident, Literal, TokenStream};
 use quote::{format_ident, quote};
 

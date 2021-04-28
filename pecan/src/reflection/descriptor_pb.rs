@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types)]
-use pecan::prelude::*;
+#![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+use crate::prelude::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct FileDescriptorSet {
     pub file: Vec<FileDescriptorProto>,
@@ -13,8 +15,8 @@ impl FileDescriptorSet {
         }
     }
 }
-impl pecan::Message for FileDescriptorSet {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for FileDescriptorSet {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.file, s)?,
@@ -23,7 +25,7 @@ impl pecan::Message for FileDescriptorSet {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.file.is_empty() {
             for i in &self.file {
                 s.write_tag(10)?;
@@ -46,7 +48,7 @@ impl pecan::Message for FileDescriptorSet {
         l
     }
 }
-impl pecan::DefaultInstance for FileDescriptorSet {
+impl crate::DefaultInstance for FileDescriptorSet {
     fn default_instance() -> &'static FileDescriptorSet {
         static DEFAULT: FileDescriptorSet = FileDescriptorSet::new();
         &DEFAULT
@@ -153,8 +155,8 @@ impl FileDescriptorProto {
         self.syntax = Some(val);
     }
 }
-impl pecan::Message for FileDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for FileDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -174,7 +176,7 @@ impl pecan::Message for FileDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -282,7 +284,7 @@ impl pecan::Message for FileDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for FileDescriptorProto {
+impl crate::DefaultInstance for FileDescriptorProto {
     fn default_instance() -> &'static FileDescriptorProto {
         static DEFAULT: FileDescriptorProto = FileDescriptorProto::new();
         &DEFAULT
@@ -341,8 +343,8 @@ impl DescriptorProto_ExtensionRange {
         self.options = Some(val);
     }
 }
-impl pecan::Message for DescriptorProto_ExtensionRange {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for DescriptorProto_ExtensionRange {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.start = Some(Varint::read_from(s)?),
@@ -353,7 +355,7 @@ impl pecan::Message for DescriptorProto_ExtensionRange {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -388,7 +390,7 @@ impl pecan::Message for DescriptorProto_ExtensionRange {
         l
     }
 }
-impl pecan::DefaultInstance for DescriptorProto_ExtensionRange {
+impl crate::DefaultInstance for DescriptorProto_ExtensionRange {
     fn default_instance() -> &'static DescriptorProto_ExtensionRange {
         static DEFAULT: DescriptorProto_ExtensionRange = DescriptorProto_ExtensionRange::new();
         &DEFAULT
@@ -433,8 +435,8 @@ impl DescriptorProto_ReservedRange {
         self.end = Some(val);
     }
 }
-impl pecan::Message for DescriptorProto_ReservedRange {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for DescriptorProto_ReservedRange {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.start = Some(Varint::read_from(s)?),
@@ -444,7 +446,7 @@ impl pecan::Message for DescriptorProto_ReservedRange {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -472,7 +474,7 @@ impl pecan::Message for DescriptorProto_ReservedRange {
         l
     }
 }
-impl pecan::DefaultInstance for DescriptorProto_ReservedRange {
+impl crate::DefaultInstance for DescriptorProto_ReservedRange {
     fn default_instance() -> &'static DescriptorProto_ReservedRange {
         static DEFAULT: DescriptorProto_ReservedRange = DescriptorProto_ReservedRange::new();
         &DEFAULT
@@ -539,8 +541,8 @@ impl DescriptorProto {
         self.options = Some(val);
     }
 }
-impl pecan::Message for DescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for DescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -558,7 +560,7 @@ impl pecan::Message for DescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -659,7 +661,7 @@ impl pecan::Message for DescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for DescriptorProto {
+impl crate::DefaultInstance for DescriptorProto {
     fn default_instance() -> &'static DescriptorProto {
         static DEFAULT: DescriptorProto = DescriptorProto::new();
         &DEFAULT
@@ -674,20 +676,20 @@ impl Default for DescriptorProto {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ExtensionRangeOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl ExtensionRangeOptions {
     pub const fn new() -> ExtensionRangeOptions {
         ExtensionRangeOptions {
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
 }
-impl pecan::Message for ExtensionRangeOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for ExtensionRangeOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
@@ -702,7 +704,7 @@ impl pecan::Message for ExtensionRangeOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
@@ -732,7 +734,7 @@ impl pecan::Message for ExtensionRangeOptions {
         l
     }
 }
-impl pecan::DefaultInstance for ExtensionRangeOptions {
+impl crate::DefaultInstance for ExtensionRangeOptions {
     fn default_instance() -> &'static ExtensionRangeOptions {
         static DEFAULT: ExtensionRangeOptions = ExtensionRangeOptions::new();
         &DEFAULT
@@ -746,7 +748,7 @@ impl Default for ExtensionRangeOptions {
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldDescriptorProto_Type(i32);
-impl pecan::Enumerate for FieldDescriptorProto_Type {
+impl crate::Enumerate for FieldDescriptorProto_Type {
     #[inline]
     fn value(self) -> i32 {
         self.0
@@ -806,7 +808,7 @@ impl std::fmt::Debug for FieldDescriptorProto_Type {
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldDescriptorProto_Label(i32);
-impl pecan::Enumerate for FieldDescriptorProto_Label {
+impl crate::Enumerate for FieldDescriptorProto_Label {
     #[inline]
     fn value(self) -> i32 {
         self.0
@@ -984,8 +986,8 @@ impl FieldDescriptorProto {
         self.proto3_optional = Some(val);
     }
 }
-impl pecan::Message for FieldDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for FieldDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1004,7 +1006,7 @@ impl pecan::Message for FieldDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1095,7 +1097,7 @@ impl pecan::Message for FieldDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for FieldDescriptorProto {
+impl crate::DefaultInstance for FieldDescriptorProto {
     fn default_instance() -> &'static FieldDescriptorProto {
         static DEFAULT: FieldDescriptorProto = FieldDescriptorProto::new();
         &DEFAULT
@@ -1146,8 +1148,8 @@ impl OneofDescriptorProto {
         self.options = Some(val);
     }
 }
-impl pecan::Message for OneofDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for OneofDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1157,7 +1159,7 @@ impl pecan::Message for OneofDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1185,7 +1187,7 @@ impl pecan::Message for OneofDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for OneofDescriptorProto {
+impl crate::DefaultInstance for OneofDescriptorProto {
     fn default_instance() -> &'static OneofDescriptorProto {
         static DEFAULT: OneofDescriptorProto = OneofDescriptorProto::new();
         &DEFAULT
@@ -1230,8 +1232,8 @@ impl EnumDescriptorProto_EnumReservedRange {
         self.end = Some(val);
     }
 }
-impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for EnumDescriptorProto_EnumReservedRange {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.start = Some(Varint::read_from(s)?),
@@ -1241,7 +1243,7 @@ impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -1269,7 +1271,7 @@ impl pecan::Message for EnumDescriptorProto_EnumReservedRange {
         l
     }
 }
-impl pecan::DefaultInstance for EnumDescriptorProto_EnumReservedRange {
+impl crate::DefaultInstance for EnumDescriptorProto_EnumReservedRange {
     fn default_instance() -> &'static EnumDescriptorProto_EnumReservedRange {
         static DEFAULT: EnumDescriptorProto_EnumReservedRange =
             EnumDescriptorProto_EnumReservedRange::new();
@@ -1327,8 +1329,8 @@ impl EnumDescriptorProto {
         self.options = Some(val);
     }
 }
-impl pecan::Message for EnumDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for EnumDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1341,7 +1343,7 @@ impl pecan::Message for EnumDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1396,7 +1398,7 @@ impl pecan::Message for EnumDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for EnumDescriptorProto {
+impl crate::DefaultInstance for EnumDescriptorProto {
     fn default_instance() -> &'static EnumDescriptorProto {
         static DEFAULT: EnumDescriptorProto = EnumDescriptorProto::new();
         &DEFAULT
@@ -1458,8 +1460,8 @@ impl EnumValueDescriptorProto {
         self.options = Some(val);
     }
 }
-impl pecan::Message for EnumValueDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for EnumValueDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1470,7 +1472,7 @@ impl pecan::Message for EnumValueDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1505,7 +1507,7 @@ impl pecan::Message for EnumValueDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for EnumValueDescriptorProto {
+impl crate::DefaultInstance for EnumValueDescriptorProto {
     fn default_instance() -> &'static EnumValueDescriptorProto {
         static DEFAULT: EnumValueDescriptorProto = EnumValueDescriptorProto::new();
         &DEFAULT
@@ -1558,8 +1560,8 @@ impl ServiceDescriptorProto {
         self.options = Some(val);
     }
 }
-impl pecan::Message for ServiceDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for ServiceDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1570,7 +1572,7 @@ impl pecan::Message for ServiceDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1607,7 +1609,7 @@ impl pecan::Message for ServiceDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for ServiceDescriptorProto {
+impl crate::DefaultInstance for ServiceDescriptorProto {
     fn default_instance() -> &'static ServiceDescriptorProto {
         static DEFAULT: ServiceDescriptorProto = ServiceDescriptorProto::new();
         &DEFAULT
@@ -1708,8 +1710,8 @@ impl MethodDescriptorProto {
         self.server_streaming = Some(val);
     }
 }
-impl pecan::Message for MethodDescriptorProto {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for MethodDescriptorProto {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name = Some(LengthPrefixed::read_from(s)?),
@@ -1723,7 +1725,7 @@ impl pecan::Message for MethodDescriptorProto {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1779,7 +1781,7 @@ impl pecan::Message for MethodDescriptorProto {
         l
     }
 }
-impl pecan::DefaultInstance for MethodDescriptorProto {
+impl crate::DefaultInstance for MethodDescriptorProto {
     fn default_instance() -> &'static MethodDescriptorProto {
         static DEFAULT: MethodDescriptorProto = MethodDescriptorProto::new();
         &DEFAULT
@@ -1793,7 +1795,7 @@ impl Default for MethodDescriptorProto {
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FileOptions_OptimizeMode(i32);
-impl pecan::Enumerate for FileOptions_OptimizeMode {
+impl crate::Enumerate for FileOptions_OptimizeMode {
     #[inline]
     fn value(self) -> i32 {
         self.0
@@ -1844,7 +1846,7 @@ pub struct FileOptions {
     pub php_metadata_namespace: Option<String>,
     pub ruby_package: Option<String>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl FileOptions {
@@ -1871,7 +1873,7 @@ impl FileOptions {
             php_metadata_namespace: None,
             ruby_package: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2095,8 +2097,8 @@ impl FileOptions {
         self.ruby_package = Some(val);
     }
 }
-impl pecan::Message for FileOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for FileOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.java_package = Some(LengthPrefixed::read_from(s)?),
@@ -2131,7 +2133,7 @@ impl pecan::Message for FileOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = &self.java_package {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -2301,7 +2303,7 @@ impl pecan::Message for FileOptions {
         l
     }
 }
-impl pecan::DefaultInstance for FileOptions {
+impl crate::DefaultInstance for FileOptions {
     fn default_instance() -> &'static FileOptions {
         static DEFAULT: FileOptions = FileOptions::new();
         &DEFAULT
@@ -2320,7 +2322,7 @@ pub struct MessageOptions {
     pub deprecated: Option<bool>,
     pub map_entry: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl MessageOptions {
@@ -2331,7 +2333,7 @@ impl MessageOptions {
             deprecated: None,
             map_entry: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2374,8 +2376,8 @@ impl MessageOptions {
         self.map_entry = Some(val);
     }
 }
-impl pecan::Message for MessageOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for MessageOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.message_set_wire_format = Some(Varint::read_from(s)?),
@@ -2394,7 +2396,7 @@ impl pecan::Message for MessageOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.message_set_wire_format {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2452,7 +2454,7 @@ impl pecan::Message for MessageOptions {
         l
     }
 }
-impl pecan::DefaultInstance for MessageOptions {
+impl crate::DefaultInstance for MessageOptions {
     fn default_instance() -> &'static MessageOptions {
         static DEFAULT: MessageOptions = MessageOptions::new();
         &DEFAULT
@@ -2466,7 +2468,7 @@ impl Default for MessageOptions {
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldOptions_CType(i32);
-impl pecan::Enumerate for FieldOptions_CType {
+impl crate::Enumerate for FieldOptions_CType {
     #[inline]
     fn value(self) -> i32 {
         self.0
@@ -2496,7 +2498,7 @@ impl std::fmt::Debug for FieldOptions_CType {
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct FieldOptions_JsType(i32);
-impl pecan::Enumerate for FieldOptions_JsType {
+impl crate::Enumerate for FieldOptions_JsType {
     #[inline]
     fn value(self) -> i32 {
         self.0
@@ -2533,7 +2535,7 @@ pub struct FieldOptions {
     pub deprecated: Option<bool>,
     pub weak: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl FieldOptions {
@@ -2546,7 +2548,7 @@ impl FieldOptions {
             deprecated: None,
             weak: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2605,8 +2607,8 @@ impl FieldOptions {
         self.weak = Some(val);
     }
 }
-impl pecan::Message for FieldOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for FieldOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.ctype = Some(Varint::read_from(s)?),
@@ -2627,7 +2629,7 @@ impl pecan::Message for FieldOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.ctype {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2699,7 +2701,7 @@ impl pecan::Message for FieldOptions {
         l
     }
 }
-impl pecan::DefaultInstance for FieldOptions {
+impl crate::DefaultInstance for FieldOptions {
     fn default_instance() -> &'static FieldOptions {
         static DEFAULT: FieldOptions = FieldOptions::new();
         &DEFAULT
@@ -2714,20 +2716,20 @@ impl Default for FieldOptions {
 #[derive(Clone, Debug, PartialEq)]
 pub struct OneofOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl OneofOptions {
     pub const fn new() -> OneofOptions {
         OneofOptions {
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
 }
-impl pecan::Message for OneofOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for OneofOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 7994 => LengthPrefixedArray::merge_from(&mut self.uninterpreted_option, s)?,
@@ -2742,7 +2744,7 @@ impl pecan::Message for OneofOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
@@ -2772,7 +2774,7 @@ impl pecan::Message for OneofOptions {
         l
     }
 }
-impl pecan::DefaultInstance for OneofOptions {
+impl crate::DefaultInstance for OneofOptions {
     fn default_instance() -> &'static OneofOptions {
         static DEFAULT: OneofOptions = OneofOptions::new();
         &DEFAULT
@@ -2789,7 +2791,7 @@ pub struct EnumOptions {
     pub allow_alias: Option<bool>,
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl EnumOptions {
@@ -2798,7 +2800,7 @@ impl EnumOptions {
             allow_alias: None,
             deprecated: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2821,8 +2823,8 @@ impl EnumOptions {
         self.deprecated = Some(val);
     }
 }
-impl pecan::Message for EnumOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for EnumOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 16 => self.allow_alias = Some(Varint::read_from(s)?),
@@ -2839,7 +2841,7 @@ impl pecan::Message for EnumOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.allow_alias {
             s.write_tag(16)?;
             Varint::write_to(v, s)?;
@@ -2883,7 +2885,7 @@ impl pecan::Message for EnumOptions {
         l
     }
 }
-impl pecan::DefaultInstance for EnumOptions {
+impl crate::DefaultInstance for EnumOptions {
     fn default_instance() -> &'static EnumOptions {
         static DEFAULT: EnumOptions = EnumOptions::new();
         &DEFAULT
@@ -2899,7 +2901,7 @@ impl Default for EnumOptions {
 pub struct EnumValueOptions {
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl EnumValueOptions {
@@ -2907,7 +2909,7 @@ impl EnumValueOptions {
         EnumValueOptions {
             deprecated: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -2921,8 +2923,8 @@ impl EnumValueOptions {
         self.deprecated = Some(val);
     }
 }
-impl pecan::Message for EnumValueOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for EnumValueOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 8 => self.deprecated = Some(Varint::read_from(s)?),
@@ -2938,7 +2940,7 @@ impl pecan::Message for EnumValueOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2975,7 +2977,7 @@ impl pecan::Message for EnumValueOptions {
         l
     }
 }
-impl pecan::DefaultInstance for EnumValueOptions {
+impl crate::DefaultInstance for EnumValueOptions {
     fn default_instance() -> &'static EnumValueOptions {
         static DEFAULT: EnumValueOptions = EnumValueOptions::new();
         &DEFAULT
@@ -2991,7 +2993,7 @@ impl Default for EnumValueOptions {
 pub struct ServiceOptions {
     pub deprecated: Option<bool>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl ServiceOptions {
@@ -2999,7 +3001,7 @@ impl ServiceOptions {
         ServiceOptions {
             deprecated: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -3013,8 +3015,8 @@ impl ServiceOptions {
         self.deprecated = Some(val);
     }
 }
-impl pecan::Message for ServiceOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for ServiceOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
@@ -3030,7 +3032,7 @@ impl pecan::Message for ServiceOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
             Varint::write_to(v, s)?;
@@ -3067,7 +3069,7 @@ impl pecan::Message for ServiceOptions {
         l
     }
 }
-impl pecan::DefaultInstance for ServiceOptions {
+impl crate::DefaultInstance for ServiceOptions {
     fn default_instance() -> &'static ServiceOptions {
         static DEFAULT: ServiceOptions = ServiceOptions::new();
         &DEFAULT
@@ -3081,7 +3083,7 @@ impl Default for ServiceOptions {
 }
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub struct MethodOptions_IdempotencyLevel(i32);
-impl pecan::Enumerate for MethodOptions_IdempotencyLevel {
+impl crate::Enumerate for MethodOptions_IdempotencyLevel {
     #[inline]
     fn value(self) -> i32 {
         self.0
@@ -3115,7 +3117,7 @@ pub struct MethodOptions {
     pub deprecated: Option<bool>,
     pub idempotency_level: Option<MethodOptions_IdempotencyLevel>,
     pub uninterpreted_option: Vec<UninterpretedOption>,
-    pub extensions: pecan::ExtensionMap,
+    pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
 }
 impl MethodOptions {
@@ -3124,7 +3126,7 @@ impl MethodOptions {
             deprecated: None,
             idempotency_level: None,
             uninterpreted_option: Vec::new(),
-            extensions: pecan::ExtensionMap::new(),
+            extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
         }
     }
@@ -3147,8 +3149,8 @@ impl MethodOptions {
         self.idempotency_level = Some(val);
     }
 }
-impl pecan::Message for MethodOptions {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for MethodOptions {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 264 => self.deprecated = Some(Varint::read_from(s)?),
@@ -3165,7 +3167,7 @@ impl pecan::Message for MethodOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
             Varint::write_to(v, s)?;
@@ -3209,7 +3211,7 @@ impl pecan::Message for MethodOptions {
         l
     }
 }
-impl pecan::DefaultInstance for MethodOptions {
+impl crate::DefaultInstance for MethodOptions {
     fn default_instance() -> &'static MethodOptions {
         static DEFAULT: MethodOptions = MethodOptions::new();
         &DEFAULT
@@ -3236,8 +3238,8 @@ impl UninterpretedOption_NamePart {
         }
     }
 }
-impl pecan::Message for UninterpretedOption_NamePart {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for UninterpretedOption_NamePart {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => self.name_part = LengthPrefixed::read_from(s)?,
@@ -3247,7 +3249,7 @@ impl pecan::Message for UninterpretedOption_NamePart {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.name_part.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name_part, s)?;
@@ -3275,7 +3277,7 @@ impl pecan::Message for UninterpretedOption_NamePart {
         l
     }
 }
-impl pecan::DefaultInstance for UninterpretedOption_NamePart {
+impl crate::DefaultInstance for UninterpretedOption_NamePart {
     fn default_instance() -> &'static UninterpretedOption_NamePart {
         static DEFAULT: UninterpretedOption_NamePart = UninterpretedOption_NamePart::new();
         &DEFAULT
@@ -3294,7 +3296,7 @@ pub struct UninterpretedOption {
     pub positive_int_value: Option<u64>,
     pub negative_int_value: Option<i64>,
     pub double_value: Option<f64>,
-    pub string_value: Option<pecan::Bytes>,
+    pub string_value: Option<crate::Bytes>,
     pub aggregate_value: Option<String>,
     _unknown: Vec<u8>,
 }
@@ -3350,16 +3352,16 @@ impl UninterpretedOption {
     pub fn set_double_value(&mut self, val: f64) {
         self.double_value = Some(val);
     }
-    pub fn string_value(&self) -> &pecan::Bytes {
+    pub fn string_value(&self) -> &crate::Bytes {
         match &self.string_value {
             Some(v) => v,
-            _ => pecan::Bytes::default_instance(),
+            _ => crate::Bytes::default_instance(),
         }
     }
-    pub fn string_value_mut(&mut self) -> &mut pecan::Bytes {
+    pub fn string_value_mut(&mut self) -> &mut crate::Bytes {
         self.string_value.get_or_insert_with(Default::default)
     }
-    pub fn set_string_value(&mut self, val: pecan::Bytes) {
+    pub fn set_string_value(&mut self, val: crate::Bytes) {
         self.string_value = Some(val);
     }
     pub fn aggregate_value(&self) -> &String {
@@ -3375,8 +3377,8 @@ impl UninterpretedOption {
         self.aggregate_value = Some(val);
     }
 }
-impl pecan::Message for UninterpretedOption {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for UninterpretedOption {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 18 => LengthPrefixedArray::merge_from(&mut self.name, s)?,
@@ -3391,7 +3393,7 @@ impl pecan::Message for UninterpretedOption {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.name.is_empty() {
             for i in &self.name {
                 s.write_tag(18)?;
@@ -3456,7 +3458,7 @@ impl pecan::Message for UninterpretedOption {
         l
     }
 }
-impl pecan::DefaultInstance for UninterpretedOption {
+impl crate::DefaultInstance for UninterpretedOption {
     fn default_instance() -> &'static UninterpretedOption {
         static DEFAULT: UninterpretedOption = UninterpretedOption::new();
         &DEFAULT
@@ -3513,8 +3515,8 @@ impl SourceCodeInfo_Location {
         self.trailing_comments = Some(val);
     }
 }
-impl pecan::Message for SourceCodeInfo_Location {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for SourceCodeInfo_Location {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => VarintArray::merge_from(&mut self.path, s)?,
@@ -3527,7 +3529,7 @@ impl pecan::Message for SourceCodeInfo_Location {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
             VarintArray::write_to(&self.path, s)?;
@@ -3579,7 +3581,7 @@ impl pecan::Message for SourceCodeInfo_Location {
         l
     }
 }
-impl pecan::DefaultInstance for SourceCodeInfo_Location {
+impl crate::DefaultInstance for SourceCodeInfo_Location {
     fn default_instance() -> &'static SourceCodeInfo_Location {
         static DEFAULT: SourceCodeInfo_Location = SourceCodeInfo_Location::new();
         &DEFAULT
@@ -3604,8 +3606,8 @@ impl SourceCodeInfo {
         }
     }
 }
-impl pecan::Message for SourceCodeInfo {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for SourceCodeInfo {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.location, s)?,
@@ -3614,7 +3616,7 @@ impl pecan::Message for SourceCodeInfo {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.location.is_empty() {
             for i in &self.location {
                 s.write_tag(10)?;
@@ -3637,7 +3639,7 @@ impl pecan::Message for SourceCodeInfo {
         l
     }
 }
-impl pecan::DefaultInstance for SourceCodeInfo {
+impl crate::DefaultInstance for SourceCodeInfo {
     fn default_instance() -> &'static SourceCodeInfo {
         static DEFAULT: SourceCodeInfo = SourceCodeInfo::new();
         &DEFAULT
@@ -3698,8 +3700,8 @@ impl GeneratedCodeInfo_Annotation {
         self.end = Some(val);
     }
 }
-impl pecan::Message for GeneratedCodeInfo_Annotation {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for GeneratedCodeInfo_Annotation {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => VarintArray::merge_from(&mut self.path, s)?,
@@ -3711,7 +3713,7 @@ impl pecan::Message for GeneratedCodeInfo_Annotation {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
             VarintArray::write_to(&self.path, s)?;
@@ -3753,7 +3755,7 @@ impl pecan::Message for GeneratedCodeInfo_Annotation {
         l
     }
 }
-impl pecan::DefaultInstance for GeneratedCodeInfo_Annotation {
+impl crate::DefaultInstance for GeneratedCodeInfo_Annotation {
     fn default_instance() -> &'static GeneratedCodeInfo_Annotation {
         static DEFAULT: GeneratedCodeInfo_Annotation = GeneratedCodeInfo_Annotation::new();
         &DEFAULT
@@ -3778,8 +3780,8 @@ impl GeneratedCodeInfo {
         }
     }
 }
-impl pecan::Message for GeneratedCodeInfo {
-    fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
+impl crate::Message for GeneratedCodeInfo {
+    fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
                 10 => LengthPrefixedArray::merge_from(&mut self.annotation, s)?,
@@ -3788,7 +3790,7 @@ impl pecan::Message for GeneratedCodeInfo {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
         if !self.annotation.is_empty() {
             for i in &self.annotation {
                 s.write_tag(10)?;
@@ -3811,7 +3813,7 @@ impl pecan::Message for GeneratedCodeInfo {
         l
     }
 }
-impl pecan::DefaultInstance for GeneratedCodeInfo {
+impl crate::DefaultInstance for GeneratedCodeInfo {
     fn default_instance() -> &'static GeneratedCodeInfo {
         static DEFAULT: GeneratedCodeInfo = GeneratedCodeInfo::new();
         &DEFAULT
@@ -3823,3 +3825,5 @@ impl Default for GeneratedCodeInfo {
         GeneratedCodeInfo::new()
     }
 }
+static DESCRIPTOR_RAW : & [u8] = b"\n google/protobuf/descriptor.proto\x12\x0Fgoogle.protobuf\"M\n\x11FileDescriptorSet\x128\n\x04file\x18\x01 \x03(\x0B2$.google.protobuf.FileDescriptorProtoR\x04file\"\xE4\x04\n\x13FileDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n\x07package\x18\x02 \x01(\tR\x07package\x12\x1E\n\ndependency\x18\x03 \x03(\tR\ndependency\x12+\n\x11public_dependency\x18\n \x03(\x05R\x10publicDependency\x12'\n\x0Fweak_dependency\x18\x0B \x03(\x05R\x0EweakDependency\x12C\n\x0Cmessage_type\x18\x04 \x03(\x0B2 .google.protobuf.DescriptorProtoR\x0BmessageType\x12A\n\tenum_type\x18\x05 \x03(\x0B2$.google.protobuf.EnumDescriptorProtoR\x08enumType\x12A\n\x07service\x18\x06 \x03(\x0B2'.google.protobuf.ServiceDescriptorProtoR\x07service\x12C\n\textension\x18\x07 \x03(\x0B2%.google.protobuf.FieldDescriptorProtoR\textension\x126\n\x07options\x18\x08 \x01(\x0B2\x1C.google.protobuf.FileOptionsR\x07options\x12I\n\x10source_code_info\x18\t \x01(\x0B2\x1F.google.protobuf.SourceCodeInfoR\x0EsourceCodeInfo\x12\x16\n\x06syntax\x18\x0C \x01(\tR\x06syntax\"\xB9\x06\n\x0FDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12;\n\x05field\x18\x02 \x03(\x0B2%.google.protobuf.FieldDescriptorProtoR\x05field\x12C\n\textension\x18\x06 \x03(\x0B2%.google.protobuf.FieldDescriptorProtoR\textension\x12A\n\x0Bnested_type\x18\x03 \x03(\x0B2 .google.protobuf.DescriptorProtoR\nnestedType\x12A\n\tenum_type\x18\x04 \x03(\x0B2$.google.protobuf.EnumDescriptorProtoR\x08enumType\x12X\n\x0Fextension_range\x18\x05 \x03(\x0B2/.google.protobuf.DescriptorProto.ExtensionRangeR\x0EextensionRange\x12D\n\noneof_decl\x18\x08 \x03(\x0B2%.google.protobuf.OneofDescriptorProtoR\toneofDecl\x129\n\x07options\x18\x07 \x01(\x0B2\x1F.google.protobuf.MessageOptionsR\x07options\x12U\n\x0Ereserved_range\x18\t \x03(\x0B2..google.protobuf.DescriptorProto.ReservedRangeR\rreservedRange\x12#\n\rreserved_name\x18\n \x03(\tR\x0CreservedName\x1Az\n\x0EExtensionRange\x12\x14\n\x05start\x18\x01 \x01(\x05R\x05start\x12\x10\n\x03end\x18\x02 \x01(\x05R\x03end\x12@\n\x07options\x18\x03 \x01(\x0B2&.google.protobuf.ExtensionRangeOptionsR\x07options\x1A7\n\rReservedRange\x12\x14\n\x05start\x18\x01 \x01(\x05R\x05start\x12\x10\n\x03end\x18\x02 \x01(\x05R\x03end\"|\n\x15ExtensionRangeOptions\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02\"\xC1\x06\n\x14FieldDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n\x06number\x18\x03 \x01(\x05R\x06number\x12A\n\x05label\x18\x04 \x01(\x0E2+.google.protobuf.FieldDescriptorProto.LabelR\x05label\x12>\n\x04type\x18\x05 \x01(\x0E2*.google.protobuf.FieldDescriptorProto.TypeR\x04type\x12\x1B\n\ttype_name\x18\x06 \x01(\tR\x08typeName\x12\x1A\n\x08extendee\x18\x02 \x01(\tR\x08extendee\x12#\n\rdefault_value\x18\x07 \x01(\tR\x0CdefaultValue\x12\x1F\n\x0Boneof_index\x18\t \x01(\x05R\noneofIndex\x12\x1B\n\tjson_name\x18\n \x01(\tR\x08jsonName\x127\n\x07options\x18\x08 \x01(\x0B2\x1D.google.protobuf.FieldOptionsR\x07options\x12'\n\x0Fproto3_optional\x18\x11 \x01(\x08R\x0Eproto3Optional\"\xB6\x02\n\x04Type\x12\x0F\n\x0BTYPE_DOUBLE\x10\x01\x12\x0E\n\nTYPE_FLOAT\x10\x02\x12\x0E\n\nTYPE_INT64\x10\x03\x12\x0F\n\x0BTYPE_UINT64\x10\x04\x12\x0E\n\nTYPE_INT32\x10\x05\x12\x10\n\x0CTYPE_FIXED64\x10\x06\x12\x10\n\x0CTYPE_FIXED32\x10\x07\x12\r\n\tTYPE_BOOL\x10\x08\x12\x0F\n\x0BTYPE_STRING\x10\t\x12\x0E\n\nTYPE_GROUP\x10\n\x12\x10\n\x0CTYPE_MESSAGE\x10\x0B\x12\x0E\n\nTYPE_BYTES\x10\x0C\x12\x0F\n\x0BTYPE_UINT32\x10\r\x12\r\n\tTYPE_ENUM\x10\x0E\x12\x11\n\rTYPE_SFIXED32\x10\x0F\x12\x11\n\rTYPE_SFIXED64\x10\x10\x12\x0F\n\x0BTYPE_SINT32\x10\x11\x12\x0F\n\x0BTYPE_SINT64\x10\x12\"C\n\x05Label\x12\x12\n\x0ELABEL_OPTIONAL\x10\x01\x12\x12\n\x0ELABEL_REQUIRED\x10\x02\x12\x12\n\x0ELABEL_REPEATED\x10\x03\"c\n\x14OneofDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x127\n\x07options\x18\x02 \x01(\x0B2\x1D.google.protobuf.OneofOptionsR\x07options\"\xE3\x02\n\x13EnumDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12?\n\x05value\x18\x02 \x03(\x0B2).google.protobuf.EnumValueDescriptorProtoR\x05value\x126\n\x07options\x18\x03 \x01(\x0B2\x1C.google.protobuf.EnumOptionsR\x07options\x12]\n\x0Ereserved_range\x18\x04 \x03(\x0B26.google.protobuf.EnumDescriptorProto.EnumReservedRangeR\rreservedRange\x12#\n\rreserved_name\x18\x05 \x03(\tR\x0CreservedName\x1A;\n\x11EnumReservedRange\x12\x14\n\x05start\x18\x01 \x01(\x05R\x05start\x12\x10\n\x03end\x18\x02 \x01(\x05R\x03end\"\x83\x01\n\x18EnumValueDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n\x06number\x18\x02 \x01(\x05R\x06number\x12;\n\x07options\x18\x03 \x01(\x0B2!.google.protobuf.EnumValueOptionsR\x07options\"\xA7\x01\n\x16ServiceDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12>\n\x06method\x18\x02 \x03(\x0B2&.google.protobuf.MethodDescriptorProtoR\x06method\x129\n\x07options\x18\x03 \x01(\x0B2\x1F.google.protobuf.ServiceOptionsR\x07options\"\x89\x02\n\x15MethodDescriptorProto\x12\x12\n\x04name\x18\x01 \x01(\tR\x04name\x12\x1D\n\ninput_type\x18\x02 \x01(\tR\tinputType\x12\x1F\n\x0Boutput_type\x18\x03 \x01(\tR\noutputType\x128\n\x07options\x18\x04 \x01(\x0B2\x1E.google.protobuf.MethodOptionsR\x07options\x120\n\x10client_streaming\x18\x05 \x01(\x08:\x05falseR\x0FclientStreaming\x120\n\x10server_streaming\x18\x06 \x01(\x08:\x05falseR\x0FserverStreaming\"\x91\t\n\x0BFileOptions\x12!\n\x0Cjava_package\x18\x01 \x01(\tR\x0BjavaPackage\x120\n\x14java_outer_classname\x18\x08 \x01(\tR\x12javaOuterClassname\x125\n\x13java_multiple_files\x18\n \x01(\x08:\x05falseR\x11javaMultipleFiles\x12D\n\x1Djava_generate_equals_and_hash\x18\x14 \x01(\x08B\x02\x18\x01R\x19javaGenerateEqualsAndHash\x12:\n\x16java_string_check_utf8\x18\x1B \x01(\x08:\x05falseR\x13javaStringCheckUtf8\x12S\n\x0Coptimize_for\x18\t \x01(\x0E2).google.protobuf.FileOptions.OptimizeMode:\x05SPEEDR\x0BoptimizeFor\x12\x1D\n\ngo_package\x18\x0B \x01(\tR\tgoPackage\x125\n\x13cc_generic_services\x18\x10 \x01(\x08:\x05falseR\x11ccGenericServices\x129\n\x15java_generic_services\x18\x11 \x01(\x08:\x05falseR\x13javaGenericServices\x125\n\x13py_generic_services\x18\x12 \x01(\x08:\x05falseR\x11pyGenericServices\x127\n\x14php_generic_services\x18* \x01(\x08:\x05falseR\x12phpGenericServices\x12%\n\ndeprecated\x18\x17 \x01(\x08:\x05falseR\ndeprecated\x12.\n\x10cc_enable_arenas\x18\x1F \x01(\x08:\x04trueR\x0EccEnableArenas\x12*\n\x11objc_class_prefix\x18$ \x01(\tR\x0FobjcClassPrefix\x12)\n\x10csharp_namespace\x18% \x01(\tR\x0FcsharpNamespace\x12!\n\x0Cswift_prefix\x18' \x01(\tR\x0BswiftPrefix\x12(\n\x10php_class_prefix\x18( \x01(\tR\x0EphpClassPrefix\x12#\n\rphp_namespace\x18) \x01(\tR\x0CphpNamespace\x124\n\x16php_metadata_namespace\x18, \x01(\tR\x14phpMetadataNamespace\x12!\n\x0Cruby_package\x18- \x01(\tR\x0BrubyPackage\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption\":\n\x0COptimizeMode\x12\t\n\x05SPEED\x10\x01\x12\r\n\tCODE_SIZE\x10\x02\x12\x10\n\x0CLITE_RUNTIME\x10\x03*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02J\x04\x08&\x10'\"\xE3\x02\n\x0EMessageOptions\x12<\n\x17message_set_wire_format\x18\x01 \x01(\x08:\x05falseR\x14messageSetWireFormat\x12L\n\x1Fno_standard_descriptor_accessor\x18\x02 \x01(\x08:\x05falseR\x1CnoStandardDescriptorAccessor\x12%\n\ndeprecated\x18\x03 \x01(\x08:\x05falseR\ndeprecated\x12\x1B\n\tmap_entry\x18\x07 \x01(\x08R\x08mapEntry\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02J\x04\x08\x04\x10\x05J\x04\x08\x05\x10\x06J\x04\x08\x06\x10\x07J\x04\x08\x08\x10\tJ\x04\x08\t\x10\n\"\xE2\x03\n\x0CFieldOptions\x12A\n\x05ctype\x18\x01 \x01(\x0E2#.google.protobuf.FieldOptions.CType:\x06STRINGR\x05ctype\x12\x16\n\x06packed\x18\x02 \x01(\x08R\x06packed\x12G\n\x06jstype\x18\x06 \x01(\x0E2$.google.protobuf.FieldOptions.JSType:\tJS_NORMALR\x06jstype\x12\x19\n\x04lazy\x18\x05 \x01(\x08:\x05falseR\x04lazy\x12%\n\ndeprecated\x18\x03 \x01(\x08:\x05falseR\ndeprecated\x12\x19\n\x04weak\x18\n \x01(\x08:\x05falseR\x04weak\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption\"/\n\x05CType\x12\n\n\x06STRING\x10\0\x12\x08\n\x04CORD\x10\x01\x12\x10\n\x0CSTRING_PIECE\x10\x02\"5\n\x06JSType\x12\r\n\tJS_NORMAL\x10\0\x12\r\n\tJS_STRING\x10\x01\x12\r\n\tJS_NUMBER\x10\x02*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02J\x04\x08\x04\x10\x05\"s\n\x0COneofOptions\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02\"\xC0\x01\n\x0BEnumOptions\x12\x1F\n\x0Ballow_alias\x18\x02 \x01(\x08R\nallowAlias\x12%\n\ndeprecated\x18\x03 \x01(\x08:\x05falseR\ndeprecated\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02J\x04\x08\x05\x10\x06\"\x9E\x01\n\x10EnumValueOptions\x12%\n\ndeprecated\x18\x01 \x01(\x08:\x05falseR\ndeprecated\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02\"\x9C\x01\n\x0EServiceOptions\x12%\n\ndeprecated\x18! \x01(\x08:\x05falseR\ndeprecated\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02\"\xE0\x02\n\rMethodOptions\x12%\n\ndeprecated\x18! \x01(\x08:\x05falseR\ndeprecated\x12q\n\x11idempotency_level\x18\" \x01(\x0E2/.google.protobuf.MethodOptions.IdempotencyLevel:\x13IDEMPOTENCY_UNKNOWNR\x10idempotencyLevel\x12X\n\x14uninterpreted_option\x18\xE7\x07 \x03(\x0B2$.google.protobuf.UninterpretedOptionR\x13uninterpretedOption\"P\n\x10IdempotencyLevel\x12\x17\n\x13IDEMPOTENCY_UNKNOWN\x10\0\x12\x13\n\x0FNO_SIDE_EFFECTS\x10\x01\x12\x0E\n\nIDEMPOTENT\x10\x02*\t\x08\xE8\x07\x10\x80\x80\x80\x80\x02\"\x9A\x03\n\x13UninterpretedOption\x12A\n\x04name\x18\x02 \x03(\x0B2-.google.protobuf.UninterpretedOption.NamePartR\x04name\x12)\n\x10identifier_value\x18\x03 \x01(\tR\x0FidentifierValue\x12,\n\x12positive_int_value\x18\x04 \x01(\x04R\x10positiveIntValue\x12,\n\x12negative_int_value\x18\x05 \x01(\x03R\x10negativeIntValue\x12!\n\x0Cdouble_value\x18\x06 \x01(\x01R\x0BdoubleValue\x12!\n\x0Cstring_value\x18\x07 \x01(\x0CR\x0BstringValue\x12'\n\x0Faggregate_value\x18\x08 \x01(\tR\x0EaggregateValue\x1AJ\n\x08NamePart\x12\x1B\n\tname_part\x18\x01 \x02(\tR\x08namePart\x12!\n\x0Cis_extension\x18\x02 \x02(\x08R\x0BisExtension\"\xA7\x02\n\x0ESourceCodeInfo\x12D\n\x08location\x18\x01 \x03(\x0B2(.google.protobuf.SourceCodeInfo.LocationR\x08location\x1A\xCE\x01\n\x08Location\x12\x16\n\x04path\x18\x01 \x03(\x05B\x02\x10\x01R\x04path\x12\x16\n\x04span\x18\x02 \x03(\x05B\x02\x10\x01R\x04span\x12)\n\x10leading_comments\x18\x03 \x01(\tR\x0FleadingComments\x12+\n\x11trailing_comments\x18\x04 \x01(\tR\x10trailingComments\x12:\n\x19leading_detached_comments\x18\x06 \x03(\tR\x17leadingDetachedComments\"\xD1\x01\n\x11GeneratedCodeInfo\x12M\n\nannotation\x18\x01 \x03(\x0B2-.google.protobuf.GeneratedCodeInfo.AnnotationR\nannotation\x1Am\n\nAnnotation\x12\x16\n\x04path\x18\x01 \x03(\x05B\x02\x10\x01R\x04path\x12\x1F\n\x0Bsource_file\x18\x02 \x01(\tR\nsourceFile\x12\x14\n\x05begin\x18\x03 \x01(\x05R\x05begin\x12\x10\n\x03end\x18\x04 \x01(\x05R\x03endB~\n\x13com.google.protobufB\x10DescriptorProtosH\x01Z-google.golang.org/protobuf/types/descriptorpb\xF8\x01\x01\xA2\x02\x03GPB\xAA\x02\x1AGoogle.Protobuf.ReflectionJ\x82\xCA\x02\n\x07\x12\x05'\0\x8E\x07\x01\n\xAA\x0F\n\x01\x0C\x12\x03'\0\x122\xC1\x0C Protocol Buffers - Google's data interchange format\n Copyright 2008 Google Inc.  All rights reserved.\n https://developers.google.com/protocol-buffers/\n\n Redistribution and use in source and binary forms, with or without\n modification, are permitted provided that the following conditions are\n met:\n\n     * Redistributions of source code must retain the above copyright\n notice, this list of conditions and the following disclaimer.\n     * Redistributions in binary form must reproduce the above\n copyright notice, this list of conditions and the following disclaimer\n in the documentation and/or other materials provided with the\n distribution.\n     * Neither the name of Google Inc. nor the names of its\n contributors may be used to endorse or promote products derived from\n this software without specific prior written permission.\n\n THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n2\xDB\x02 Author: kenton@google.com (Kenton Varda)\n  Based on original Protocol Buffers design by\n  Sanjay Ghemawat, Jeff Dean, and others.\n\n The messages in this file describe the definitions found in .proto files.\n A valid .proto file can be translated directly to a FileDescriptorProto\n without any other information (e.g. without reading its imports).\n\n\x08\n\x01\x02\x12\x03)\0\x18\n\x08\n\x01\x08\x12\x03+\0D\n\t\n\x02\x08\x0B\x12\x03+\0D\n\x08\n\x01\x08\x12\x03,\0,\n\t\n\x02\x08\x01\x12\x03,\0,\n\x08\n\x01\x08\x12\x03-\01\n\t\n\x02\x08\x08\x12\x03-\01\n\x08\n\x01\x08\x12\x03.\07\n\t\n\x02\x08%\x12\x03.\07\n\x08\n\x01\x08\x12\x03/\0!\n\t\n\x02\x08$\x12\x03/\0!\n\x08\n\x01\x08\x12\x030\0\x1F\n\t\n\x02\x08\x1F\x12\x030\0\x1F\n\x08\n\x01\x08\x12\x034\0\x1C\n\x7F\n\x02\x08\t\x12\x034\0\x1C\x1At descriptor.proto must be optimized for speed because reflection-based\n algorithms don't work during bootstrapping.\n\nj\n\x02\x04\0\x12\x048\0:\x01\x1A^ The protocol compiler can output a FileDescriptorSet containing the .proto\n files it parses.\n\n\n\n\x03\x04\0\x01\x12\x038\x08\x19\n\x0B\n\x04\x04\0\x02\0\x12\x039\x02(\n\x0C\n\x05\x04\0\x02\0\x04\x12\x039\x02\n\n\x0C\n\x05\x04\0\x02\0\x06\x12\x039\x0B\x1E\n\x0C\n\x05\x04\0\x02\0\x01\x12\x039\x1F#\n\x0C\n\x05\x04\0\x02\0\x03\x12\x039&'\n/\n\x02\x04\x01\x12\x04=\0Z\x01\x1A# Describes a complete .proto file.\n\n\n\n\x03\x04\x01\x01\x12\x03=\x08\x1B\n9\n\x04\x04\x01\x02\0\x12\x03>\x02\x1B\", file name, relative to root of source tree\n\n\x0C\n\x05\x04\x01\x02\0\x04\x12\x03>\x02\n\n\x0C\n\x05\x04\x01\x02\0\x05\x12\x03>\x0B\x11\n\x0C\n\x05\x04\x01\x02\0\x01\x12\x03>\x12\x16\n\x0C\n\x05\x04\x01\x02\0\x03\x12\x03>\x19\x1A\n*\n\x04\x04\x01\x02\x01\x12\x03?\x02\x1E\"\x1D e.g. \"foo\", \"foo.bar\", etc.\n\n\x0C\n\x05\x04\x01\x02\x01\x04\x12\x03?\x02\n\n\x0C\n\x05\x04\x01\x02\x01\x05\x12\x03?\x0B\x11\n\x0C\n\x05\x04\x01\x02\x01\x01\x12\x03?\x12\x19\n\x0C\n\x05\x04\x01\x02\x01\x03\x12\x03?\x1C\x1D\n4\n\x04\x04\x01\x02\x02\x12\x03B\x02!\x1A' Names of files imported by this file.\n\n\x0C\n\x05\x04\x01\x02\x02\x04\x12\x03B\x02\n\n\x0C\n\x05\x04\x01\x02\x02\x05\x12\x03B\x0B\x11\n\x0C\n\x05\x04\x01\x02\x02\x01\x12\x03B\x12\x1C\n\x0C\n\x05\x04\x01\x02\x02\x03\x12\x03B\x1F \nQ\n\x04\x04\x01\x02\x03\x12\x03D\x02(\x1AD Indexes of the public imported files in the dependency list above.\n\n\x0C\n\x05\x04\x01\x02\x03\x04\x12\x03D\x02\n\n\x0C\n\x05\x04\x01\x02\x03\x05\x12\x03D\x0B\x10\n\x0C\n\x05\x04\x01\x02\x03\x01\x12\x03D\x11\"\n\x0C\n\x05\x04\x01\x02\x03\x03\x12\x03D%'\nz\n\x04\x04\x01\x02\x04\x12\x03G\x02&\x1Am Indexes of the weak imported files in the dependency list.\n For Google-internal migration only. Do not use.\n\n\x0C\n\x05\x04\x01\x02\x04\x04\x12\x03G\x02\n\n\x0C\n\x05\x04\x01\x02\x04\x05\x12\x03G\x0B\x10\n\x0C\n\x05\x04\x01\x02\x04\x01\x12\x03G\x11 \n\x0C\n\x05\x04\x01\x02\x04\x03\x12\x03G#%\n6\n\x04\x04\x01\x02\x05\x12\x03J\x02,\x1A) All top-level definitions in this file.\n\n\x0C\n\x05\x04\x01\x02\x05\x04\x12\x03J\x02\n\n\x0C\n\x05\x04\x01\x02\x05\x06\x12\x03J\x0B\x1A\n\x0C\n\x05\x04\x01\x02\x05\x01\x12\x03J\x1B'\n\x0C\n\x05\x04\x01\x02\x05\x03\x12\x03J*+\n\x0B\n\x04\x04\x01\x02\x06\x12\x03K\x02-\n\x0C\n\x05\x04\x01\x02\x06\x04\x12\x03K\x02\n\n\x0C\n\x05\x04\x01\x02\x06\x06\x12\x03K\x0B\x1E\n\x0C\n\x05\x04\x01\x02\x06\x01\x12\x03K\x1F(\n\x0C\n\x05\x04\x01\x02\x06\x03\x12\x03K+,\n\x0B\n\x04\x04\x01\x02\x07\x12\x03L\x02.\n\x0C\n\x05\x04\x01\x02\x07\x04\x12\x03L\x02\n\n\x0C\n\x05\x04\x01\x02\x07\x06\x12\x03L\x0B!\n\x0C\n\x05\x04\x01\x02\x07\x01\x12\x03L\")\n\x0C\n\x05\x04\x01\x02\x07\x03\x12\x03L,-\n\x0B\n\x04\x04\x01\x02\x08\x12\x03M\x02.\n\x0C\n\x05\x04\x01\x02\x08\x04\x12\x03M\x02\n\n\x0C\n\x05\x04\x01\x02\x08\x06\x12\x03M\x0B\x1F\n\x0C\n\x05\x04\x01\x02\x08\x01\x12\x03M )\n\x0C\n\x05\x04\x01\x02\x08\x03\x12\x03M,-\n\x0B\n\x04\x04\x01\x02\t\x12\x03O\x02#\n\x0C\n\x05\x04\x01\x02\t\x04\x12\x03O\x02\n\n\x0C\n\x05\x04\x01\x02\t\x06\x12\x03O\x0B\x16\n\x0C\n\x05\x04\x01\x02\t\x01\x12\x03O\x17\x1E\n\x0C\n\x05\x04\x01\x02\t\x03\x12\x03O!\"\n\xF4\x01\n\x04\x04\x01\x02\n\x12\x03U\x02/\x1A\xE6\x01 This field contains optional information about the original source code.\n You may safely remove this entire field without harming runtime\n functionality of the descriptors -- the information is needed only by\n development tools.\n\n\x0C\n\x05\x04\x01\x02\n\x04\x12\x03U\x02\n\n\x0C\n\x05\x04\x01\x02\n\x06\x12\x03U\x0B\x19\n\x0C\n\x05\x04\x01\x02\n\x01\x12\x03U\x1A*\n\x0C\n\x05\x04\x01\x02\n\x03\x12\x03U-.\n]\n\x04\x04\x01\x02\x0B\x12\x03Y\x02\x1E\x1AP The syntax of the proto file.\n The supported values are \"proto2\" and \"proto3\".\n\n\x0C\n\x05\x04\x01\x02\x0B\x04\x12\x03Y\x02\n\n\x0C\n\x05\x04\x01\x02\x0B\x05\x12\x03Y\x0B\x11\n\x0C\n\x05\x04\x01\x02\x0B\x01\x12\x03Y\x12\x18\n\x0C\n\x05\x04\x01\x02\x0B\x03\x12\x03Y\x1B\x1D\n'\n\x02\x04\x02\x12\x04]\0}\x01\x1A\x1B Describes a message type.\n\n\n\n\x03\x04\x02\x01\x12\x03]\x08\x17\n\x0B\n\x04\x04\x02\x02\0\x12\x03^\x02\x1B\n\x0C\n\x05\x04\x02\x02\0\x04\x12\x03^\x02\n\n\x0C\n\x05\x04\x02\x02\0\x05\x12\x03^\x0B\x11\n\x0C\n\x05\x04\x02\x02\0\x01\x12\x03^\x12\x16\n\x0C\n\x05\x04\x02\x02\0\x03\x12\x03^\x19\x1A\n\x0B\n\x04\x04\x02\x02\x01\x12\x03`\x02*\n\x0C\n\x05\x04\x02\x02\x01\x04\x12\x03`\x02\n\n\x0C\n\x05\x04\x02\x02\x01\x06\x12\x03`\x0B\x1F\n\x0C\n\x05\x04\x02\x02\x01\x01\x12\x03` %\n\x0C\n\x05\x04\x02\x02\x01\x03\x12\x03`()\n\x0B\n\x04\x04\x02\x02\x02\x12\x03a\x02.\n\x0C\n\x05\x04\x02\x02\x02\x04\x12\x03a\x02\n\n\x0C\n\x05\x04\x02\x02\x02\x06\x12\x03a\x0B\x1F\n\x0C\n\x05\x04\x02\x02\x02\x01\x12\x03a )\n\x0C\n\x05\x04\x02\x02\x02\x03\x12\x03a,-\n\x0B\n\x04\x04\x02\x02\x03\x12\x03c\x02+\n\x0C\n\x05\x04\x02\x02\x03\x04\x12\x03c\x02\n\n\x0C\n\x05\x04\x02\x02\x03\x06\x12\x03c\x0B\x1A\n\x0C\n\x05\x04\x02\x02\x03\x01\x12\x03c\x1B&\n\x0C\n\x05\x04\x02\x02\x03\x03\x12\x03c)*\n\x0B\n\x04\x04\x02\x02\x04\x12\x03d\x02-\n\x0C\n\x05\x04\x02\x02\x04\x04\x12\x03d\x02\n\n\x0C\n\x05\x04\x02\x02\x04\x06\x12\x03d\x0B\x1E\n\x0C\n\x05\x04\x02\x02\x04\x01\x12\x03d\x1F(\n\x0C\n\x05\x04\x02\x02\x04\x03\x12\x03d+,\n\x0C\n\x04\x04\x02\x03\0\x12\x04f\x02k\x03\n\x0C\n\x05\x04\x02\x03\0\x01\x12\x03f\n\x18\n\x1B\n\x06\x04\x02\x03\0\x02\0\x12\x03g\x04\x1D\"\x0C Inclusive.\n\n\x0E\n\x07\x04\x02\x03\0\x02\0\x04\x12\x03g\x04\x0C\n\x0E\n\x07\x04\x02\x03\0\x02\0\x05\x12\x03g\r\x12\n\x0E\n\x07\x04\x02\x03\0\x02\0\x01\x12\x03g\x13\x18\n\x0E\n\x07\x04\x02\x03\0\x02\0\x03\x12\x03g\x1B\x1C\n\x1B\n\x06\x04\x02\x03\0\x02\x01\x12\x03h\x04\x1B\"\x0C Exclusive.\n\n\x0E\n\x07\x04\x02\x03\0\x02\x01\x04\x12\x03h\x04\x0C\n\x0E\n\x07\x04\x02\x03\0\x02\x01\x05\x12\x03h\r\x12\n\x0E\n\x07\x04\x02\x03\0\x02\x01\x01\x12\x03h\x13\x16\n\x0E\n\x07\x04\x02\x03\0\x02\x01\x03\x12\x03h\x19\x1A\n\r\n\x06\x04\x02\x03\0\x02\x02\x12\x03j\x04/\n\x0E\n\x07\x04\x02\x03\0\x02\x02\x04\x12\x03j\x04\x0C\n\x0E\n\x07\x04\x02\x03\0\x02\x02\x06\x12\x03j\r\"\n\x0E\n\x07\x04\x02\x03\0\x02\x02\x01\x12\x03j#*\n\x0E\n\x07\x04\x02\x03\0\x02\x02\x03\x12\x03j-.\n\x0B\n\x04\x04\x02\x02\x05\x12\x03l\x02.\n\x0C\n\x05\x04\x02\x02\x05\x04\x12\x03l\x02\n\n\x0C\n\x05\x04\x02\x02\x05\x06\x12\x03l\x0B\x19\n\x0C\n\x05\x04\x02\x02\x05\x01\x12\x03l\x1A)\n\x0C\n\x05\x04\x02\x02\x05\x03\x12\x03l,-\n\x0B\n\x04\x04\x02\x02\x06\x12\x03n\x02/\n\x0C\n\x05\x04\x02\x02\x06\x04\x12\x03n\x02\n\n\x0C\n\x05\x04\x02\x02\x06\x06\x12\x03n\x0B\x1F\n\x0C\n\x05\x04\x02\x02\x06\x01\x12\x03n *\n\x0C\n\x05\x04\x02\x02\x06\x03\x12\x03n-.\n\x0B\n\x04\x04\x02\x02\x07\x12\x03p\x02&\n\x0C\n\x05\x04\x02\x02\x07\x04\x12\x03p\x02\n\n\x0C\n\x05\x04\x02\x02\x07\x06\x12\x03p\x0B\x19\n\x0C\n\x05\x04\x02\x02\x07\x01\x12\x03p\x1A!\n\x0C\n\x05\x04\x02\x02\x07\x03\x12\x03p$%\n\xAA\x01\n\x04\x04\x02\x03\x01\x12\x04u\x02x\x03\x1A\x9B\x01 Range of reserved tag numbers. Reserved tag numbers may not be used by\n fields or extension ranges in the same message. Reserved ranges may\n not overlap.\n\n\x0C\n\x05\x04\x02\x03\x01\x01\x12\x03u\n\x17\n\x1B\n\x06\x04\x02\x03\x01\x02\0\x12\x03v\x04\x1D\"\x0C Inclusive.\n\n\x0E\n\x07\x04\x02\x03\x01\x02\0\x04\x12\x03v\x04\x0C\n\x0E\n\x07\x04\x02\x03\x01\x02\0\x05\x12\x03v\r\x12\n\x0E\n\x07\x04\x02\x03\x01\x02\0\x01\x12\x03v\x13\x18\n\x0E\n\x07\x04\x02\x03\x01\x02\0\x03\x12\x03v\x1B\x1C\n\x1B\n\x06\x04\x02\x03\x01\x02\x01\x12\x03w\x04\x1B\"\x0C Exclusive.\n\n\x0E\n\x07\x04\x02\x03\x01\x02\x01\x04\x12\x03w\x04\x0C\n\x0E\n\x07\x04\x02\x03\x01\x02\x01\x05\x12\x03w\r\x12\n\x0E\n\x07\x04\x02\x03\x01\x02\x01\x01\x12\x03w\x13\x16\n\x0E\n\x07\x04\x02\x03\x01\x02\x01\x03\x12\x03w\x19\x1A\n\x0B\n\x04\x04\x02\x02\x08\x12\x03y\x02,\n\x0C\n\x05\x04\x02\x02\x08\x04\x12\x03y\x02\n\n\x0C\n\x05\x04\x02\x02\x08\x06\x12\x03y\x0B\x18\n\x0C\n\x05\x04\x02\x02\x08\x01\x12\x03y\x19'\n\x0C\n\x05\x04\x02\x02\x08\x03\x12\x03y*+\n\x82\x01\n\x04\x04\x02\x02\t\x12\x03|\x02%\x1Au Reserved field names, which may not be used by fields in the same message.\n A given name may only be reserved once.\n\n\x0C\n\x05\x04\x02\x02\t\x04\x12\x03|\x02\n\n\x0C\n\x05\x04\x02\x02\t\x05\x12\x03|\x0B\x11\n\x0C\n\x05\x04\x02\x02\t\x01\x12\x03|\x12\x1F\n\x0C\n\x05\x04\x02\x02\t\x03\x12\x03|\"$\n\x0B\n\x02\x04\x03\x12\x05\x7F\0\x86\x01\x01\n\n\n\x03\x04\x03\x01\x12\x03\x7F\x08\x1D\nO\n\x04\x04\x03\x02\0\x12\x04\x81\x01\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x03\x02\0\x04\x12\x04\x81\x01\x02\n\n\r\n\x05\x04\x03\x02\0\x06\x12\x04\x81\x01\x0B\x1E\n\r\n\x05\x04\x03\x02\0\x01\x12\x04\x81\x01\x1F3\n\r\n\x05\x04\x03\x02\0\x03\x12\x04\x81\x0169\nZ\n\x03\x04\x03\x05\x12\x04\x85\x01\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x03\x05\0\x12\x04\x85\x01\r\x18\n\r\n\x05\x04\x03\x05\0\x01\x12\x04\x85\x01\r\x11\n\r\n\x05\x04\x03\x05\0\x02\x12\x04\x85\x01\x15\x18\n3\n\x02\x04\x04\x12\x06\x89\x01\0\xEE\x01\x01\x1A% Describes a field within a message.\n\n\x0B\n\x03\x04\x04\x01\x12\x04\x89\x01\x08\x1C\n\x0E\n\x04\x04\x04\x04\0\x12\x06\x8A\x01\x02\xA9\x01\x03\n\r\n\x05\x04\x04\x04\0\x01\x12\x04\x8A\x01\x07\x0B\nS\n\x06\x04\x04\x04\0\x02\0\x12\x04\x8D\x01\x04\x14\x1AC 0 is reserved for errors.\n Order is weird for historical reasons.\n\n\x0F\n\x07\x04\x04\x04\0\x02\0\x01\x12\x04\x8D\x01\x04\x0F\n\x0F\n\x07\x04\x04\x04\0\x02\0\x02\x12\x04\x8D\x01\x12\x13\n\x0E\n\x06\x04\x04\x04\0\x02\x01\x12\x04\x8E\x01\x04\x13\n\x0F\n\x07\x04\x04\x04\0\x02\x01\x01\x12\x04\x8E\x01\x04\x0E\n\x0F\n\x07\x04\x04\x04\0\x02\x01\x02\x12\x04\x8E\x01\x11\x12\nw\n\x06\x04\x04\x04\0\x02\x02\x12\x04\x91\x01\x04\x13\x1Ag Not ZigZag encoded.  Negative numbers take 10 bytes.  Use TYPE_SINT64 if\n negative values are likely.\n\n\x0F\n\x07\x04\x04\x04\0\x02\x02\x01\x12\x04\x91\x01\x04\x0E\n\x0F\n\x07\x04\x04\x04\0\x02\x02\x02\x12\x04\x91\x01\x11\x12\n\x0E\n\x06\x04\x04\x04\0\x02\x03\x12\x04\x92\x01\x04\x14\n\x0F\n\x07\x04\x04\x04\0\x02\x03\x01\x12\x04\x92\x01\x04\x0F\n\x0F\n\x07\x04\x04\x04\0\x02\x03\x02\x12\x04\x92\x01\x12\x13\nw\n\x06\x04\x04\x04\0\x02\x04\x12\x04\x95\x01\x04\x13\x1Ag Not ZigZag encoded.  Negative numbers take 10 bytes.  Use TYPE_SINT32 if\n negative values are likely.\n\n\x0F\n\x07\x04\x04\x04\0\x02\x04\x01\x12\x04\x95\x01\x04\x0E\n\x0F\n\x07\x04\x04\x04\0\x02\x04\x02\x12\x04\x95\x01\x11\x12\n\x0E\n\x06\x04\x04\x04\0\x02\x05\x12\x04\x96\x01\x04\x15\n\x0F\n\x07\x04\x04\x04\0\x02\x05\x01\x12\x04\x96\x01\x04\x10\n\x0F\n\x07\x04\x04\x04\0\x02\x05\x02\x12\x04\x96\x01\x13\x14\n\x0E\n\x06\x04\x04\x04\0\x02\x06\x12\x04\x97\x01\x04\x15\n\x0F\n\x07\x04\x04\x04\0\x02\x06\x01\x12\x04\x97\x01\x04\x10\n\x0F\n\x07\x04\x04\x04\0\x02\x06\x02\x12\x04\x97\x01\x13\x14\n\x0E\n\x06\x04\x04\x04\0\x02\x07\x12\x04\x98\x01\x04\x12\n\x0F\n\x07\x04\x04\x04\0\x02\x07\x01\x12\x04\x98\x01\x04\r\n\x0F\n\x07\x04\x04\x04\0\x02\x07\x02\x12\x04\x98\x01\x10\x11\n\x0E\n\x06\x04\x04\x04\0\x02\x08\x12\x04\x99\x01\x04\x14\n\x0F\n\x07\x04\x04\x04\0\x02\x08\x01\x12\x04\x99\x01\x04\x0F\n\x0F\n\x07\x04\x04\x04\0\x02\x08\x02\x12\x04\x99\x01\x12\x13\n\xE2\x01\n\x06\x04\x04\x04\0\x02\t\x12\x04\x9E\x01\x04\x14\x1A\xD1\x01 Tag-delimited aggregate.\n Group type is deprecated and not supported in proto3. However, Proto3\n implementations should still be able to parse the group wire format and\n treat group fields as unknown fields.\n\n\x0F\n\x07\x04\x04\x04\0\x02\t\x01\x12\x04\x9E\x01\x04\x0E\n\x0F\n\x07\x04\x04\x04\0\x02\t\x02\x12\x04\x9E\x01\x11\x13\n-\n\x06\x04\x04\x04\0\x02\n\x12\x04\x9F\x01\x04\x16\"\x1D Length-delimited aggregate.\n\n\x0F\n\x07\x04\x04\x04\0\x02\n\x01\x12\x04\x9F\x01\x04\x10\n\x0F\n\x07\x04\x04\x04\0\x02\n\x02\x12\x04\x9F\x01\x13\x15\n#\n\x06\x04\x04\x04\0\x02\x0B\x12\x04\xA2\x01\x04\x14\x1A\x13 New in version 2.\n\n\x0F\n\x07\x04\x04\x04\0\x02\x0B\x01\x12\x04\xA2\x01\x04\x0E\n\x0F\n\x07\x04\x04\x04\0\x02\x0B\x02\x12\x04\xA2\x01\x11\x13\n\x0E\n\x06\x04\x04\x04\0\x02\x0C\x12\x04\xA3\x01\x04\x15\n\x0F\n\x07\x04\x04\x04\0\x02\x0C\x01\x12\x04\xA3\x01\x04\x0F\n\x0F\n\x07\x04\x04\x04\0\x02\x0C\x02\x12\x04\xA3\x01\x12\x14\n\x0E\n\x06\x04\x04\x04\0\x02\r\x12\x04\xA4\x01\x04\x13\n\x0F\n\x07\x04\x04\x04\0\x02\r\x01\x12\x04\xA4\x01\x04\r\n\x0F\n\x07\x04\x04\x04\0\x02\r\x02\x12\x04\xA4\x01\x10\x12\n\x0E\n\x06\x04\x04\x04\0\x02\x0E\x12\x04\xA5\x01\x04\x17\n\x0F\n\x07\x04\x04\x04\0\x02\x0E\x01\x12\x04\xA5\x01\x04\x11\n\x0F\n\x07\x04\x04\x04\0\x02\x0E\x02\x12\x04\xA5\x01\x14\x16\n\x0E\n\x06\x04\x04\x04\0\x02\x0F\x12\x04\xA6\x01\x04\x17\n\x0F\n\x07\x04\x04\x04\0\x02\x0F\x01\x12\x04\xA6\x01\x04\x11\n\x0F\n\x07\x04\x04\x04\0\x02\x0F\x02\x12\x04\xA6\x01\x14\x16\n'\n\x06\x04\x04\x04\0\x02\x10\x12\x04\xA7\x01\x04\x15\"\x17 Uses ZigZag encoding.\n\n\x0F\n\x07\x04\x04\x04\0\x02\x10\x01\x12\x04\xA7\x01\x04\x0F\n\x0F\n\x07\x04\x04\x04\0\x02\x10\x02\x12\x04\xA7\x01\x12\x14\n'\n\x06\x04\x04\x04\0\x02\x11\x12\x04\xA8\x01\x04\x15\"\x17 Uses ZigZag encoding.\n\n\x0F\n\x07\x04\x04\x04\0\x02\x11\x01\x12\x04\xA8\x01\x04\x0F\n\x0F\n\x07\x04\x04\x04\0\x02\x11\x02\x12\x04\xA8\x01\x12\x14\n\x0E\n\x04\x04\x04\x04\x01\x12\x06\xAB\x01\x02\xB0\x01\x03\n\r\n\x05\x04\x04\x04\x01\x01\x12\x04\xAB\x01\x07\x0C\n*\n\x06\x04\x04\x04\x01\x02\0\x12\x04\xAD\x01\x04\x17\x1A\x1A 0 is reserved for errors\n\n\x0F\n\x07\x04\x04\x04\x01\x02\0\x01\x12\x04\xAD\x01\x04\x12\n\x0F\n\x07\x04\x04\x04\x01\x02\0\x02\x12\x04\xAD\x01\x15\x16\n\x0E\n\x06\x04\x04\x04\x01\x02\x01\x12\x04\xAE\x01\x04\x17\n\x0F\n\x07\x04\x04\x04\x01\x02\x01\x01\x12\x04\xAE\x01\x04\x12\n\x0F\n\x07\x04\x04\x04\x01\x02\x01\x02\x12\x04\xAE\x01\x15\x16\n\x0E\n\x06\x04\x04\x04\x01\x02\x02\x12\x04\xAF\x01\x04\x17\n\x0F\n\x07\x04\x04\x04\x01\x02\x02\x01\x12\x04\xAF\x01\x04\x12\n\x0F\n\x07\x04\x04\x04\x01\x02\x02\x02\x12\x04\xAF\x01\x15\x16\n\x0C\n\x04\x04\x04\x02\0\x12\x04\xB2\x01\x02\x1B\n\r\n\x05\x04\x04\x02\0\x04\x12\x04\xB2\x01\x02\n\n\r\n\x05\x04\x04\x02\0\x05\x12\x04\xB2\x01\x0B\x11\n\r\n\x05\x04\x04\x02\0\x01\x12\x04\xB2\x01\x12\x16\n\r\n\x05\x04\x04\x02\0\x03\x12\x04\xB2\x01\x19\x1A\n\x0C\n\x04\x04\x04\x02\x01\x12\x04\xB3\x01\x02\x1C\n\r\n\x05\x04\x04\x02\x01\x04\x12\x04\xB3\x01\x02\n\n\r\n\x05\x04\x04\x02\x01\x05\x12\x04\xB3\x01\x0B\x10\n\r\n\x05\x04\x04\x02\x01\x01\x12\x04\xB3\x01\x11\x17\n\r\n\x05\x04\x04\x02\x01\x03\x12\x04\xB3\x01\x1A\x1B\n\x0C\n\x04\x04\x04\x02\x02\x12\x04\xB4\x01\x02\x1B\n\r\n\x05\x04\x04\x02\x02\x04\x12\x04\xB4\x01\x02\n\n\r\n\x05\x04\x04\x02\x02\x06\x12\x04\xB4\x01\x0B\x10\n\r\n\x05\x04\x04\x02\x02\x01\x12\x04\xB4\x01\x11\x16\n\r\n\x05\x04\x04\x02\x02\x03\x12\x04\xB4\x01\x19\x1A\n\x9C\x01\n\x04\x04\x04\x02\x03\x12\x04\xB8\x01\x02\x19\x1A\x8D\x01 If type_name is set, this need not be set.  If both this and type_name\n are set, this must be one of TYPE_ENUM, TYPE_MESSAGE or TYPE_GROUP.\n\n\r\n\x05\x04\x04\x02\x03\x04\x12\x04\xB8\x01\x02\n\n\r\n\x05\x04\x04\x02\x03\x06\x12\x04\xB8\x01\x0B\x0F\n\r\n\x05\x04\x04\x02\x03\x01\x12\x04\xB8\x01\x10\x14\n\r\n\x05\x04\x04\x02\x03\x03\x12\x04\xB8\x01\x17\x18\n\xB7\x02\n\x04\x04\x04\x02\x04\x12\x04\xBF\x01\x02 \x1A\xA8\x02 For message and enum types, this is the name of the type.  If the name\n starts with a '.', it is fully-qualified.  Otherwise, C++-like scoping\n rules are used to find the type (i.e. first the nested types within this\n message are searched, then within the parent, on up to the root\n namespace).\n\n\r\n\x05\x04\x04\x02\x04\x04\x12\x04\xBF\x01\x02\n\n\r\n\x05\x04\x04\x02\x04\x05\x12\x04\xBF\x01\x0B\x11\n\r\n\x05\x04\x04\x02\x04\x01\x12\x04\xBF\x01\x12\x1B\n\r\n\x05\x04\x04\x02\x04\x03\x12\x04\xBF\x01\x1E\x1F\n~\n\x04\x04\x04\x02\x05\x12\x04\xC3\x01\x02\x1F\x1Ap For extensions, this is the name of the type being extended.  It is\n resolved in the same manner as type_name.\n\n\r\n\x05\x04\x04\x02\x05\x04\x12\x04\xC3\x01\x02\n\n\r\n\x05\x04\x04\x02\x05\x05\x12\x04\xC3\x01\x0B\x11\n\r\n\x05\x04\x04\x02\x05\x01\x12\x04\xC3\x01\x12\x1A\n\r\n\x05\x04\x04\x02\x05\x03\x12\x04\xC3\x01\x1D\x1E\n\xB1\x02\n\x04\x04\x04\x02\x06\x12\x04\xCA\x01\x02$\x1A\xA2\x02 For numeric types, contains the original text representation of the value.\n For booleans, \"true\" or \"false\".\n For strings, contains the default text contents (not escaped in any way).\n For bytes, contains the C escaped value.  All bytes >= 128 are escaped.\n TODO(kenton):  Base-64 encode?\n\n\r\n\x05\x04\x04\x02\x06\x04\x12\x04\xCA\x01\x02\n\n\r\n\x05\x04\x04\x02\x06\x05\x12\x04\xCA\x01\x0B\x11\n\r\n\x05\x04\x04\x02\x06\x01\x12\x04\xCA\x01\x12\x1F\n\r\n\x05\x04\x04\x02\x06\x03\x12\x04\xCA\x01\"#\n\x84\x01\n\x04\x04\x04\x02\x07\x12\x04\xCE\x01\x02!\x1Av If set, gives the index of a oneof in the containing type's oneof_decl\n list.  This field is a member of that oneof.\n\n\r\n\x05\x04\x04\x02\x07\x04\x12\x04\xCE\x01\x02\n\n\r\n\x05\x04\x04\x02\x07\x05\x12\x04\xCE\x01\x0B\x10\n\r\n\x05\x04\x04\x02\x07\x01\x12\x04\xCE\x01\x11\x1C\n\r\n\x05\x04\x04\x02\x07\x03\x12\x04\xCE\x01\x1F \n\xFA\x01\n\x04\x04\x04\x02\x08\x12\x04\xD4\x01\x02!\x1A\xEB\x01 JSON name of this field. The value is set by protocol compiler. If the\n user has set a \"json_name\" option on this field, that option's value\n will be used. Otherwise, it's deduced from the field's name by converting\n it to camelCase.\n\n\r\n\x05\x04\x04\x02\x08\x04\x12\x04\xD4\x01\x02\n\n\r\n\x05\x04\x04\x02\x08\x05\x12\x04\xD4\x01\x0B\x11\n\r\n\x05\x04\x04\x02\x08\x01\x12\x04\xD4\x01\x12\x1B\n\r\n\x05\x04\x04\x02\x08\x03\x12\x04\xD4\x01\x1E \n\x0C\n\x04\x04\x04\x02\t\x12\x04\xD6\x01\x02$\n\r\n\x05\x04\x04\x02\t\x04\x12\x04\xD6\x01\x02\n\n\r\n\x05\x04\x04\x02\t\x06\x12\x04\xD6\x01\x0B\x17\n\r\n\x05\x04\x04\x02\t\x01\x12\x04\xD6\x01\x18\x1F\n\r\n\x05\x04\x04\x02\t\x03\x12\x04\xD6\x01\"#\n\xB3\t\n\x04\x04\x04\x02\n\x12\x04\xED\x01\x02%\x1A\xA4\t If true, this is a proto3 \"optional\". When a proto3 field is optional, it\n tracks presence regardless of field type.\n\n When proto3_optional is true, this field must be belong to a oneof to\n signal to old proto3 clients that presence is tracked for this field. This\n oneof is known as a \"synthetic\" oneof, and this field must be its sole\n member (each proto3 optional field gets its own synthetic oneof). Synthetic\n oneofs exist in the descriptor only, and do not generate any API. Synthetic\n oneofs must be ordered after all \"real\" oneofs.\n\n For message fields, proto3_optional doesn't create any semantic change,\n since non-repeated message fields always track presence. However it still\n indicates the semantic detail of whether the user wrote \"optional\" or not.\n This can be useful for round-tripping the .proto file. For consistency we\n give message fields a synthetic oneof also, even though it is not required\n to track presence. This is especially important because the parser can't\n tell if a field is a message or an enum, so it must always create a\n synthetic oneof.\n\n Proto2 optional fields do not set this flag, because they already indicate\n optional with `LABEL_OPTIONAL`.\n\n\r\n\x05\x04\x04\x02\n\x04\x12\x04\xED\x01\x02\n\n\r\n\x05\x04\x04\x02\n\x05\x12\x04\xED\x01\x0B\x0F\n\r\n\x05\x04\x04\x02\n\x01\x12\x04\xED\x01\x10\x1F\n\r\n\x05\x04\x04\x02\n\x03\x12\x04\xED\x01\"$\n\"\n\x02\x04\x05\x12\x06\xF1\x01\0\xF4\x01\x01\x1A\x14 Describes a oneof.\n\n\x0B\n\x03\x04\x05\x01\x12\x04\xF1\x01\x08\x1C\n\x0C\n\x04\x04\x05\x02\0\x12\x04\xF2\x01\x02\x1B\n\r\n\x05\x04\x05\x02\0\x04\x12\x04\xF2\x01\x02\n\n\r\n\x05\x04\x05\x02\0\x05\x12\x04\xF2\x01\x0B\x11\n\r\n\x05\x04\x05\x02\0\x01\x12\x04\xF2\x01\x12\x16\n\r\n\x05\x04\x05\x02\0\x03\x12\x04\xF2\x01\x19\x1A\n\x0C\n\x04\x04\x05\x02\x01\x12\x04\xF3\x01\x02$\n\r\n\x05\x04\x05\x02\x01\x04\x12\x04\xF3\x01\x02\n\n\r\n\x05\x04\x05\x02\x01\x06\x12\x04\xF3\x01\x0B\x17\n\r\n\x05\x04\x05\x02\x01\x01\x12\x04\xF3\x01\x18\x1F\n\r\n\x05\x04\x05\x02\x01\x03\x12\x04\xF3\x01\"#\n'\n\x02\x04\x06\x12\x06\xF7\x01\0\x91\x02\x01\x1A\x19 Describes an enum type.\n\n\x0B\n\x03\x04\x06\x01\x12\x04\xF7\x01\x08\x1B\n\x0C\n\x04\x04\x06\x02\0\x12\x04\xF8\x01\x02\x1B\n\r\n\x05\x04\x06\x02\0\x04\x12\x04\xF8\x01\x02\n\n\r\n\x05\x04\x06\x02\0\x05\x12\x04\xF8\x01\x0B\x11\n\r\n\x05\x04\x06\x02\0\x01\x12\x04\xF8\x01\x12\x16\n\r\n\x05\x04\x06\x02\0\x03\x12\x04\xF8\x01\x19\x1A\n\x0C\n\x04\x04\x06\x02\x01\x12\x04\xFA\x01\x02.\n\r\n\x05\x04\x06\x02\x01\x04\x12\x04\xFA\x01\x02\n\n\r\n\x05\x04\x06\x02\x01\x06\x12\x04\xFA\x01\x0B#\n\r\n\x05\x04\x06\x02\x01\x01\x12\x04\xFA\x01$)\n\r\n\x05\x04\x06\x02\x01\x03\x12\x04\xFA\x01,-\n\x0C\n\x04\x04\x06\x02\x02\x12\x04\xFC\x01\x02#\n\r\n\x05\x04\x06\x02\x02\x04\x12\x04\xFC\x01\x02\n\n\r\n\x05\x04\x06\x02\x02\x06\x12\x04\xFC\x01\x0B\x16\n\r\n\x05\x04\x06\x02\x02\x01\x12\x04\xFC\x01\x17\x1E\n\r\n\x05\x04\x06\x02\x02\x03\x12\x04\xFC\x01!\"\n\xAF\x02\n\x04\x04\x06\x03\0\x12\x06\x84\x02\x02\x87\x02\x03\x1A\x9E\x02 Range of reserved numeric values. Reserved values may not be used by\n entries in the same enum. Reserved ranges may not overlap.\n\n Note that this is distinct from DescriptorProto.ReservedRange in that it\n is inclusive such that it can appropriately represent the entire int32\n domain.\n\n\r\n\x05\x04\x06\x03\0\x01\x12\x04\x84\x02\n\x1B\n\x1C\n\x06\x04\x06\x03\0\x02\0\x12\x04\x85\x02\x04\x1D\"\x0C Inclusive.\n\n\x0F\n\x07\x04\x06\x03\0\x02\0\x04\x12\x04\x85\x02\x04\x0C\n\x0F\n\x07\x04\x06\x03\0\x02\0\x05\x12\x04\x85\x02\r\x12\n\x0F\n\x07\x04\x06\x03\0\x02\0\x01\x12\x04\x85\x02\x13\x18\n\x0F\n\x07\x04\x06\x03\0\x02\0\x03\x12\x04\x85\x02\x1B\x1C\n\x1C\n\x06\x04\x06\x03\0\x02\x01\x12\x04\x86\x02\x04\x1B\"\x0C Inclusive.\n\n\x0F\n\x07\x04\x06\x03\0\x02\x01\x04\x12\x04\x86\x02\x04\x0C\n\x0F\n\x07\x04\x06\x03\0\x02\x01\x05\x12\x04\x86\x02\r\x12\n\x0F\n\x07\x04\x06\x03\0\x02\x01\x01\x12\x04\x86\x02\x13\x16\n\x0F\n\x07\x04\x06\x03\0\x02\x01\x03\x12\x04\x86\x02\x19\x1A\n\xAA\x01\n\x04\x04\x06\x02\x03\x12\x04\x8C\x02\x020\x1A\x9B\x01 Range of reserved numeric values. Reserved numeric values may not be used\n by enum values in the same enum declaration. Reserved ranges may not\n overlap.\n\n\r\n\x05\x04\x06\x02\x03\x04\x12\x04\x8C\x02\x02\n\n\r\n\x05\x04\x06\x02\x03\x06\x12\x04\x8C\x02\x0B\x1C\n\r\n\x05\x04\x06\x02\x03\x01\x12\x04\x8C\x02\x1D+\n\r\n\x05\x04\x06\x02\x03\x03\x12\x04\x8C\x02./\nl\n\x04\x04\x06\x02\x04\x12\x04\x90\x02\x02$\x1A^ Reserved enum value names, which may not be reused. A given name may only\n be reserved once.\n\n\r\n\x05\x04\x06\x02\x04\x04\x12\x04\x90\x02\x02\n\n\r\n\x05\x04\x06\x02\x04\x05\x12\x04\x90\x02\x0B\x11\n\r\n\x05\x04\x06\x02\x04\x01\x12\x04\x90\x02\x12\x1F\n\r\n\x05\x04\x06\x02\x04\x03\x12\x04\x90\x02\"#\n1\n\x02\x04\x07\x12\x06\x94\x02\0\x99\x02\x01\x1A# Describes a value within an enum.\n\n\x0B\n\x03\x04\x07\x01\x12\x04\x94\x02\x08 \n\x0C\n\x04\x04\x07\x02\0\x12\x04\x95\x02\x02\x1B\n\r\n\x05\x04\x07\x02\0\x04\x12\x04\x95\x02\x02\n\n\r\n\x05\x04\x07\x02\0\x05\x12\x04\x95\x02\x0B\x11\n\r\n\x05\x04\x07\x02\0\x01\x12\x04\x95\x02\x12\x16\n\r\n\x05\x04\x07\x02\0\x03\x12\x04\x95\x02\x19\x1A\n\x0C\n\x04\x04\x07\x02\x01\x12\x04\x96\x02\x02\x1C\n\r\n\x05\x04\x07\x02\x01\x04\x12\x04\x96\x02\x02\n\n\r\n\x05\x04\x07\x02\x01\x05\x12\x04\x96\x02\x0B\x10\n\r\n\x05\x04\x07\x02\x01\x01\x12\x04\x96\x02\x11\x17\n\r\n\x05\x04\x07\x02\x01\x03\x12\x04\x96\x02\x1A\x1B\n\x0C\n\x04\x04\x07\x02\x02\x12\x04\x98\x02\x02(\n\r\n\x05\x04\x07\x02\x02\x04\x12\x04\x98\x02\x02\n\n\r\n\x05\x04\x07\x02\x02\x06\x12\x04\x98\x02\x0B\x1B\n\r\n\x05\x04\x07\x02\x02\x01\x12\x04\x98\x02\x1C#\n\r\n\x05\x04\x07\x02\x02\x03\x12\x04\x98\x02&'\n$\n\x02\x04\x08\x12\x06\x9C\x02\0\xA1\x02\x01\x1A\x16 Describes a service.\n\n\x0B\n\x03\x04\x08\x01\x12\x04\x9C\x02\x08\x1E\n\x0C\n\x04\x04\x08\x02\0\x12\x04\x9D\x02\x02\x1B\n\r\n\x05\x04\x08\x02\0\x04\x12\x04\x9D\x02\x02\n\n\r\n\x05\x04\x08\x02\0\x05\x12\x04\x9D\x02\x0B\x11\n\r\n\x05\x04\x08\x02\0\x01\x12\x04\x9D\x02\x12\x16\n\r\n\x05\x04\x08\x02\0\x03\x12\x04\x9D\x02\x19\x1A\n\x0C\n\x04\x04\x08\x02\x01\x12\x04\x9E\x02\x02,\n\r\n\x05\x04\x08\x02\x01\x04\x12\x04\x9E\x02\x02\n\n\r\n\x05\x04\x08\x02\x01\x06\x12\x04\x9E\x02\x0B \n\r\n\x05\x04\x08\x02\x01\x01\x12\x04\x9E\x02!'\n\r\n\x05\x04\x08\x02\x01\x03\x12\x04\x9E\x02*+\n\x0C\n\x04\x04\x08\x02\x02\x12\x04\xA0\x02\x02&\n\r\n\x05\x04\x08\x02\x02\x04\x12\x04\xA0\x02\x02\n\n\r\n\x05\x04\x08\x02\x02\x06\x12\x04\xA0\x02\x0B\x19\n\r\n\x05\x04\x08\x02\x02\x01\x12\x04\xA0\x02\x1A!\n\r\n\x05\x04\x08\x02\x02\x03\x12\x04\xA0\x02$%\n0\n\x02\x04\t\x12\x06\xA4\x02\0\xB2\x02\x01\x1A\" Describes a method of a service.\n\n\x0B\n\x03\x04\t\x01\x12\x04\xA4\x02\x08\x1D\n\x0C\n\x04\x04\t\x02\0\x12\x04\xA5\x02\x02\x1B\n\r\n\x05\x04\t\x02\0\x04\x12\x04\xA5\x02\x02\n\n\r\n\x05\x04\t\x02\0\x05\x12\x04\xA5\x02\x0B\x11\n\r\n\x05\x04\t\x02\0\x01\x12\x04\xA5\x02\x12\x16\n\r\n\x05\x04\t\x02\0\x03\x12\x04\xA5\x02\x19\x1A\n\x97\x01\n\x04\x04\t\x02\x01\x12\x04\xA9\x02\x02!\x1A\x88\x01 Input and output type names.  These are resolved in the same way as\n FieldDescriptorProto.type_name, but must refer to a message type.\n\n\r\n\x05\x04\t\x02\x01\x04\x12\x04\xA9\x02\x02\n\n\r\n\x05\x04\t\x02\x01\x05\x12\x04\xA9\x02\x0B\x11\n\r\n\x05\x04\t\x02\x01\x01\x12\x04\xA9\x02\x12\x1C\n\r\n\x05\x04\t\x02\x01\x03\x12\x04\xA9\x02\x1F \n\x0C\n\x04\x04\t\x02\x02\x12\x04\xAA\x02\x02\"\n\r\n\x05\x04\t\x02\x02\x04\x12\x04\xAA\x02\x02\n\n\r\n\x05\x04\t\x02\x02\x05\x12\x04\xAA\x02\x0B\x11\n\r\n\x05\x04\t\x02\x02\x01\x12\x04\xAA\x02\x12\x1D\n\r\n\x05\x04\t\x02\x02\x03\x12\x04\xAA\x02 !\n\x0C\n\x04\x04\t\x02\x03\x12\x04\xAC\x02\x02%\n\r\n\x05\x04\t\x02\x03\x04\x12\x04\xAC\x02\x02\n\n\r\n\x05\x04\t\x02\x03\x06\x12\x04\xAC\x02\x0B\x18\n\r\n\x05\x04\t\x02\x03\x01\x12\x04\xAC\x02\x19 \n\r\n\x05\x04\t\x02\x03\x03\x12\x04\xAC\x02#$\nE\n\x04\x04\t\x02\x04\x12\x04\xAF\x02\x027\x1A7 Identifies if client streams multiple client messages\n\n\r\n\x05\x04\t\x02\x04\x04\x12\x04\xAF\x02\x02\n\n\r\n\x05\x04\t\x02\x04\x05\x12\x04\xAF\x02\x0B\x0F\n\r\n\x05\x04\t\x02\x04\x01\x12\x04\xAF\x02\x10 \n\r\n\x05\x04\t\x02\x04\x03\x12\x04\xAF\x02#$\n\r\n\x05\x04\t\x02\x04\x08\x12\x04\xAF\x02%6\n\r\n\x05\x04\t\x02\x04\x07\x12\x04\xAF\x0205\nE\n\x04\x04\t\x02\x05\x12\x04\xB1\x02\x027\x1A7 Identifies if server streams multiple server messages\n\n\r\n\x05\x04\t\x02\x05\x04\x12\x04\xB1\x02\x02\n\n\r\n\x05\x04\t\x02\x05\x05\x12\x04\xB1\x02\x0B\x0F\n\r\n\x05\x04\t\x02\x05\x01\x12\x04\xB1\x02\x10 \n\r\n\x05\x04\t\x02\x05\x03\x12\x04\xB1\x02#$\n\r\n\x05\x04\t\x02\x05\x08\x12\x04\xB1\x02%6\n\r\n\x05\x04\t\x02\x05\x07\x12\x04\xB1\x0205\n\xAF\x0E\n\x02\x04\n\x12\x06\xD5\x02\0\xD0\x03\x012N ===================================================================\n Options\n2\xD0\r Each of the definitions above may have \"options\" attached.  These are\n just annotations which may cause code to be generated slightly differently\n or may contain hints for code that manipulates protocol messages.\n\n Clients may define custom options as extensions of the *Options messages.\n These extensions may not yet be known at parsing time, so the parser cannot\n store the values in them.  Instead it stores them in a field in the *Options\n message called uninterpreted_option. This field must have the same name\n across all *Options messages. We then use this field to populate the\n extensions when we build a descriptor, at which point all protos have been\n parsed and so all extensions are known.\n\n Extension numbers for custom options may be chosen as follows:\n * For options which will only be used within a single application or\n   organization, or for experimental options, use field numbers 50000\n   through 99999.  It is up to you to ensure that you do not use the\n   same number for multiple options.\n * For options which will be published and used publicly by multiple\n   independent entities, e-mail protobuf-global-extension-registry@google.com\n   to reserve extension numbers. Simply provide your project name (e.g.\n   Objective-C plugin) and your project website (if available) -- there's no\n   need to explain how you intend to use them. Usually you only need one\n   extension number. You can declare multiple options with only one extension\n   number by putting them in a sub-message. See the Custom Options section of\n   the docs for examples:\n   https://developers.google.com/protocol-buffers/docs/proto#options\n   If this turns out to be popular, a web service will be set up\n   to automatically assign option numbers.\n\n\x0B\n\x03\x04\n\x01\x12\x04\xD5\x02\x08\x13\n\xF4\x01\n\x04\x04\n\x02\0\x12\x04\xDB\x02\x02#\x1A\xE5\x01 Sets the Java package where classes generated from this .proto will be\n placed.  By default, the proto package is used, but this is often\n inappropriate because proto packages do not normally start with backwards\n domain names.\n\n\r\n\x05\x04\n\x02\0\x04\x12\x04\xDB\x02\x02\n\n\r\n\x05\x04\n\x02\0\x05\x12\x04\xDB\x02\x0B\x11\n\r\n\x05\x04\n\x02\0\x01\x12\x04\xDB\x02\x12\x1E\n\r\n\x05\x04\n\x02\0\x03\x12\x04\xDB\x02!\"\n\xF1\x02\n\x04\x04\n\x02\x01\x12\x04\xE3\x02\x02+\x1A\xE2\x02 Controls the name of the wrapper Java class generated for the .proto file.\n That class will always contain the .proto file's getDescriptor() method as\n well as any top-level extensions defined in the .proto file.\n If java_multiple_files is disabled, then all the other classes from the\n .proto file will be nested inside the single wrapper outer class.\n\n\r\n\x05\x04\n\x02\x01\x04\x12\x04\xE3\x02\x02\n\n\r\n\x05\x04\n\x02\x01\x05\x12\x04\xE3\x02\x0B\x11\n\r\n\x05\x04\n\x02\x01\x01\x12\x04\xE3\x02\x12&\n\r\n\x05\x04\n\x02\x01\x03\x12\x04\xE3\x02)*\n\xA6\x03\n\x04\x04\n\x02\x02\x12\x04\xEB\x02\x02;\x1A\x97\x03 If enabled, then the Java code generator will generate a separate .java\n file for each top-level message, enum, and service defined in the .proto\n file.  Thus, these types will *not* be nested inside the wrapper class\n named by java_outer_classname.  However, the wrapper class will still be\n generated to contain the file's getDescriptor() method as well as any\n top-level extensions defined in the file.\n\n\r\n\x05\x04\n\x02\x02\x04\x12\x04\xEB\x02\x02\n\n\r\n\x05\x04\n\x02\x02\x05\x12\x04\xEB\x02\x0B\x0F\n\r\n\x05\x04\n\x02\x02\x01\x12\x04\xEB\x02\x10#\n\r\n\x05\x04\n\x02\x02\x03\x12\x04\xEB\x02&(\n\r\n\x05\x04\n\x02\x02\x08\x12\x04\xEB\x02):\n\r\n\x05\x04\n\x02\x02\x07\x12\x04\xEB\x0249\n)\n\x04\x04\n\x02\x03\x12\x04\xEE\x02\x02E\x1A\x1B This option does nothing.\n\n\r\n\x05\x04\n\x02\x03\x04\x12\x04\xEE\x02\x02\n\n\r\n\x05\x04\n\x02\x03\x05\x12\x04\xEE\x02\x0B\x0F\n\r\n\x05\x04\n\x02\x03\x01\x12\x04\xEE\x02\x10-\n\r\n\x05\x04\n\x02\x03\x03\x12\x04\xEE\x0202\n\r\n\x05\x04\n\x02\x03\x08\x12\x04\xEE\x023D\n\x0E\n\x06\x04\n\x02\x03\x08\x03\x12\x04\xEE\x024C\n\xE6\x02\n\x04\x04\n\x02\x04\x12\x04\xF6\x02\x02>\x1A\xD7\x02 If set true, then the Java2 code generator will generate code that\n throws an exception whenever an attempt is made to assign a non-UTF-8\n byte sequence to a string field.\n Message reflection will do the same.\n However, an extension field still accepts non-UTF-8 byte sequences.\n This option has no effect on when used with the lite runtime.\n\n\r\n\x05\x04\n\x02\x04\x04\x12\x04\xF6\x02\x02\n\n\r\n\x05\x04\n\x02\x04\x05\x12\x04\xF6\x02\x0B\x0F\n\r\n\x05\x04\n\x02\x04\x01\x12\x04\xF6\x02\x10&\n\r\n\x05\x04\n\x02\x04\x03\x12\x04\xF6\x02)+\n\r\n\x05\x04\n\x02\x04\x08\x12\x04\xF6\x02,=\n\r\n\x05\x04\n\x02\x04\x07\x12\x04\xF6\x027<\nL\n\x04\x04\n\x04\0\x12\x06\xFA\x02\x02\xFF\x02\x03\x1A< Generated classes can be optimized for speed or code size.\n\n\r\n\x05\x04\n\x04\0\x01\x12\x04\xFA\x02\x07\x13\nD\n\x06\x04\n\x04\0\x02\0\x12\x04\xFB\x02\x04\x0E\"4 Generate complete code for parsing, serialization,\n\n\x0F\n\x07\x04\n\x04\0\x02\0\x01\x12\x04\xFB\x02\x04\t\n\x0F\n\x07\x04\n\x04\0\x02\0\x02\x12\x04\xFB\x02\x0C\r\nG\n\x06\x04\n\x04\0\x02\x01\x12\x04\xFD\x02\x04\x12\x1A\x06 etc.\n\"/ Use ReflectionOps to implement these methods.\n\n\x0F\n\x07\x04\n\x04\0\x02\x01\x01\x12\x04\xFD\x02\x04\r\n\x0F\n\x07\x04\n\x04\0\x02\x01\x02\x12\x04\xFD\x02\x10\x11\nG\n\x06\x04\n\x04\0\x02\x02\x12\x04\xFE\x02\x04\x15\"7 Generate code using MessageLite and the lite runtime.\n\n\x0F\n\x07\x04\n\x04\0\x02\x02\x01\x12\x04\xFE\x02\x04\x10\n\x0F\n\x07\x04\n\x04\0\x02\x02\x02\x12\x04\xFE\x02\x13\x14\n\x0C\n\x04\x04\n\x02\x05\x12\x04\x80\x03\x02;\n\r\n\x05\x04\n\x02\x05\x04\x12\x04\x80\x03\x02\n\n\r\n\x05\x04\n\x02\x05\x06\x12\x04\x80\x03\x0B\x17\n\r\n\x05\x04\n\x02\x05\x01\x12\x04\x80\x03\x18$\n\r\n\x05\x04\n\x02\x05\x03\x12\x04\x80\x03'(\n\r\n\x05\x04\n\x02\x05\x08\x12\x04\x80\x03):\n\r\n\x05\x04\n\x02\x05\x07\x12\x04\x80\x0349\n\xE2\x02\n\x04\x04\n\x02\x06\x12\x04\x87\x03\x02\"\x1A\xD3\x02 Sets the Go package where structs generated from this .proto will be\n placed. If omitted, the Go package will be derived from the following:\n   - The basename of the package import path, if provided.\n   - Otherwise, the package statement in the .proto file, if present.\n   - Otherwise, the basename of the .proto file, without extension.\n\n\r\n\x05\x04\n\x02\x06\x04\x12\x04\x87\x03\x02\n\n\r\n\x05\x04\n\x02\x06\x05\x12\x04\x87\x03\x0B\x11\n\r\n\x05\x04\n\x02\x06\x01\x12\x04\x87\x03\x12\x1C\n\r\n\x05\x04\n\x02\x06\x03\x12\x04\x87\x03\x1F!\n\xD4\x04\n\x04\x04\n\x02\x07\x12\x04\x96\x03\x02;\x1A\xC5\x04 Should generic services be generated in each language?  \"Generic\" services\n are not specific to any particular RPC system.  They are generated by the\n main code generators in each language (without additional plugins).\n Generic services were the only kind of service generation supported by\n early versions of google.protobuf.\n\n Generic services are now considered deprecated in favor of using plugins\n that generate code specific to your particular RPC system.  Therefore,\n these default to false.  Old code which depends on generic services should\n explicitly set them to true.\n\n\r\n\x05\x04\n\x02\x07\x04\x12\x04\x96\x03\x02\n\n\r\n\x05\x04\n\x02\x07\x05\x12\x04\x96\x03\x0B\x0F\n\r\n\x05\x04\n\x02\x07\x01\x12\x04\x96\x03\x10#\n\r\n\x05\x04\n\x02\x07\x03\x12\x04\x96\x03&(\n\r\n\x05\x04\n\x02\x07\x08\x12\x04\x96\x03):\n\r\n\x05\x04\n\x02\x07\x07\x12\x04\x96\x0349\n\x0C\n\x04\x04\n\x02\x08\x12\x04\x97\x03\x02=\n\r\n\x05\x04\n\x02\x08\x04\x12\x04\x97\x03\x02\n\n\r\n\x05\x04\n\x02\x08\x05\x12\x04\x97\x03\x0B\x0F\n\r\n\x05\x04\n\x02\x08\x01\x12\x04\x97\x03\x10%\n\r\n\x05\x04\n\x02\x08\x03\x12\x04\x97\x03(*\n\r\n\x05\x04\n\x02\x08\x08\x12\x04\x97\x03+<\n\r\n\x05\x04\n\x02\x08\x07\x12\x04\x97\x036;\n\x0C\n\x04\x04\n\x02\t\x12\x04\x98\x03\x02;\n\r\n\x05\x04\n\x02\t\x04\x12\x04\x98\x03\x02\n\n\r\n\x05\x04\n\x02\t\x05\x12\x04\x98\x03\x0B\x0F\n\r\n\x05\x04\n\x02\t\x01\x12\x04\x98\x03\x10#\n\r\n\x05\x04\n\x02\t\x03\x12\x04\x98\x03&(\n\r\n\x05\x04\n\x02\t\x08\x12\x04\x98\x03):\n\r\n\x05\x04\n\x02\t\x07\x12\x04\x98\x0349\n\x0C\n\x04\x04\n\x02\n\x12\x04\x99\x03\x02<\n\r\n\x05\x04\n\x02\n\x04\x12\x04\x99\x03\x02\n\n\r\n\x05\x04\n\x02\n\x05\x12\x04\x99\x03\x0B\x0F\n\r\n\x05\x04\n\x02\n\x01\x12\x04\x99\x03\x10$\n\r\n\x05\x04\n\x02\n\x03\x12\x04\x99\x03')\n\r\n\x05\x04\n\x02\n\x08\x12\x04\x99\x03*;\n\r\n\x05\x04\n\x02\n\x07\x12\x04\x99\x035:\n\xF3\x01\n\x04\x04\n\x02\x0B\x12\x04\x9F\x03\x022\x1A\xE4\x01 Is this file deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for everything in the file, or it will be completely ignored; in the very\n least, this is a formalization for deprecating files.\n\n\r\n\x05\x04\n\x02\x0B\x04\x12\x04\x9F\x03\x02\n\n\r\n\x05\x04\n\x02\x0B\x05\x12\x04\x9F\x03\x0B\x0F\n\r\n\x05\x04\n\x02\x0B\x01\x12\x04\x9F\x03\x10\x1A\n\r\n\x05\x04\n\x02\x0B\x03\x12\x04\x9F\x03\x1D\x1F\n\r\n\x05\x04\n\x02\x0B\x08\x12\x04\x9F\x03 1\n\r\n\x05\x04\n\x02\x0B\x07\x12\x04\x9F\x03+0\n\x7F\n\x04\x04\n\x02\x0C\x12\x04\xA3\x03\x027\x1Aq Enables the use of arenas for the proto messages in this file. This applies\n only to generated classes for C++.\n\n\r\n\x05\x04\n\x02\x0C\x04\x12\x04\xA3\x03\x02\n\n\r\n\x05\x04\n\x02\x0C\x05\x12\x04\xA3\x03\x0B\x0F\n\r\n\x05\x04\n\x02\x0C\x01\x12\x04\xA3\x03\x10 \n\r\n\x05\x04\n\x02\x0C\x03\x12\x04\xA3\x03#%\n\r\n\x05\x04\n\x02\x0C\x08\x12\x04\xA3\x03&6\n\r\n\x05\x04\n\x02\x0C\x07\x12\x04\xA3\x0315\n\x92\x01\n\x04\x04\n\x02\r\x12\x04\xA8\x03\x02)\x1A\x83\x01 Sets the objective c class prefix which is prepended to all objective c\n generated classes from this .proto. There is no default.\n\n\r\n\x05\x04\n\x02\r\x04\x12\x04\xA8\x03\x02\n\n\r\n\x05\x04\n\x02\r\x05\x12\x04\xA8\x03\x0B\x11\n\r\n\x05\x04\n\x02\r\x01\x12\x04\xA8\x03\x12#\n\r\n\x05\x04\n\x02\r\x03\x12\x04\xA8\x03&(\nI\n\x04\x04\n\x02\x0E\x12\x04\xAB\x03\x02(\x1A; Namespace for generated classes; defaults to the package.\n\n\r\n\x05\x04\n\x02\x0E\x04\x12\x04\xAB\x03\x02\n\n\r\n\x05\x04\n\x02\x0E\x05\x12\x04\xAB\x03\x0B\x11\n\r\n\x05\x04\n\x02\x0E\x01\x12\x04\xAB\x03\x12\"\n\r\n\x05\x04\n\x02\x0E\x03\x12\x04\xAB\x03%'\n\x91\x02\n\x04\x04\n\x02\x0F\x12\x04\xB1\x03\x02$\x1A\x82\x02 By default Swift generators will take the proto package and CamelCase it\n replacing '.' with underscore and use that to prefix the types/symbols\n defined. When this options is provided, they will use this value instead\n to prefix the types/symbols defined.\n\n\r\n\x05\x04\n\x02\x0F\x04\x12\x04\xB1\x03\x02\n\n\r\n\x05\x04\n\x02\x0F\x05\x12\x04\xB1\x03\x0B\x11\n\r\n\x05\x04\n\x02\x0F\x01\x12\x04\xB1\x03\x12\x1E\n\r\n\x05\x04\n\x02\x0F\x03\x12\x04\xB1\x03!#\n~\n\x04\x04\n\x02\x10\x12\x04\xB5\x03\x02(\x1Ap Sets the php class prefix which is prepended to all php generated classes\n from this .proto. Default is empty.\n\n\r\n\x05\x04\n\x02\x10\x04\x12\x04\xB5\x03\x02\n\n\r\n\x05\x04\n\x02\x10\x05\x12\x04\xB5\x03\x0B\x11\n\r\n\x05\x04\n\x02\x10\x01\x12\x04\xB5\x03\x12\"\n\r\n\x05\x04\n\x02\x10\x03\x12\x04\xB5\x03%'\n\xBE\x01\n\x04\x04\n\x02\x11\x12\x04\xBA\x03\x02%\x1A\xAF\x01 Use this option to change the namespace of php generated classes. Default\n is empty. When this option is empty, the package name will be used for\n determining the namespace.\n\n\r\n\x05\x04\n\x02\x11\x04\x12\x04\xBA\x03\x02\n\n\r\n\x05\x04\n\x02\x11\x05\x12\x04\xBA\x03\x0B\x11\n\r\n\x05\x04\n\x02\x11\x01\x12\x04\xBA\x03\x12\x1F\n\r\n\x05\x04\n\x02\x11\x03\x12\x04\xBA\x03\"$\n\xCA\x01\n\x04\x04\n\x02\x12\x12\x04\xBF\x03\x02.\x1A\xBB\x01 Use this option to change the namespace of php generated metadata classes.\n Default is empty. When this option is empty, the proto file name will be\n used for determining the namespace.\n\n\r\n\x05\x04\n\x02\x12\x04\x12\x04\xBF\x03\x02\n\n\r\n\x05\x04\n\x02\x12\x05\x12\x04\xBF\x03\x0B\x11\n\r\n\x05\x04\n\x02\x12\x01\x12\x04\xBF\x03\x12(\n\r\n\x05\x04\n\x02\x12\x03\x12\x04\xBF\x03+-\n\xC2\x01\n\x04\x04\n\x02\x13\x12\x04\xC4\x03\x02$\x1A\xB3\x01 Use this option to change the package of ruby generated classes. Default\n is empty. When this option is not set, the package name will be used for\n determining the ruby package.\n\n\r\n\x05\x04\n\x02\x13\x04\x12\x04\xC4\x03\x02\n\n\r\n\x05\x04\n\x02\x13\x05\x12\x04\xC4\x03\x0B\x11\n\r\n\x05\x04\n\x02\x13\x01\x12\x04\xC4\x03\x12\x1E\n\r\n\x05\x04\n\x02\x13\x03\x12\x04\xC4\x03!#\n|\n\x04\x04\n\x02\x14\x12\x04\xC9\x03\x02:\x1An The parser stores options it doesn't recognize here.\n See the documentation for the \"Options\" section above.\n\n\r\n\x05\x04\n\x02\x14\x04\x12\x04\xC9\x03\x02\n\n\r\n\x05\x04\n\x02\x14\x06\x12\x04\xC9\x03\x0B\x1E\n\r\n\x05\x04\n\x02\x14\x01\x12\x04\xC9\x03\x1F3\n\r\n\x05\x04\n\x02\x14\x03\x12\x04\xC9\x0369\n\x87\x01\n\x03\x04\n\x05\x12\x04\xCD\x03\x02\x19\x1Az Clients can define custom options in extensions of this message.\n See the documentation for the \"Options\" section above.\n\n\x0C\n\x04\x04\n\x05\0\x12\x04\xCD\x03\r\x18\n\r\n\x05\x04\n\x05\0\x01\x12\x04\xCD\x03\r\x11\n\r\n\x05\x04\n\x05\0\x02\x12\x04\xCD\x03\x15\x18\n\x0B\n\x03\x04\n\t\x12\x04\xCF\x03\x02\x0E\n\x0C\n\x04\x04\n\t\0\x12\x04\xCF\x03\x0B\r\n\r\n\x05\x04\n\t\0\x01\x12\x04\xCF\x03\x0B\r\n\r\n\x05\x04\n\t\0\x02\x12\x04\xCF\x03\x0B\r\n\x0C\n\x02\x04\x0B\x12\x06\xD2\x03\0\x94\x04\x01\n\x0B\n\x03\x04\x0B\x01\x12\x04\xD2\x03\x08\x16\n\xD8\x05\n\x04\x04\x0B\x02\0\x12\x04\xE5\x03\x02>\x1A\xC9\x05 Set true to use the old proto1 MessageSet wire format for extensions.\n This is provided for backwards-compatibility with the MessageSet wire\n format.  You should not use this for any other reason:  It's less\n efficient, has fewer features, and is more complicated.\n\n The message must be defined exactly as follows:\n   message Foo {\n     option message_set_wire_format = true;\n     extensions 4 to max;\n   }\n Note that the message cannot have any defined fields; MessageSets only\n have extensions.\n\n All extensions of your type must be singular messages; e.g. they cannot\n be int32s, enums, or repeated messages.\n\n Because this is an option, the above two restrictions are not enforced by\n the protocol compiler.\n\n\r\n\x05\x04\x0B\x02\0\x04\x12\x04\xE5\x03\x02\n\n\r\n\x05\x04\x0B\x02\0\x05\x12\x04\xE5\x03\x0B\x0F\n\r\n\x05\x04\x0B\x02\0\x01\x12\x04\xE5\x03\x10'\n\r\n\x05\x04\x0B\x02\0\x03\x12\x04\xE5\x03*+\n\r\n\x05\x04\x0B\x02\0\x08\x12\x04\xE5\x03,=\n\r\n\x05\x04\x0B\x02\0\x07\x12\x04\xE5\x037<\n\xEB\x01\n\x04\x04\x0B\x02\x01\x12\x04\xEA\x03\x02F\x1A\xDC\x01 Disables the generation of the standard \"descriptor()\" accessor, which can\n conflict with a field of the same name.  This is meant to make migration\n from proto1 easier; new code should avoid fields named \"descriptor\".\n\n\r\n\x05\x04\x0B\x02\x01\x04\x12\x04\xEA\x03\x02\n\n\r\n\x05\x04\x0B\x02\x01\x05\x12\x04\xEA\x03\x0B\x0F\n\r\n\x05\x04\x0B\x02\x01\x01\x12\x04\xEA\x03\x10/\n\r\n\x05\x04\x0B\x02\x01\x03\x12\x04\xEA\x0323\n\r\n\x05\x04\x0B\x02\x01\x08\x12\x04\xEA\x034E\n\r\n\x05\x04\x0B\x02\x01\x07\x12\x04\xEA\x03?D\n\xEE\x01\n\x04\x04\x0B\x02\x02\x12\x04\xF0\x03\x021\x1A\xDF\x01 Is this message deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for the message, or it will be completely ignored; in the very least,\n this is a formalization for deprecating messages.\n\n\r\n\x05\x04\x0B\x02\x02\x04\x12\x04\xF0\x03\x02\n\n\r\n\x05\x04\x0B\x02\x02\x05\x12\x04\xF0\x03\x0B\x0F\n\r\n\x05\x04\x0B\x02\x02\x01\x12\x04\xF0\x03\x10\x1A\n\r\n\x05\x04\x0B\x02\x02\x03\x12\x04\xF0\x03\x1D\x1E\n\r\n\x05\x04\x0B\x02\x02\x08\x12\x04\xF0\x03\x1F0\n\r\n\x05\x04\x0B\x02\x02\x07\x12\x04\xF0\x03*/\n\x0B\n\x03\x04\x0B\t\x12\x04\xF2\x03\x02\x13\n\x0C\n\x04\x04\x0B\t\0\x12\x04\xF2\x03\x0B\x0C\n\r\n\x05\x04\x0B\t\0\x01\x12\x04\xF2\x03\x0B\x0C\n\r\n\x05\x04\x0B\t\0\x02\x12\x04\xF2\x03\x0B\x0C\n\x0C\n\x04\x04\x0B\t\x01\x12\x04\xF2\x03\x0E\x0F\n\r\n\x05\x04\x0B\t\x01\x01\x12\x04\xF2\x03\x0E\x0F\n\r\n\x05\x04\x0B\t\x01\x02\x12\x04\xF2\x03\x0E\x0F\n\x0C\n\x04\x04\x0B\t\x02\x12\x04\xF2\x03\x11\x12\n\r\n\x05\x04\x0B\t\x02\x01\x12\x04\xF2\x03\x11\x12\n\r\n\x05\x04\x0B\t\x02\x02\x12\x04\xF2\x03\x11\x12\n\xA0\x06\n\x04\x04\x0B\x02\x03\x12\x04\x89\x04\x02\x1E\x1A\x91\x06 Whether the message is an automatically generated map entry type for the\n maps field.\n\n For maps fields:\n     map<KeyType, ValueType> map_field = 1;\n The parsed descriptor looks like:\n     message MapFieldEntry {\n         option map_entry = true;\n         optional KeyType key = 1;\n         optional ValueType value = 2;\n     }\n     repeated MapFieldEntry map_field = 1;\n\n Implementations may choose not to generate the map_entry=true message, but\n use a native map in the target language to hold the keys and values.\n The reflection APIs in such implementations still need to work as\n if the field is a repeated message field.\n\n NOTE: Do not set the option in .proto files. Always use the maps syntax\n instead. The option should only be implicitly set by the proto compiler\n parser.\n\n\r\n\x05\x04\x0B\x02\x03\x04\x12\x04\x89\x04\x02\n\n\r\n\x05\x04\x0B\x02\x03\x05\x12\x04\x89\x04\x0B\x0F\n\r\n\x05\x04\x0B\x02\x03\x01\x12\x04\x89\x04\x10\x19\n\r\n\x05\x04\x0B\x02\x03\x03\x12\x04\x89\x04\x1C\x1D\n$\n\x03\x04\x0B\t\x12\x04\x8B\x04\x02\r\"\x17 javalite_serializable\n\n\x0C\n\x04\x04\x0B\t\x03\x12\x04\x8B\x04\x0B\x0C\n\r\n\x05\x04\x0B\t\x03\x01\x12\x04\x8B\x04\x0B\x0C\n\r\n\x05\x04\x0B\t\x03\x02\x12\x04\x8B\x04\x0B\x0C\n\x1F\n\x03\x04\x0B\t\x12\x04\x8C\x04\x02\r\"\x12 javanano_as_lite\n\n\x0C\n\x04\x04\x0B\t\x04\x12\x04\x8C\x04\x0B\x0C\n\r\n\x05\x04\x0B\t\x04\x01\x12\x04\x8C\x04\x0B\x0C\n\r\n\x05\x04\x0B\t\x04\x02\x12\x04\x8C\x04\x0B\x0C\nO\n\x04\x04\x0B\x02\x04\x12\x04\x90\x04\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x0B\x02\x04\x04\x12\x04\x90\x04\x02\n\n\r\n\x05\x04\x0B\x02\x04\x06\x12\x04\x90\x04\x0B\x1E\n\r\n\x05\x04\x0B\x02\x04\x01\x12\x04\x90\x04\x1F3\n\r\n\x05\x04\x0B\x02\x04\x03\x12\x04\x90\x0469\nZ\n\x03\x04\x0B\x05\x12\x04\x93\x04\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x0B\x05\0\x12\x04\x93\x04\r\x18\n\r\n\x05\x04\x0B\x05\0\x01\x12\x04\x93\x04\r\x11\n\r\n\x05\x04\x0B\x05\0\x02\x12\x04\x93\x04\x15\x18\n\x0C\n\x02\x04\x0C\x12\x06\x96\x04\0\xF1\x04\x01\n\x0B\n\x03\x04\x0C\x01\x12\x04\x96\x04\x08\x14\n\xA3\x02\n\x04\x04\x0C\x02\0\x12\x04\x9B\x04\x02.\x1A\x94\x02 The ctype option instructs the C++ code generator to use a different\n representation of the field than it normally would.  See the specific\n options below.  This option is not yet implemented in the open source\n release -- sorry, we'll try to include it in a future version!\n\n\r\n\x05\x04\x0C\x02\0\x04\x12\x04\x9B\x04\x02\n\n\r\n\x05\x04\x0C\x02\0\x06\x12\x04\x9B\x04\x0B\x10\n\r\n\x05\x04\x0C\x02\0\x01\x12\x04\x9B\x04\x11\x16\n\r\n\x05\x04\x0C\x02\0\x03\x12\x04\x9B\x04\x19\x1A\n\r\n\x05\x04\x0C\x02\0\x08\x12\x04\x9B\x04\x1B-\n\r\n\x05\x04\x0C\x02\0\x07\x12\x04\x9B\x04&,\n\x0E\n\x04\x04\x0C\x04\0\x12\x06\x9C\x04\x02\xA3\x04\x03\n\r\n\x05\x04\x0C\x04\0\x01\x12\x04\x9C\x04\x07\x0C\n\x1F\n\x06\x04\x0C\x04\0\x02\0\x12\x04\x9E\x04\x04\x0F\x1A\x0F Default mode.\n\n\x0F\n\x07\x04\x0C\x04\0\x02\0\x01\x12\x04\x9E\x04\x04\n\n\x0F\n\x07\x04\x0C\x04\0\x02\0\x02\x12\x04\x9E\x04\r\x0E\n\x0E\n\x06\x04\x0C\x04\0\x02\x01\x12\x04\xA0\x04\x04\r\n\x0F\n\x07\x04\x0C\x04\0\x02\x01\x01\x12\x04\xA0\x04\x04\x08\n\x0F\n\x07\x04\x0C\x04\0\x02\x01\x02\x12\x04\xA0\x04\x0B\x0C\n\x0E\n\x06\x04\x0C\x04\0\x02\x02\x12\x04\xA2\x04\x04\x15\n\x0F\n\x07\x04\x0C\x04\0\x02\x02\x01\x12\x04\xA2\x04\x04\x10\n\x0F\n\x07\x04\x0C\x04\0\x02\x02\x02\x12\x04\xA2\x04\x13\x14\n\xDA\x02\n\x04\x04\x0C\x02\x01\x12\x04\xA9\x04\x02\x1B\x1A\xCB\x02 The packed option can be enabled for repeated primitive fields to enable\n a more efficient representation on the wire. Rather than repeatedly\n writing the tag and type for each element, the entire array is encoded as\n a single length-delimited blob. In proto3, only explicit setting it to\n false will avoid using packed encoding.\n\n\r\n\x05\x04\x0C\x02\x01\x04\x12\x04\xA9\x04\x02\n\n\r\n\x05\x04\x0C\x02\x01\x05\x12\x04\xA9\x04\x0B\x0F\n\r\n\x05\x04\x0C\x02\x01\x01\x12\x04\xA9\x04\x10\x16\n\r\n\x05\x04\x0C\x02\x01\x03\x12\x04\xA9\x04\x19\x1A\n\x9A\x05\n\x04\x04\x0C\x02\x02\x12\x04\xB6\x04\x023\x1A\x8B\x05 The jstype option determines the JavaScript type used for values of the\n field.  The option is permitted only for 64 bit integral and fixed types\n (int64, uint64, sint64, fixed64, sfixed64).  A field with jstype JS_STRING\n is represented as JavaScript string, which avoids loss of precision that\n can happen when a large value is converted to a floating point JavaScript.\n Specifying JS_NUMBER for the jstype causes the generated JavaScript code to\n use the JavaScript \"number\" type.  The behavior of the default option\n JS_NORMAL is implementation dependent.\n\n This option is an enum to permit additional types to be added, e.g.\n goog.math.Integer.\n\n\r\n\x05\x04\x0C\x02\x02\x04\x12\x04\xB6\x04\x02\n\n\r\n\x05\x04\x0C\x02\x02\x06\x12\x04\xB6\x04\x0B\x11\n\r\n\x05\x04\x0C\x02\x02\x01\x12\x04\xB6\x04\x12\x18\n\r\n\x05\x04\x0C\x02\x02\x03\x12\x04\xB6\x04\x1B\x1C\n\r\n\x05\x04\x0C\x02\x02\x08\x12\x04\xB6\x04\x1D2\n\r\n\x05\x04\x0C\x02\x02\x07\x12\x04\xB6\x04(1\n\x0E\n\x04\x04\x0C\x04\x01\x12\x06\xB7\x04\x02\xC0\x04\x03\n\r\n\x05\x04\x0C\x04\x01\x01\x12\x04\xB7\x04\x07\r\n'\n\x06\x04\x0C\x04\x01\x02\0\x12\x04\xB9\x04\x04\x12\x1A\x17 Use the default type.\n\n\x0F\n\x07\x04\x0C\x04\x01\x02\0\x01\x12\x04\xB9\x04\x04\r\n\x0F\n\x07\x04\x0C\x04\x01\x02\0\x02\x12\x04\xB9\x04\x10\x11\n)\n\x06\x04\x0C\x04\x01\x02\x01\x12\x04\xBC\x04\x04\x12\x1A\x19 Use JavaScript strings.\n\n\x0F\n\x07\x04\x0C\x04\x01\x02\x01\x01\x12\x04\xBC\x04\x04\r\n\x0F\n\x07\x04\x0C\x04\x01\x02\x01\x02\x12\x04\xBC\x04\x10\x11\n)\n\x06\x04\x0C\x04\x01\x02\x02\x12\x04\xBF\x04\x04\x12\x1A\x19 Use JavaScript numbers.\n\n\x0F\n\x07\x04\x0C\x04\x01\x02\x02\x01\x12\x04\xBF\x04\x04\r\n\x0F\n\x07\x04\x0C\x04\x01\x02\x02\x02\x12\x04\xBF\x04\x10\x11\n\xEF\x0C\n\x04\x04\x0C\x02\x03\x12\x04\xDE\x04\x02+\x1A\xE0\x0C Should this field be parsed lazily?  Lazy applies only to message-type\n fields.  It means that when the outer message is initially parsed, the\n inner message's contents will not be parsed but instead stored in encoded\n form.  The inner message will actually be parsed when it is first accessed.\n\n This is only a hint.  Implementations are free to choose whether to use\n eager or lazy parsing regardless of the value of this option.  However,\n setting this option true suggests that the protocol author believes that\n using lazy parsing on this field is worth the additional bookkeeping\n overhead typically needed to implement it.\n\n This option does not affect the public interface of any generated code;\n all method signatures remain the same.  Furthermore, thread-safety of the\n interface is not affected by this option; const methods remain safe to\n call from multiple threads concurrently, while non-const methods continue\n to require exclusive access.\n\n\n Note that implementations may choose not to check required fields within\n a lazy sub-message.  That is, calling IsInitialized() on the outer message\n may return true even if the inner message has missing required fields.\n This is necessary because otherwise the inner message would have to be\n parsed in order to perform the check, defeating the purpose of lazy\n parsing.  An implementation which chooses not to check required fields\n must be consistent about it.  That is, for any particular sub-message, the\n implementation must either *always* check its required fields, or *never*\n check its required fields, regardless of whether or not the message has\n been parsed.\n\n\r\n\x05\x04\x0C\x02\x03\x04\x12\x04\xDE\x04\x02\n\n\r\n\x05\x04\x0C\x02\x03\x05\x12\x04\xDE\x04\x0B\x0F\n\r\n\x05\x04\x0C\x02\x03\x01\x12\x04\xDE\x04\x10\x14\n\r\n\x05\x04\x0C\x02\x03\x03\x12\x04\xDE\x04\x17\x18\n\r\n\x05\x04\x0C\x02\x03\x08\x12\x04\xDE\x04\x19*\n\r\n\x05\x04\x0C\x02\x03\x07\x12\x04\xDE\x04$)\n\xE8\x01\n\x04\x04\x0C\x02\x04\x12\x04\xE4\x04\x021\x1A\xD9\x01 Is this field deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for accessors, or it will be completely ignored; in the very least, this\n is a formalization for deprecating fields.\n\n\r\n\x05\x04\x0C\x02\x04\x04\x12\x04\xE4\x04\x02\n\n\r\n\x05\x04\x0C\x02\x04\x05\x12\x04\xE4\x04\x0B\x0F\n\r\n\x05\x04\x0C\x02\x04\x01\x12\x04\xE4\x04\x10\x1A\n\r\n\x05\x04\x0C\x02\x04\x03\x12\x04\xE4\x04\x1D\x1E\n\r\n\x05\x04\x0C\x02\x04\x08\x12\x04\xE4\x04\x1F0\n\r\n\x05\x04\x0C\x02\x04\x07\x12\x04\xE4\x04*/\n?\n\x04\x04\x0C\x02\x05\x12\x04\xE7\x04\x02,\x1A1 For Google-internal migration only. Do not use.\n\n\r\n\x05\x04\x0C\x02\x05\x04\x12\x04\xE7\x04\x02\n\n\r\n\x05\x04\x0C\x02\x05\x05\x12\x04\xE7\x04\x0B\x0F\n\r\n\x05\x04\x0C\x02\x05\x01\x12\x04\xE7\x04\x10\x14\n\r\n\x05\x04\x0C\x02\x05\x03\x12\x04\xE7\x04\x17\x19\n\r\n\x05\x04\x0C\x02\x05\x08\x12\x04\xE7\x04\x1A+\n\r\n\x05\x04\x0C\x02\x05\x07\x12\x04\xE7\x04%*\nO\n\x04\x04\x0C\x02\x06\x12\x04\xEB\x04\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x0C\x02\x06\x04\x12\x04\xEB\x04\x02\n\n\r\n\x05\x04\x0C\x02\x06\x06\x12\x04\xEB\x04\x0B\x1E\n\r\n\x05\x04\x0C\x02\x06\x01\x12\x04\xEB\x04\x1F3\n\r\n\x05\x04\x0C\x02\x06\x03\x12\x04\xEB\x0469\nZ\n\x03\x04\x0C\x05\x12\x04\xEE\x04\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x0C\x05\0\x12\x04\xEE\x04\r\x18\n\r\n\x05\x04\x0C\x05\0\x01\x12\x04\xEE\x04\r\x11\n\r\n\x05\x04\x0C\x05\0\x02\x12\x04\xEE\x04\x15\x18\n\x1C\n\x03\x04\x0C\t\x12\x04\xF0\x04\x02\r\"\x0F removed jtype\n\n\x0C\n\x04\x04\x0C\t\0\x12\x04\xF0\x04\x0B\x0C\n\r\n\x05\x04\x0C\t\0\x01\x12\x04\xF0\x04\x0B\x0C\n\r\n\x05\x04\x0C\t\0\x02\x12\x04\xF0\x04\x0B\x0C\n\x0C\n\x02\x04\r\x12\x06\xF3\x04\0\xF9\x04\x01\n\x0B\n\x03\x04\r\x01\x12\x04\xF3\x04\x08\x14\nO\n\x04\x04\r\x02\0\x12\x04\xF5\x04\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\r\x02\0\x04\x12\x04\xF5\x04\x02\n\n\r\n\x05\x04\r\x02\0\x06\x12\x04\xF5\x04\x0B\x1E\n\r\n\x05\x04\r\x02\0\x01\x12\x04\xF5\x04\x1F3\n\r\n\x05\x04\r\x02\0\x03\x12\x04\xF5\x0469\nZ\n\x03\x04\r\x05\x12\x04\xF8\x04\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\r\x05\0\x12\x04\xF8\x04\r\x18\n\r\n\x05\x04\r\x05\0\x01\x12\x04\xF8\x04\r\x11\n\r\n\x05\x04\r\x05\0\x02\x12\x04\xF8\x04\x15\x18\n\x0C\n\x02\x04\x0E\x12\x06\xFB\x04\0\x8E\x05\x01\n\x0B\n\x03\x04\x0E\x01\x12\x04\xFB\x04\x08\x13\n`\n\x04\x04\x0E\x02\0\x12\x04\xFF\x04\x02 \x1AR Set this option to true to allow mapping different tag names to the same\n value.\n\n\r\n\x05\x04\x0E\x02\0\x04\x12\x04\xFF\x04\x02\n\n\r\n\x05\x04\x0E\x02\0\x05\x12\x04\xFF\x04\x0B\x0F\n\r\n\x05\x04\x0E\x02\0\x01\x12\x04\xFF\x04\x10\x1B\n\r\n\x05\x04\x0E\x02\0\x03\x12\x04\xFF\x04\x1E\x1F\n\xE5\x01\n\x04\x04\x0E\x02\x01\x12\x04\x85\x05\x021\x1A\xD6\x01 Is this enum deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for the enum, or it will be completely ignored; in the very least, this\n is a formalization for deprecating enums.\n\n\r\n\x05\x04\x0E\x02\x01\x04\x12\x04\x85\x05\x02\n\n\r\n\x05\x04\x0E\x02\x01\x05\x12\x04\x85\x05\x0B\x0F\n\r\n\x05\x04\x0E\x02\x01\x01\x12\x04\x85\x05\x10\x1A\n\r\n\x05\x04\x0E\x02\x01\x03\x12\x04\x85\x05\x1D\x1E\n\r\n\x05\x04\x0E\x02\x01\x08\x12\x04\x85\x05\x1F0\n\r\n\x05\x04\x0E\x02\x01\x07\x12\x04\x85\x05*/\n\x1F\n\x03\x04\x0E\t\x12\x04\x87\x05\x02\r\"\x12 javanano_as_lite\n\n\x0C\n\x04\x04\x0E\t\0\x12\x04\x87\x05\x0B\x0C\n\r\n\x05\x04\x0E\t\0\x01\x12\x04\x87\x05\x0B\x0C\n\r\n\x05\x04\x0E\t\0\x02\x12\x04\x87\x05\x0B\x0C\nO\n\x04\x04\x0E\x02\x02\x12\x04\x8A\x05\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x0E\x02\x02\x04\x12\x04\x8A\x05\x02\n\n\r\n\x05\x04\x0E\x02\x02\x06\x12\x04\x8A\x05\x0B\x1E\n\r\n\x05\x04\x0E\x02\x02\x01\x12\x04\x8A\x05\x1F3\n\r\n\x05\x04\x0E\x02\x02\x03\x12\x04\x8A\x0569\nZ\n\x03\x04\x0E\x05\x12\x04\x8D\x05\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x0E\x05\0\x12\x04\x8D\x05\r\x18\n\r\n\x05\x04\x0E\x05\0\x01\x12\x04\x8D\x05\r\x11\n\r\n\x05\x04\x0E\x05\0\x02\x12\x04\x8D\x05\x15\x18\n\x0C\n\x02\x04\x0F\x12\x06\x90\x05\0\x9C\x05\x01\n\x0B\n\x03\x04\x0F\x01\x12\x04\x90\x05\x08\x18\n\xF7\x01\n\x04\x04\x0F\x02\0\x12\x04\x95\x05\x021\x1A\xE8\x01 Is this enum value deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for the enum value, or it will be completely ignored; in the very least,\n this is a formalization for deprecating enum values.\n\n\r\n\x05\x04\x0F\x02\0\x04\x12\x04\x95\x05\x02\n\n\r\n\x05\x04\x0F\x02\0\x05\x12\x04\x95\x05\x0B\x0F\n\r\n\x05\x04\x0F\x02\0\x01\x12\x04\x95\x05\x10\x1A\n\r\n\x05\x04\x0F\x02\0\x03\x12\x04\x95\x05\x1D\x1E\n\r\n\x05\x04\x0F\x02\0\x08\x12\x04\x95\x05\x1F0\n\r\n\x05\x04\x0F\x02\0\x07\x12\x04\x95\x05*/\nO\n\x04\x04\x0F\x02\x01\x12\x04\x98\x05\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x0F\x02\x01\x04\x12\x04\x98\x05\x02\n\n\r\n\x05\x04\x0F\x02\x01\x06\x12\x04\x98\x05\x0B\x1E\n\r\n\x05\x04\x0F\x02\x01\x01\x12\x04\x98\x05\x1F3\n\r\n\x05\x04\x0F\x02\x01\x03\x12\x04\x98\x0569\nZ\n\x03\x04\x0F\x05\x12\x04\x9B\x05\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x0F\x05\0\x12\x04\x9B\x05\r\x18\n\r\n\x05\x04\x0F\x05\0\x01\x12\x04\x9B\x05\r\x11\n\r\n\x05\x04\x0F\x05\0\x02\x12\x04\x9B\x05\x15\x18\n\x0C\n\x02\x04\x10\x12\x06\x9E\x05\0\xB0\x05\x01\n\x0B\n\x03\x04\x10\x01\x12\x04\x9E\x05\x08\x16\n\xD9\x03\n\x04\x04\x10\x02\0\x12\x04\xA9\x05\x022\x1A\xDF\x01 Is this service deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for the service, or it will be completely ignored; in the very least,\n this is a formalization for deprecating services.\n2\xE8\x01 Note:  Field numbers 1 through 32 are reserved for Google's internal RPC\n   framework.  We apologize for hoarding these numbers to ourselves, but\n   we were already using them long before we decided to release Protocol\n   Buffers.\n\n\r\n\x05\x04\x10\x02\0\x04\x12\x04\xA9\x05\x02\n\n\r\n\x05\x04\x10\x02\0\x05\x12\x04\xA9\x05\x0B\x0F\n\r\n\x05\x04\x10\x02\0\x01\x12\x04\xA9\x05\x10\x1A\n\r\n\x05\x04\x10\x02\0\x03\x12\x04\xA9\x05\x1D\x1F\n\r\n\x05\x04\x10\x02\0\x08\x12\x04\xA9\x05 1\n\r\n\x05\x04\x10\x02\0\x07\x12\x04\xA9\x05+0\nO\n\x04\x04\x10\x02\x01\x12\x04\xAC\x05\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x10\x02\x01\x04\x12\x04\xAC\x05\x02\n\n\r\n\x05\x04\x10\x02\x01\x06\x12\x04\xAC\x05\x0B\x1E\n\r\n\x05\x04\x10\x02\x01\x01\x12\x04\xAC\x05\x1F3\n\r\n\x05\x04\x10\x02\x01\x03\x12\x04\xAC\x0569\nZ\n\x03\x04\x10\x05\x12\x04\xAF\x05\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x10\x05\0\x12\x04\xAF\x05\r\x18\n\r\n\x05\x04\x10\x05\0\x01\x12\x04\xAF\x05\r\x11\n\r\n\x05\x04\x10\x05\0\x02\x12\x04\xAF\x05\x15\x18\n\x0C\n\x02\x04\x11\x12\x06\xB2\x05\0\xCF\x05\x01\n\x0B\n\x03\x04\x11\x01\x12\x04\xB2\x05\x08\x15\n\xD6\x03\n\x04\x04\x11\x02\0\x12\x04\xBD\x05\x022\x1A\xDC\x01 Is this method deprecated?\n Depending on the target platform, this can emit Deprecated annotations\n for the method, or it will be completely ignored; in the very least,\n this is a formalization for deprecating methods.\n2\xE8\x01 Note:  Field numbers 1 through 32 are reserved for Google's internal RPC\n   framework.  We apologize for hoarding these numbers to ourselves, but\n   we were already using them long before we decided to release Protocol\n   Buffers.\n\n\r\n\x05\x04\x11\x02\0\x04\x12\x04\xBD\x05\x02\n\n\r\n\x05\x04\x11\x02\0\x05\x12\x04\xBD\x05\x0B\x0F\n\r\n\x05\x04\x11\x02\0\x01\x12\x04\xBD\x05\x10\x1A\n\r\n\x05\x04\x11\x02\0\x03\x12\x04\xBD\x05\x1D\x1F\n\r\n\x05\x04\x11\x02\0\x08\x12\x04\xBD\x05 1\n\r\n\x05\x04\x11\x02\0\x07\x12\x04\xBD\x05+0\n\xF0\x01\n\x04\x04\x11\x04\0\x12\x06\xC2\x05\x02\xC6\x05\x03\x1A\xDF\x01 Is this method side-effect-free (or safe in HTTP parlance), or idempotent,\n or neither? HTTP based RPC implementation may choose GET verb for safe\n methods, and PUT verb for idempotent methods instead of the default POST.\n\n\r\n\x05\x04\x11\x04\0\x01\x12\x04\xC2\x05\x07\x17\n\x0E\n\x06\x04\x11\x04\0\x02\0\x12\x04\xC3\x05\x04\x1C\n\x0F\n\x07\x04\x11\x04\0\x02\0\x01\x12\x04\xC3\x05\x04\x17\n\x0F\n\x07\x04\x11\x04\0\x02\0\x02\x12\x04\xC3\x05\x1A\x1B\n$\n\x06\x04\x11\x04\0\x02\x01\x12\x04\xC4\x05\x04\x18\"\x14 implies idempotent\n\n\x0F\n\x07\x04\x11\x04\0\x02\x01\x01\x12\x04\xC4\x05\x04\x13\n\x0F\n\x07\x04\x11\x04\0\x02\x01\x02\x12\x04\xC4\x05\x16\x17\n7\n\x06\x04\x11\x04\0\x02\x02\x12\x04\xC5\x05\x04\x13\"' idempotent, but may have side effects\n\n\x0F\n\x07\x04\x11\x04\0\x02\x02\x01\x12\x04\xC5\x05\x04\x0E\n\x0F\n\x07\x04\x11\x04\0\x02\x02\x02\x12\x04\xC5\x05\x11\x12\n\x0E\n\x04\x04\x11\x02\x01\x12\x06\xC7\x05\x02\xC8\x05&\n\r\n\x05\x04\x11\x02\x01\x04\x12\x04\xC7\x05\x02\n\n\r\n\x05\x04\x11\x02\x01\x06\x12\x04\xC7\x05\x0B\x1B\n\r\n\x05\x04\x11\x02\x01\x01\x12\x04\xC7\x05\x1C-\n\r\n\x05\x04\x11\x02\x01\x03\x12\x04\xC7\x0502\n\r\n\x05\x04\x11\x02\x01\x08\x12\x04\xC8\x05\x06%\n\r\n\x05\x04\x11\x02\x01\x07\x12\x04\xC8\x05\x11$\nO\n\x04\x04\x11\x02\x02\x12\x04\xCB\x05\x02:\x1AA The parser stores options it doesn't recognize here. See above.\n\n\r\n\x05\x04\x11\x02\x02\x04\x12\x04\xCB\x05\x02\n\n\r\n\x05\x04\x11\x02\x02\x06\x12\x04\xCB\x05\x0B\x1E\n\r\n\x05\x04\x11\x02\x02\x01\x12\x04\xCB\x05\x1F3\n\r\n\x05\x04\x11\x02\x02\x03\x12\x04\xCB\x0569\nZ\n\x03\x04\x11\x05\x12\x04\xCE\x05\x02\x19\x1AM Clients can define custom options in extensions of this message. See above.\n\n\x0C\n\x04\x04\x11\x05\0\x12\x04\xCE\x05\r\x18\n\r\n\x05\x04\x11\x05\0\x01\x12\x04\xCE\x05\r\x11\n\r\n\x05\x04\x11\x05\0\x02\x12\x04\xCE\x05\x15\x18\n\x8B\x03\n\x02\x04\x12\x12\x06\xD8\x05\0\xEC\x05\x01\x1A\xFC\x02 A message representing a option the parser does not recognize. This only\n appears in options protos created by the compiler::Parser class.\n DescriptorPool resolves these when building Descriptor objects. Therefore,\n options protos in descriptor objects (e.g. returned by Descriptor::options(),\n or produced by Descriptor::CopyTo()) will never have UninterpretedOptions\n in them.\n\n\x0B\n\x03\x04\x12\x01\x12\x04\xD8\x05\x08\x1B\n\xCB\x02\n\x04\x04\x12\x03\0\x12\x06\xDE\x05\x02\xE1\x05\x03\x1A\xBA\x02 The name of the uninterpreted option.  Each string represents a segment in\n a dot-separated name.  is_extension is true iff a segment represents an\n extension (denoted with parentheses in options specs in .proto files).\n E.g.,{ [\"foo\", false], [\"bar.baz\", true], [\"qux\", false] } represents\n \"foo.(bar.baz).qux\".\n\n\r\n\x05\x04\x12\x03\0\x01\x12\x04\xDE\x05\n\x12\n\x0E\n\x06\x04\x12\x03\0\x02\0\x12\x04\xDF\x05\x04\"\n\x0F\n\x07\x04\x12\x03\0\x02\0\x04\x12\x04\xDF\x05\x04\x0C\n\x0F\n\x07\x04\x12\x03\0\x02\0\x05\x12\x04\xDF\x05\r\x13\n\x0F\n\x07\x04\x12\x03\0\x02\0\x01\x12\x04\xDF\x05\x14\x1D\n\x0F\n\x07\x04\x12\x03\0\x02\0\x03\x12\x04\xDF\x05 !\n\x0E\n\x06\x04\x12\x03\0\x02\x01\x12\x04\xE0\x05\x04#\n\x0F\n\x07\x04\x12\x03\0\x02\x01\x04\x12\x04\xE0\x05\x04\x0C\n\x0F\n\x07\x04\x12\x03\0\x02\x01\x05\x12\x04\xE0\x05\r\x11\n\x0F\n\x07\x04\x12\x03\0\x02\x01\x01\x12\x04\xE0\x05\x12\x1E\n\x0F\n\x07\x04\x12\x03\0\x02\x01\x03\x12\x04\xE0\x05!\"\n\x0C\n\x04\x04\x12\x02\0\x12\x04\xE2\x05\x02\x1D\n\r\n\x05\x04\x12\x02\0\x04\x12\x04\xE2\x05\x02\n\n\r\n\x05\x04\x12\x02\0\x06\x12\x04\xE2\x05\x0B\x13\n\r\n\x05\x04\x12\x02\0\x01\x12\x04\xE2\x05\x14\x18\n\r\n\x05\x04\x12\x02\0\x03\x12\x04\xE2\x05\x1B\x1C\n\x9C\x01\n\x04\x04\x12\x02\x01\x12\x04\xE6\x05\x02'\x1A\x8D\x01 The value of the uninterpreted option, in whatever type the tokenizer\n identified it as during parsing. Exactly one of these should be set.\n\n\r\n\x05\x04\x12\x02\x01\x04\x12\x04\xE6\x05\x02\n\n\r\n\x05\x04\x12\x02\x01\x05\x12\x04\xE6\x05\x0B\x11\n\r\n\x05\x04\x12\x02\x01\x01\x12\x04\xE6\x05\x12\"\n\r\n\x05\x04\x12\x02\x01\x03\x12\x04\xE6\x05%&\n\x0C\n\x04\x04\x12\x02\x02\x12\x04\xE7\x05\x02)\n\r\n\x05\x04\x12\x02\x02\x04\x12\x04\xE7\x05\x02\n\n\r\n\x05\x04\x12\x02\x02\x05\x12\x04\xE7\x05\x0B\x11\n\r\n\x05\x04\x12\x02\x02\x01\x12\x04\xE7\x05\x12$\n\r\n\x05\x04\x12\x02\x02\x03\x12\x04\xE7\x05'(\n\x0C\n\x04\x04\x12\x02\x03\x12\x04\xE8\x05\x02(\n\r\n\x05\x04\x12\x02\x03\x04\x12\x04\xE8\x05\x02\n\n\r\n\x05\x04\x12\x02\x03\x05\x12\x04\xE8\x05\x0B\x10\n\r\n\x05\x04\x12\x02\x03\x01\x12\x04\xE8\x05\x11#\n\r\n\x05\x04\x12\x02\x03\x03\x12\x04\xE8\x05&'\n\x0C\n\x04\x04\x12\x02\x04\x12\x04\xE9\x05\x02#\n\r\n\x05\x04\x12\x02\x04\x04\x12\x04\xE9\x05\x02\n\n\r\n\x05\x04\x12\x02\x04\x05\x12\x04\xE9\x05\x0B\x11\n\r\n\x05\x04\x12\x02\x04\x01\x12\x04\xE9\x05\x12\x1E\n\r\n\x05\x04\x12\x02\x04\x03\x12\x04\xE9\x05!\"\n\x0C\n\x04\x04\x12\x02\x05\x12\x04\xEA\x05\x02\"\n\r\n\x05\x04\x12\x02\x05\x04\x12\x04\xEA\x05\x02\n\n\r\n\x05\x04\x12\x02\x05\x05\x12\x04\xEA\x05\x0B\x10\n\r\n\x05\x04\x12\x02\x05\x01\x12\x04\xEA\x05\x11\x1D\n\r\n\x05\x04\x12\x02\x05\x03\x12\x04\xEA\x05 !\n\x0C\n\x04\x04\x12\x02\x06\x12\x04\xEB\x05\x02&\n\r\n\x05\x04\x12\x02\x06\x04\x12\x04\xEB\x05\x02\n\n\r\n\x05\x04\x12\x02\x06\x05\x12\x04\xEB\x05\x0B\x11\n\r\n\x05\x04\x12\x02\x06\x01\x12\x04\xEB\x05\x12!\n\r\n\x05\x04\x12\x02\x06\x03\x12\x04\xEB\x05$%\n\xDA\x01\n\x02\x04\x13\x12\x06\xF3\x05\0\xF4\x06\x01\x1Aj Encapsulates information about the original source file from which a\n FileDescriptorProto was generated.\n2` ===================================================================\n Optional source code info\n\n\x0B\n\x03\x04\x13\x01\x12\x04\xF3\x05\x08\x16\n\x82\x11\n\x04\x04\x13\x02\0\x12\x04\x9F\x06\x02!\x1A\xF3\x10 A Location identifies a piece of source code in a .proto file which\n corresponds to a particular definition.  This information is intended\n to be useful to IDEs, code indexers, documentation generators, and similar\n tools.\n\n For example, say we have a file like:\n   message Foo {\n     optional string foo = 1;\n   }\n Let's look at just the field definition:\n   optional string foo = 1;\n   ^       ^^     ^^  ^  ^^^\n   a       bc     de  f  ghi\n We have the following locations:\n   span   path               represents\n   [a,i)  [ 4, 0, 2, 0 ]     The whole field definition.\n   [a,b)  [ 4, 0, 2, 0, 4 ]  The label (optional).\n   [c,d)  [ 4, 0, 2, 0, 5 ]  The type (string).\n   [e,f)  [ 4, 0, 2, 0, 1 ]  The name (foo).\n   [g,h)  [ 4, 0, 2, 0, 3 ]  The number (1).\n\n Notes:\n - A location may refer to a repeated field itself (i.e. not to any\n   particular index within it).  This is used whenever a set of elements are\n   logically enclosed in a single code segment.  For example, an entire\n   extend block (possibly containing multiple extension definitions) will\n   have an outer location whose path refers to the \"extensions\" repeated\n   field without an index.\n - Multiple locations may have the same path.  This happens when a single\n   logical declaration is spread out across multiple places.  The most\n   obvious example is the \"extend\" block again -- there may be multiple\n   extend blocks in the same scope, each of which will have the same path.\n - A location's span is not always a subset of its parent's span.  For\n   example, the \"extendee\" of an extension declaration appears at the\n   beginning of the \"extend\" block and is shared by all extensions within\n   the block.\n - Just because a location's span is a subset of some other location's span\n   does not mean that it is a descendant.  For example, a \"group\" defines\n   both a type and a field in a single declaration.  Thus, the locations\n   corresponding to the type and field and their components will overlap.\n - Code which tries to interpret locations should probably be designed to\n   ignore those that it doesn't understand, as more types of locations could\n   be recorded in the future.\n\n\r\n\x05\x04\x13\x02\0\x04\x12\x04\x9F\x06\x02\n\n\r\n\x05\x04\x13\x02\0\x06\x12\x04\x9F\x06\x0B\x13\n\r\n\x05\x04\x13\x02\0\x01\x12\x04\x9F\x06\x14\x1C\n\r\n\x05\x04\x13\x02\0\x03\x12\x04\x9F\x06\x1F \n\x0E\n\x04\x04\x13\x03\0\x12\x06\xA0\x06\x02\xF3\x06\x03\n\r\n\x05\x04\x13\x03\0\x01\x12\x04\xA0\x06\n\x12\n\x83\x07\n\x06\x04\x13\x03\0\x02\0\x12\x04\xB8\x06\x04,\x1A\xF2\x06 Identifies which part of the FileDescriptorProto was defined at this\n location.\n\n Each element is a field number or an index.  They form a path from\n the root FileDescriptorProto to the place where the definition.  For\n example, this path:\n   [ 4, 3, 2, 7, 1 ]\n refers to:\n   file.message_type(3)  // 4, 3\n       .field(7)         // 2, 7\n       .name()           // 1\n This is because FileDescriptorProto.message_type has field number 4:\n   repeated DescriptorProto message_type = 4;\n and DescriptorProto.field has field number 2:\n   repeated FieldDescriptorProto field = 2;\n and FieldDescriptorProto.name has field number 1:\n   optional string name = 1;\n\n Thus, the above path gives the location of a field name.  If we removed\n the last element:\n   [ 4, 3, 2, 7 ]\n this path refers to the whole field declaration (from the beginning\n of the label to the terminating semicolon).\n\n\x0F\n\x07\x04\x13\x03\0\x02\0\x04\x12\x04\xB8\x06\x04\x0C\n\x0F\n\x07\x04\x13\x03\0\x02\0\x05\x12\x04\xB8\x06\r\x12\n\x0F\n\x07\x04\x13\x03\0\x02\0\x01\x12\x04\xB8\x06\x13\x17\n\x0F\n\x07\x04\x13\x03\0\x02\0\x03\x12\x04\xB8\x06\x1A\x1B\n\x0F\n\x07\x04\x13\x03\0\x02\0\x08\x12\x04\xB8\x06\x1C+\n\x10\n\x08\x04\x13\x03\0\x02\0\x08\x02\x12\x04\xB8\x06\x1D*\n\xD2\x02\n\x06\x04\x13\x03\0\x02\x01\x12\x04\xBF\x06\x04,\x1A\xC1\x02 Always has exactly three or four elements: start line, start column,\n end line (optional, otherwise assumed same as start line), end column.\n These are packed into a single field for efficiency.  Note that line\n and column numbers are zero-based -- typically you will want to add\n 1 to each before displaying to a user.\n\n\x0F\n\x07\x04\x13\x03\0\x02\x01\x04\x12\x04\xBF\x06\x04\x0C\n\x0F\n\x07\x04\x13\x03\0\x02\x01\x05\x12\x04\xBF\x06\r\x12\n\x0F\n\x07\x04\x13\x03\0\x02\x01\x01\x12\x04\xBF\x06\x13\x17\n\x0F\n\x07\x04\x13\x03\0\x02\x01\x03\x12\x04\xBF\x06\x1A\x1B\n\x0F\n\x07\x04\x13\x03\0\x02\x01\x08\x12\x04\xBF\x06\x1C+\n\x10\n\x08\x04\x13\x03\0\x02\x01\x08\x02\x12\x04\xBF\x06\x1D*\n\xA5\x0C\n\x06\x04\x13\x03\0\x02\x02\x12\x04\xF0\x06\x04)\x1A\x94\x0C If this SourceCodeInfo represents a complete declaration, these are any\n comments appearing before and after the declaration which appear to be\n attached to the declaration.\n\n A series of line comments appearing on consecutive lines, with no other\n tokens appearing on those lines, will be treated as a single comment.\n\n leading_detached_comments will keep paragraphs of comments that appear\n before (but not connected to) the current element. Each paragraph,\n separated by empty lines, will be one comment element in the repeated\n field.\n\n Only the comment content is provided; comment markers (e.g. //) are\n stripped out.  For block comments, leading whitespace and an asterisk\n will be stripped from the beginning of each line other than the first.\n Newlines are included in the output.\n\n Examples:\n\n   optional int32 foo = 1;  // Comment attached to foo.\n   // Comment attached to bar.\n   optional int32 bar = 2;\n\n   optional string baz = 3;\n   // Comment attached to baz.\n   // Another line attached to baz.\n\n   // Comment attached to qux.\n   //\n   // Another line attached to qux.\n   optional double qux = 4;\n\n   // Detached comment for corge. This is not leading or trailing comments\n   // to qux or corge because there are blank lines separating it from\n   // both.\n\n   // Detached comment for corge paragraph 2.\n\n   optional string corge = 5;\n   /* Block comment attached\n    * to corge.  Leading asterisks\n    * will be removed. */\n   /* Block comment attached to\n    * grault. */\n   optional int32 grault = 6;\n\n   // ignored detached comments.\n\n\x0F\n\x07\x04\x13\x03\0\x02\x02\x04\x12\x04\xF0\x06\x04\x0C\n\x0F\n\x07\x04\x13\x03\0\x02\x02\x05\x12\x04\xF0\x06\r\x13\n\x0F\n\x07\x04\x13\x03\0\x02\x02\x01\x12\x04\xF0\x06\x14$\n\x0F\n\x07\x04\x13\x03\0\x02\x02\x03\x12\x04\xF0\x06'(\n\x0E\n\x06\x04\x13\x03\0\x02\x03\x12\x04\xF1\x06\x04*\n\x0F\n\x07\x04\x13\x03\0\x02\x03\x04\x12\x04\xF1\x06\x04\x0C\n\x0F\n\x07\x04\x13\x03\0\x02\x03\x05\x12\x04\xF1\x06\r\x13\n\x0F\n\x07\x04\x13\x03\0\x02\x03\x01\x12\x04\xF1\x06\x14%\n\x0F\n\x07\x04\x13\x03\0\x02\x03\x03\x12\x04\xF1\x06()\n\x0E\n\x06\x04\x13\x03\0\x02\x04\x12\x04\xF2\x06\x042\n\x0F\n\x07\x04\x13\x03\0\x02\x04\x04\x12\x04\xF2\x06\x04\x0C\n\x0F\n\x07\x04\x13\x03\0\x02\x04\x05\x12\x04\xF2\x06\r\x13\n\x0F\n\x07\x04\x13\x03\0\x02\x04\x01\x12\x04\xF2\x06\x14-\n\x0F\n\x07\x04\x13\x03\0\x02\x04\x03\x12\x04\xF2\x0601\n\xEE\x01\n\x02\x04\x14\x12\x06\xF9\x06\0\x8E\x07\x01\x1A\xDF\x01 Describes the relationship between generated code and its original source\n file. A GeneratedCodeInfo message is associated with only one generated\n source file, but may contain references to different source .proto files.\n\n\x0B\n\x03\x04\x14\x01\x12\x04\xF9\x06\x08\x19\nx\n\x04\x04\x14\x02\0\x12\x04\xFC\x06\x02%\x1Aj An Annotation connects some span of text in generated code to an element\n of its generating .proto file.\n\n\r\n\x05\x04\x14\x02\0\x04\x12\x04\xFC\x06\x02\n\n\r\n\x05\x04\x14\x02\0\x06\x12\x04\xFC\x06\x0B\x15\n\r\n\x05\x04\x14\x02\0\x01\x12\x04\xFC\x06\x16 \n\r\n\x05\x04\x14\x02\0\x03\x12\x04\xFC\x06#$\n\x0E\n\x04\x04\x14\x03\0\x12\x06\xFD\x06\x02\x8D\x07\x03\n\r\n\x05\x04\x14\x03\0\x01\x12\x04\xFD\x06\n\x14\n\x8F\x01\n\x06\x04\x14\x03\0\x02\0\x12\x04\x80\x07\x04,\x1A\x7F Identifies the element in the original source .proto file. This field\n is formatted the same as SourceCodeInfo.Location.path.\n\n\x0F\n\x07\x04\x14\x03\0\x02\0\x04\x12\x04\x80\x07\x04\x0C\n\x0F\n\x07\x04\x14\x03\0\x02\0\x05\x12\x04\x80\x07\r\x12\n\x0F\n\x07\x04\x14\x03\0\x02\0\x01\x12\x04\x80\x07\x13\x17\n\x0F\n\x07\x04\x14\x03\0\x02\0\x03\x12\x04\x80\x07\x1A\x1B\n\x0F\n\x07\x04\x14\x03\0\x02\0\x08\x12\x04\x80\x07\x1C+\n\x10\n\x08\x04\x14\x03\0\x02\0\x08\x02\x12\x04\x80\x07\x1D*\nO\n\x06\x04\x14\x03\0\x02\x01\x12\x04\x83\x07\x04$\x1A? Identifies the filesystem path to the original source .proto.\n\n\x0F\n\x07\x04\x14\x03\0\x02\x01\x04\x12\x04\x83\x07\x04\x0C\n\x0F\n\x07\x04\x14\x03\0\x02\x01\x05\x12\x04\x83\x07\r\x13\n\x0F\n\x07\x04\x14\x03\0\x02\x01\x01\x12\x04\x83\x07\x14\x1F\n\x0F\n\x07\x04\x14\x03\0\x02\x01\x03\x12\x04\x83\x07\"#\nw\n\x06\x04\x14\x03\0\x02\x02\x12\x04\x87\x07\x04\x1D\x1Ag Identifies the starting offset in bytes in the generated code\n that relates to the identified object.\n\n\x0F\n\x07\x04\x14\x03\0\x02\x02\x04\x12\x04\x87\x07\x04\x0C\n\x0F\n\x07\x04\x14\x03\0\x02\x02\x05\x12\x04\x87\x07\r\x12\n\x0F\n\x07\x04\x14\x03\0\x02\x02\x01\x12\x04\x87\x07\x13\x18\n\x0F\n\x07\x04\x14\x03\0\x02\x02\x03\x12\x04\x87\x07\x1B\x1C\n\xDB\x01\n\x06\x04\x14\x03\0\x02\x03\x12\x04\x8C\x07\x04\x1B\x1A\xCA\x01 Identifies the ending offset in bytes in the generated code that\n relates to the identified offset. The end offset should be one past\n the last relevant byte (so the length of the text = end - begin).\n\n\x0F\n\x07\x04\x14\x03\0\x02\x03\x04\x12\x04\x8C\x07\x04\x0C\n\x0F\n\x07\x04\x14\x03\0\x02\x03\x05\x12\x04\x8C\x07\r\x12\n\x0F\n\x07\x04\x14\x03\0\x02\x03\x01\x12\x04\x8C\x07\x13\x16\n\x0F\n\x07\x04\x14\x03\0\x02\x03\x03\x12\x04\x8C\x07\x19\x1A" ;
+pub static DESCRIPTOR: crate::Bytes = crate::Bytes::from_static(DESCRIPTOR_RAW);
