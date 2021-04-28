@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "conformance",
     "pecan",
     "compiler",
     "types",

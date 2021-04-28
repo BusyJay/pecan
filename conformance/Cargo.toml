@@ -1,0 +1,10 @@
+[package]
+name = "conformance"
+version = "0.1.0"
+authors = ["Jay Lee <BusyJayLee@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pecan = { path = "../pecan" }
+pecan-types = { path = "../types" }
+bytes = "1.0"
