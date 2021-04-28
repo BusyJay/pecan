@@ -5,8 +5,8 @@ use crate::{
     message::MessageGenerator,
 };
 use bytes::BytesMut;
+use pecan::prelude::*;
 use pecan::reflection::*;
-use pecan::Message;
 use proc_macro2::Literal;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};

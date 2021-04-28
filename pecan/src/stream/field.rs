@@ -1,6 +1,7 @@
 use std::{marker::PhantomData, ptr};
 
 use crate::{
+    codec,
     stream::{CodedInputStream, CodedOutputStream},
     Enumerate, Message,
 };
@@ -25,18 +26,7 @@ pub struct Varint;
 impl ReadFieldCodec<bool> for Varint {
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<bool> {
-        loop {
-            if !buf.chunk.is_empty() {
-                let b = match buf.chunk[0] {
-                    0 => false,
-                    1 => true,
-                    _ => return Err(Error::corrupted()),
-                };
-                buf.chunk = &buf.chunk[1..];
-                return Ok(b);
-            }
-            buf.renew()?;
-        }
+        Varint::read_from(buf).map(|i: u64| i != 0)
     }
 }
 
@@ -214,11 +204,7 @@ impl ReadFieldCodec<i32> for Varint {
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<i32> {
         let v: i64 = Varint::read_from(buf)?;
-        if v >= i32::MIN as i64 && v <= i32::MAX as i64 {
-            Ok(v as i32)
-        } else {
-            Err(Error::corrupted())
-        }
+        Ok(v as i32)
     }
 }
 
@@ -350,24 +336,22 @@ pub struct ZigZag;
 impl ReadFieldCodec<i32> for ZigZag {
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<i32> {
-        let i: i64 = ZigZag::read_from(buf)?;
-        if i >= i32::MIN as i64 && i <= i32::MAX as i64 {
-            Ok(i as i32)
-        } else {
-            Err(Error::corrupted())
-        }
+        let u: u32 = Varint::read_from(buf)?;
+        Ok(codec::unzigzag32(u))
     }
 }
 
 impl WriteFieldCodec<i32> for ZigZag {
     #[inline]
     fn write_to<B: BufMut>(val: i32, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        ZigZag::write_to(val as i64, buf)
+        let u = codec::zigzag32(val);
+        Varint::write_to(u, buf)
     }
 
     #[inline]
     fn size(val: i32) -> u64 {
-        ZigZag::size(val as i64)
+        let u = codec::zigzag32(val);
+        Varint::size(u)
     }
 }
 
@@ -375,31 +359,29 @@ impl ReadFieldCodec<i64> for ZigZag {
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<i64> {
         let u: u64 = Varint::read_from(buf)?;
-        Ok(u.rotate_right(1) as i64)
+        Ok(codec::unzigzag64(u))
     }
 }
 
 impl WriteFieldCodec<i64> for ZigZag {
     #[inline]
     fn write_to<B: BufMut>(val: i64, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        Varint::write_to(val.rotate_left(1) as u64, buf)
+        let u = codec::zigzag64(val);
+        Varint::write_to(u, buf)
     }
 
     #[inline]
     fn size(val: i64) -> u64 {
-        Varint::size(val.rotate_left(1) as u64)
+        let u = codec::zigzag64(val);
+        Varint::size(u)
     }
 }
 
 impl ReadFieldCodec<u32> for Varint {
     #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<u32> {
-        let u: u64 = Varint::read_from(buf)?;
-        if u >= u32::MIN as u64 && u <= u32::MAX as u64 {
-            Ok(u as u32)
-        } else {
-            Err(Error::corrupted())
-        }
+        let v: u64 = Varint::read_from(buf)?;
+        Ok(v as u32)
     }
 }
 

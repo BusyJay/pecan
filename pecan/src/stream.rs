@@ -55,7 +55,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         match self.progress().cmp(&self.limit) {
             std::cmp::Ordering::Less => {
                 let tag = self.read_var_u64_raw()?;
-                if self.progress() <= self.limit && tag != 0 {
+                if self.progress() <= self.limit && (tag >> 3) != 0 {
                     Ok(tag)
                 } else {
                     Err(Error::corrupted())

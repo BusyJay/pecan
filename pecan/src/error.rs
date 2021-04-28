@@ -8,11 +8,13 @@ pub enum Error {
 
 impl Error {
     pub fn corrupted() -> Error {
-        panic!("corrupted");
+        // panic!("corrupted");
+        Error::Corrupted
     }
 
     pub fn eof() -> Error {
-        panic!("eof");
+        // panic!("eof");
+        Error::Eof
     }
 }
 

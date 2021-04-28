@@ -1,8 +1,8 @@
 use crate::util::*;
 use crate::Generator;
 use bytes::Bytes;
+use pecan::prelude::*;
 use pecan::reflection::*;
-use pecan::Message;
 use pecan_types::google::protobuf;
 use std::collections::HashMap;
 

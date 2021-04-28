@@ -91,8 +91,10 @@ impl pecan::Message for Api {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
-        s.write_tag(56)?;
-        Varint::write_to(self.syntax, s)?;
+        if self.syntax != crate::google::protobuf::type_pb::Syntax::new() {
+            s.write_tag(56)?;
+            Varint::write_to(self.syntax, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -118,7 +120,9 @@ impl pecan::Message for Api {
         if !self.mixins.is_empty() {
             l += self.mixins.len() as u64 + LengthPrefixedArray::size(&self.mixins);
         }
-        l += 1 + Varint::size(self.syntax);
+        if self.syntax != crate::google::protobuf::type_pb::Syntax::new() {
+            l += 1 + Varint::size(self.syntax);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -205,8 +209,10 @@ impl pecan::Message for Method {
                 LengthPrefixed::write_to(i, s)?;
             }
         }
-        s.write_tag(56)?;
-        Varint::write_to(self.syntax, s)?;
+        if self.syntax != crate::google::protobuf::type_pb::Syntax::new() {
+            s.write_tag(56)?;
+            Varint::write_to(self.syntax, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -232,7 +238,9 @@ impl pecan::Message for Method {
         if !self.options.is_empty() {
             l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
-        l += 1 + Varint::size(self.syntax);
+        if self.syntax != crate::google::protobuf::type_pb::Syntax::new() {
+            l += 1 + Varint::size(self.syntax);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }

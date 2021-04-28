@@ -376,7 +376,7 @@ impl FieldGenerator {
                 quote! { if !self.#name.is_empty() { #t } }
             } else if matches!(self.kind, FieldKind::Boolean) {
                 quote! { if self.#name { #t } }
-            } else if self.kind.is_message() {
+            } else if !self.kind.is_message() {
                 let val = &self.default_value;
                 quote! { if self.#name != #val { #t } }
             } else {

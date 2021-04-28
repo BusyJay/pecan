@@ -29,10 +29,14 @@ impl pecan::Message for Timestamp {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(8)?;
-        Varint::write_to(self.seconds, s)?;
-        s.write_tag(16)?;
-        Varint::write_to(self.nanos, s)?;
+        if self.seconds != 0 {
+            s.write_tag(8)?;
+            Varint::write_to(self.seconds, s)?;
+        }
+        if self.nanos != 0 {
+            s.write_tag(16)?;
+            Varint::write_to(self.nanos, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -40,8 +44,12 @@ impl pecan::Message for Timestamp {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::size(self.seconds);
-        l += 1 + Varint::size(self.nanos);
+        if self.seconds != 0 {
+            l += 1 + Varint::size(self.seconds);
+        }
+        if self.nanos != 0 {
+            l += 1 + Varint::size(self.nanos);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }

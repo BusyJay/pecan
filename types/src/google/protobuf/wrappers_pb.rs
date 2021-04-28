@@ -26,8 +26,10 @@ impl pecan::Message for DoubleValue {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(9)?;
-        Fixed64::write_to(self.value, s)?;
+        if self.value != 0f64 {
+            s.write_tag(9)?;
+            Fixed64::write_to(self.value, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -35,7 +37,9 @@ impl pecan::Message for DoubleValue {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Fixed64::size(self.value);
+        if self.value != 0f64 {
+            l += 1 + Fixed64::size(self.value);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -78,8 +82,10 @@ impl pecan::Message for FloatValue {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(13)?;
-        Fixed32::write_to(self.value, s)?;
+        if self.value != 0f32 {
+            s.write_tag(13)?;
+            Fixed32::write_to(self.value, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -87,7 +93,9 @@ impl pecan::Message for FloatValue {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Fixed32::size(self.value);
+        if self.value != 0f32 {
+            l += 1 + Fixed32::size(self.value);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -130,8 +138,10 @@ impl pecan::Message for Int64Value {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(8)?;
-        Varint::write_to(self.value, s)?;
+        if self.value != 0 {
+            s.write_tag(8)?;
+            Varint::write_to(self.value, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -139,7 +149,9 @@ impl pecan::Message for Int64Value {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::size(self.value);
+        if self.value != 0 {
+            l += 1 + Varint::size(self.value);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -182,8 +194,10 @@ impl pecan::Message for UInt64Value {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(8)?;
-        Varint::write_to(self.value, s)?;
+        if self.value != 0 {
+            s.write_tag(8)?;
+            Varint::write_to(self.value, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -191,7 +205,9 @@ impl pecan::Message for UInt64Value {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::size(self.value);
+        if self.value != 0 {
+            l += 1 + Varint::size(self.value);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -234,8 +250,10 @@ impl pecan::Message for Int32Value {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(8)?;
-        Varint::write_to(self.value, s)?;
+        if self.value != 0 {
+            s.write_tag(8)?;
+            Varint::write_to(self.value, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -243,7 +261,9 @@ impl pecan::Message for Int32Value {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::size(self.value);
+        if self.value != 0 {
+            l += 1 + Varint::size(self.value);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -286,8 +306,10 @@ impl pecan::Message for UInt32Value {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(8)?;
-        Varint::write_to(self.value, s)?;
+        if self.value != 0 {
+            s.write_tag(8)?;
+            Varint::write_to(self.value, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -295,7 +317,9 @@ impl pecan::Message for UInt32Value {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::size(self.value);
+        if self.value != 0 {
+            l += 1 + Varint::size(self.value);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }

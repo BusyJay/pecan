@@ -102,6 +102,26 @@ pub fn encode_var_u64(buf: &mut &mut UninitSlice, mut val: u64) -> Result<()> {
     Err(Error::WantMore(val, len as u8))
 }
 
+#[inline]
+pub fn zigzag32(v: i32) -> u32 {
+    ((v << 1) ^ (v >> 31)) as u32
+}
+
+#[inline]
+pub fn zigzag64(v: i64) -> u64 {
+    ((v << 1) ^ (v >> 63)) as u64
+}
+
+#[inline]
+pub fn unzigzag32(v: u32) -> i32 {
+    ((v >> 1) as i32) ^ -(v as i32 & 1)
+}
+
+#[inline]
+pub fn unzigzag64(v: u64) -> i64 {
+    ((v >> 1) as i64) ^ -(v as i64 & 1)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,6 +216,24 @@ mod tests {
                     res => panic!("{:?}", res),
                 }
             }
+        }
+    }
+
+    #[test]
+    fn test_zigzag() {
+        let cases: &[(i32, u32)] = &[
+            (0, 0),
+            (-1, 1),
+            (1, 2),
+            (-2, 3),
+            (2147483647, 4294967294),
+            (-2147483648, 4294967295),
+        ];
+        for (i, exp) in cases {
+            assert_eq!(super::zigzag32(*i), *exp);
+            assert_eq!(super::unzigzag32(*exp), *i);
+            assert_eq!(super::zigzag64(*i as i64), *exp as u64);
+            assert_eq!(super::unzigzag64(*exp as u64), *i as i64);
         }
     }
 }

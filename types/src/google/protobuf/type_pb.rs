@@ -113,8 +113,10 @@ impl pecan::Message for Type {
             s.write_tag(42)?;
             LengthPrefixed::write_to(v, s)?;
         }
-        s.write_tag(48)?;
-        Varint::write_to(self.syntax, s)?;
+        if self.syntax != Syntax::new() {
+            s.write_tag(48)?;
+            Varint::write_to(self.syntax, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -137,7 +139,9 @@ impl pecan::Message for Type {
         if let Some(v) = &self.source_context {
             l += 1 + LengthPrefixed::size(v);
         }
-        l += 1 + Varint::size(self.syntax);
+        if self.syntax != Syntax::new() {
+            l += 1 + Varint::size(self.syntax);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -301,12 +305,18 @@ impl pecan::Message for Field {
         }
     }
     fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-        s.write_tag(8)?;
-        Varint::write_to(self.kind, s)?;
-        s.write_tag(16)?;
-        Varint::write_to(self.cardinality, s)?;
-        s.write_tag(24)?;
-        Varint::write_to(self.number, s)?;
+        if self.kind != Field_Kind::new() {
+            s.write_tag(8)?;
+            Varint::write_to(self.kind, s)?;
+        }
+        if self.cardinality != Field_Cardinality::new() {
+            s.write_tag(16)?;
+            Varint::write_to(self.cardinality, s)?;
+        }
+        if self.number != 0 {
+            s.write_tag(24)?;
+            Varint::write_to(self.number, s)?;
+        }
         if !self.name.is_empty() {
             s.write_tag(34)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -315,8 +325,10 @@ impl pecan::Message for Field {
             s.write_tag(50)?;
             LengthPrefixed::write_to(&self.type_url, s)?;
         }
-        s.write_tag(56)?;
-        Varint::write_to(self.oneof_index, s)?;
+        if self.oneof_index != 0 {
+            s.write_tag(56)?;
+            Varint::write_to(self.oneof_index, s)?;
+        }
         if self.packed {
             s.write_tag(64)?;
             Varint::write_to(self.packed, s)?;
@@ -342,16 +354,24 @@ impl pecan::Message for Field {
     }
     fn size(&self) -> u64 {
         let mut l = 0;
-        l += 1 + Varint::size(self.kind);
-        l += 1 + Varint::size(self.cardinality);
-        l += 1 + Varint::size(self.number);
+        if self.kind != Field_Kind::new() {
+            l += 1 + Varint::size(self.kind);
+        }
+        if self.cardinality != Field_Cardinality::new() {
+            l += 1 + Varint::size(self.cardinality);
+        }
+        if self.number != 0 {
+            l += 1 + Varint::size(self.number);
+        }
         if !self.name.is_empty() {
             l += 1 + LengthPrefixed::size(&self.name);
         }
         if !self.type_url.is_empty() {
             l += 1 + LengthPrefixed::size(&self.type_url);
         }
-        l += 1 + Varint::size(self.oneof_index);
+        if self.oneof_index != 0 {
+            l += 1 + Varint::size(self.oneof_index);
+        }
         if self.packed {
             l += 1 + Varint::size(self.packed);
         }
@@ -456,8 +476,10 @@ impl pecan::Message for Enum {
             s.write_tag(34)?;
             LengthPrefixed::write_to(v, s)?;
         }
-        s.write_tag(40)?;
-        Varint::write_to(self.syntax, s)?;
+        if self.syntax != Syntax::new() {
+            s.write_tag(40)?;
+            Varint::write_to(self.syntax, s)?;
+        }
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -477,7 +499,9 @@ impl pecan::Message for Enum {
         if let Some(v) = &self.source_context {
             l += 1 + LengthPrefixed::size(v);
         }
-        l += 1 + Varint::size(self.syntax);
+        if self.syntax != Syntax::new() {
+            l += 1 + Varint::size(self.syntax);
+        }
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
@@ -530,8 +554,10 @@ impl pecan::Message for EnumValue {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
         }
-        s.write_tag(16)?;
-        Varint::write_to(self.number, s)?;
+        if self.number != 0 {
+            s.write_tag(16)?;
+            Varint::write_to(self.number, s)?;
+        }
         if !self.options.is_empty() {
             for i in &self.options {
                 s.write_tag(26)?;
@@ -548,7 +574,9 @@ impl pecan::Message for EnumValue {
         if !self.name.is_empty() {
             l += 1 + LengthPrefixed::size(&self.name);
         }
-        l += 1 + Varint::size(self.number);
+        if self.number != 0 {
+            l += 1 + Varint::size(self.number);
+        }
         if !self.options.is_empty() {
             l += self.options.len() as u64 + LengthPrefixedArray::size(&self.options);
         }
