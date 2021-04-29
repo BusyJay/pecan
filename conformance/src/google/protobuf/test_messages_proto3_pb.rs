@@ -104,6 +104,7 @@ pub struct TestAllTypesProto3_NestedMessage {
     pub a: i32,
     pub corecursive: Option<Box<TestAllTypesProto3>>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl TestAllTypesProto3_NestedMessage {
     pub const fn new() -> TestAllTypesProto3_NestedMessage {
@@ -111,6 +112,7 @@ impl TestAllTypesProto3_NestedMessage {
             a: 0,
             corecursive: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn corecursive(&self) -> &TestAllTypesProto3 {
@@ -137,7 +139,10 @@ impl pecan::Message for TestAllTypesProto3_NestedMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.a != 0 {
             s.write_tag(8)?;
             Varint::write_to(self.a, s)?;
@@ -162,7 +167,12 @@ impl pecan::Message for TestAllTypesProto3_NestedMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for TestAllTypesProto3_NestedMessage {
@@ -342,6 +352,7 @@ pub struct TestAllTypesProto3 {
     pub field_name17__: i32,
     pub field_name18__: i32,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl TestAllTypesProto3 {
     pub const fn new() -> TestAllTypesProto3 {
@@ -489,6 +500,7 @@ impl TestAllTypesProto3 {
             field_name17__: 0,
             field_name18__: 0,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn optional_nested_message(&self) -> &TestAllTypesProto3_NestedMessage {
@@ -1858,7 +1870,10 @@ impl pecan::Message for TestAllTypesProto3 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.optional_int32 != 0 {
             s.write_tag(8)?;
             Varint::write_to(self.optional_int32, s)?;
@@ -3231,7 +3246,12 @@ impl pecan::Message for TestAllTypesProto3 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for TestAllTypesProto3 {
@@ -3250,12 +3270,14 @@ impl Default for TestAllTypesProto3 {
 pub struct ForeignMessage {
     pub c: i32,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl ForeignMessage {
     pub const fn new() -> ForeignMessage {
         ForeignMessage {
             c: 0,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -3269,7 +3291,10 @@ impl pecan::Message for ForeignMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.c != 0 {
             s.write_tag(8)?;
             Varint::write_to(self.c, s)?;
@@ -3287,7 +3312,12 @@ impl pecan::Message for ForeignMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for ForeignMessage {

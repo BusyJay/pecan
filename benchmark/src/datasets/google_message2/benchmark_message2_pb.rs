@@ -23,6 +23,7 @@ pub struct GoogleMessage2_Group1 {
     pub field24: Option<String>,
     pub field31: Option<GoogleMessage2GroupedMessage>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl GoogleMessage2_Group1 {
     pub const fn new() -> GoogleMessage2_Group1 {
@@ -44,6 +45,7 @@ impl GoogleMessage2_Group1 {
             field24: None,
             field31: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field26(&self) -> f32 {
@@ -196,7 +198,10 @@ impl pecan::Message for GoogleMessage2_Group1 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.field5 {
             s.write_tag(40)?;
             Varint::write_to(v, s)?;
@@ -325,7 +330,12 @@ impl pecan::Message for GoogleMessage2_Group1 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for GoogleMessage2_Group1 {
@@ -373,6 +383,7 @@ pub struct GoogleMessage2 {
     pub field205: Option<bool>,
     pub field206: Option<bool>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl GoogleMessage2 {
     pub const fn new() -> GoogleMessage2 {
@@ -408,6 +419,7 @@ impl GoogleMessage2 {
             field205: None,
             field206: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field1(&self) -> &String {
@@ -697,7 +709,10 @@ impl pecan::Message for GoogleMessage2 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.field1 {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -721,7 +736,7 @@ impl pecan::Message for GoogleMessage2 {
         if !self.group1.is_empty() {
             for i in &self.group1 {
                 s.write_tag(83)?;
-                i.write_to(s)?;
+                i.write_to_uncheck(s)?;
                 s.write_tag(84)?;
             }
         }
@@ -930,7 +945,12 @@ impl pecan::Message for GoogleMessage2 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for GoogleMessage2 {
@@ -959,6 +979,7 @@ pub struct GoogleMessage2GroupedMessage {
     pub field10: Option<f32>,
     pub field11: Option<i64>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl GoogleMessage2GroupedMessage {
     pub const fn new() -> GoogleMessage2GroupedMessage {
@@ -975,6 +996,7 @@ impl GoogleMessage2GroupedMessage {
             field10: None,
             field11: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field1(&self) -> f32 {
@@ -1097,7 +1119,10 @@ impl pecan::Message for GoogleMessage2GroupedMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.field1 {
             s.write_tag(13)?;
             Fixed32::write_to(v, s)?;
@@ -1185,7 +1210,12 @@ impl pecan::Message for GoogleMessage2GroupedMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for GoogleMessage2GroupedMessage {

@@ -11,6 +11,7 @@ pub struct Version {
     pub patch: Option<i32>,
     pub suffix: Option<String>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Version {
     pub const fn new() -> Version {
@@ -20,6 +21,7 @@ impl Version {
             patch: None,
             suffix: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn major(&self) -> i32 {
@@ -75,7 +77,10 @@ impl pecan::Message for Version {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.major {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -114,7 +119,12 @@ impl pecan::Message for Version {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Version {
@@ -136,6 +146,7 @@ pub struct CodeGeneratorRequest {
     pub proto_file: Vec<pecan::reflection::FileDescriptorProto>,
     pub compiler_version: Option<Version>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl CodeGeneratorRequest {
     pub const fn new() -> CodeGeneratorRequest {
@@ -145,6 +156,7 @@ impl CodeGeneratorRequest {
             proto_file: Vec::new(),
             compiler_version: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn parameter(&self) -> &String {
@@ -185,7 +197,10 @@ impl pecan::Message for CodeGeneratorRequest {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.file_to_generate.is_empty() {
             for i in &self.file_to_generate {
                 s.write_tag(10)?;
@@ -229,7 +244,12 @@ impl pecan::Message for CodeGeneratorRequest {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for CodeGeneratorRequest {
@@ -280,6 +300,7 @@ pub struct CodeGeneratorResponse_File {
     pub content: Option<String>,
     pub generated_code_info: Option<pecan::reflection::GeneratedCodeInfo>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl CodeGeneratorResponse_File {
     pub const fn new() -> CodeGeneratorResponse_File {
@@ -289,6 +310,7 @@ impl CodeGeneratorResponse_File {
             content: None,
             generated_code_info: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -354,7 +376,10 @@ impl pecan::Message for CodeGeneratorResponse_File {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -393,7 +418,12 @@ impl pecan::Message for CodeGeneratorResponse_File {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for CodeGeneratorResponse_File {
@@ -414,6 +444,7 @@ pub struct CodeGeneratorResponse {
     pub supported_features: Option<u64>,
     pub file: Vec<CodeGeneratorResponse_File>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl CodeGeneratorResponse {
     pub const fn new() -> CodeGeneratorResponse {
@@ -422,6 +453,7 @@ impl CodeGeneratorResponse {
             supported_features: None,
             file: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn error(&self) -> &String {
@@ -458,7 +490,10 @@ impl pecan::Message for CodeGeneratorResponse {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.error {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -492,7 +527,12 @@ impl pecan::Message for CodeGeneratorResponse {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for CodeGeneratorResponse {

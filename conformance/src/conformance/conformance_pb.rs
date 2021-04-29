@@ -78,12 +78,14 @@ impl std::fmt::Debug for TestCategory {
 pub struct FailureSet {
     pub failure: Vec<String>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl FailureSet {
     pub const fn new() -> FailureSet {
         FailureSet {
             failure: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -97,7 +99,10 @@ impl pecan::Message for FailureSet {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.failure.is_empty() {
             for i in &self.failure {
                 s.write_tag(10)?;
@@ -117,7 +122,12 @@ impl pecan::Message for FailureSet {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for FailureSet {
@@ -155,6 +165,7 @@ pub struct ConformanceRequest {
     pub jspb_encoding_options: Option<JspbEncodingConfig>,
     pub print_unknown_fields: bool,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl ConformanceRequest {
     pub const fn new() -> ConformanceRequest {
@@ -166,6 +177,7 @@ impl ConformanceRequest {
             jspb_encoding_options: None,
             print_unknown_fields: false,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn protobuf_payload(&self) -> &pecan::Bytes {
@@ -284,7 +296,10 @@ impl pecan::Message for ConformanceRequest {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         match &self.payload {
             ConformanceRequest_Payload::None => (),
             ConformanceRequest_Payload::ProtobufPayload(v) => {
@@ -356,7 +371,12 @@ impl pecan::Message for ConformanceRequest {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for ConformanceRequest {
@@ -393,12 +413,14 @@ impl Default for ConformanceResponse_Result {
 pub struct ConformanceResponse {
     pub result: ConformanceResponse_Result,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl ConformanceResponse {
     pub const fn new() -> ConformanceResponse {
         ConformanceResponse {
             result: ConformanceResponse_Result::None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn parse_error(&self) -> &String {
@@ -586,7 +608,10 @@ impl pecan::Message for ConformanceResponse {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         match &self.result {
             ConformanceResponse_Result::None => (),
             ConformanceResponse_Result::ParseError(v) => {
@@ -643,7 +668,12 @@ impl pecan::Message for ConformanceResponse {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for ConformanceResponse {
@@ -662,12 +692,14 @@ impl Default for ConformanceResponse {
 pub struct JspbEncodingConfig {
     pub use_jspb_array_any_format: bool,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl JspbEncodingConfig {
     pub const fn new() -> JspbEncodingConfig {
         JspbEncodingConfig {
             use_jspb_array_any_format: false,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -681,7 +713,10 @@ impl pecan::Message for JspbEncodingConfig {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.use_jspb_array_any_format {
             s.write_tag(8)?;
             Varint::write_to(self.use_jspb_array_any_format, s)?;
@@ -699,7 +734,12 @@ impl pecan::Message for JspbEncodingConfig {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for JspbEncodingConfig {

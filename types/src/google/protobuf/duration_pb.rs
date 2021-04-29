@@ -9,6 +9,7 @@ pub struct Duration {
     pub seconds: i64,
     pub nanos: i32,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Duration {
     pub const fn new() -> Duration {
@@ -16,6 +17,7 @@ impl Duration {
             seconds: 0,
             nanos: 0,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -30,7 +32,10 @@ impl pecan::Message for Duration {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.seconds != 0 {
             s.write_tag(8)?;
             Varint::write_to(self.seconds, s)?;
@@ -55,7 +60,12 @@ impl pecan::Message for Duration {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Duration {

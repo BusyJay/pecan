@@ -42,6 +42,7 @@ pub struct Type {
         std::option::Option<crate::google::protobuf::source_context_pb::SourceContext>,
     pub syntax: Syntax,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Type {
     pub const fn new() -> Type {
@@ -53,6 +54,7 @@ impl Type {
             source_context: None,
             syntax: Syntax::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn source_context(&self) -> &crate::google::protobuf::source_context_pb::SourceContext {
@@ -88,7 +90,10 @@ impl pecan::Message for Type {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -147,7 +152,12 @@ impl pecan::Message for Type {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Type {
@@ -269,6 +279,7 @@ pub struct Field {
     pub json_name: String,
     pub default_value: String,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Field {
     pub const fn new() -> Field {
@@ -284,6 +295,7 @@ impl Field {
             json_name: String::new(),
             default_value: String::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -306,7 +318,10 @@ impl pecan::Message for Field {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.kind != Field_Kind::new() {
             s.write_tag(8)?;
             Varint::write_to(self.kind, s)?;
@@ -389,7 +404,12 @@ impl pecan::Message for Field {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Field {
@@ -413,6 +433,7 @@ pub struct Enum {
         std::option::Option<crate::google::protobuf::source_context_pb::SourceContext>,
     pub syntax: Syntax,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Enum {
     pub const fn new() -> Enum {
@@ -423,6 +444,7 @@ impl Enum {
             source_context: None,
             syntax: Syntax::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn source_context(&self) -> &crate::google::protobuf::source_context_pb::SourceContext {
@@ -457,7 +479,10 @@ impl pecan::Message for Enum {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -507,7 +532,12 @@ impl pecan::Message for Enum {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Enum {
@@ -528,6 +558,7 @@ pub struct EnumValue {
     pub number: i32,
     pub options: Vec<Option>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl EnumValue {
     pub const fn new() -> EnumValue {
@@ -536,6 +567,7 @@ impl EnumValue {
             number: 0,
             options: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -551,7 +583,10 @@ impl pecan::Message for EnumValue {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -585,7 +620,12 @@ impl pecan::Message for EnumValue {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for EnumValue {
@@ -605,6 +645,7 @@ pub struct Option {
     pub name: String,
     pub value: std::option::Option<crate::google::protobuf::any_pb::Any>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Option {
     pub const fn new() -> Option {
@@ -612,6 +653,7 @@ impl Option {
             name: String::new(),
             value: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn value(&self) -> &crate::google::protobuf::any_pb::Any {
@@ -638,7 +680,10 @@ impl pecan::Message for Option {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -663,7 +708,12 @@ impl pecan::Message for Option {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Option {

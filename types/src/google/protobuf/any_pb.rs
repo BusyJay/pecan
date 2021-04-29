@@ -9,6 +9,7 @@ pub struct Any {
     pub type_url: String,
     pub value: pecan::Bytes,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Any {
     pub const fn new() -> Any {
@@ -16,6 +17,7 @@ impl Any {
             type_url: String::new(),
             value: pecan::Bytes::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -30,7 +32,10 @@ impl pecan::Message for Any {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.type_url.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.type_url, s)?;
@@ -55,7 +60,12 @@ impl pecan::Message for Any {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Any {

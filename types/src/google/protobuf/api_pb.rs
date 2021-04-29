@@ -14,6 +14,7 @@ pub struct Api {
     pub mixins: Vec<Mixin>,
     pub syntax: crate::google::protobuf::type_pb::Syntax,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Api {
     pub const fn new() -> Api {
@@ -26,6 +27,7 @@ impl Api {
             mixins: Vec::new(),
             syntax: crate::google::protobuf::type_pb::Syntax::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn source_context(&self) -> &crate::google::protobuf::source_context_pb::SourceContext {
@@ -62,7 +64,10 @@ impl pecan::Message for Api {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -128,7 +133,12 @@ impl pecan::Message for Api {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Api {
@@ -153,6 +163,7 @@ pub struct Method {
     pub options: Vec<crate::google::protobuf::type_pb::Option>,
     pub syntax: crate::google::protobuf::type_pb::Syntax,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Method {
     pub const fn new() -> Method {
@@ -165,6 +176,7 @@ impl Method {
             options: Vec::new(),
             syntax: crate::google::protobuf::type_pb::Syntax::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -184,7 +196,10 @@ impl pecan::Message for Method {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -246,7 +261,12 @@ impl pecan::Message for Method {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Method {
@@ -266,6 +286,7 @@ pub struct Mixin {
     pub name: String,
     pub root: String,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Mixin {
     pub const fn new() -> Mixin {
@@ -273,6 +294,7 @@ impl Mixin {
             name: String::new(),
             root: String::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -287,7 +309,10 @@ impl pecan::Message for Mixin {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.name.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name, s)?;
@@ -312,7 +337,12 @@ impl pecan::Message for Mixin {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Mixin {

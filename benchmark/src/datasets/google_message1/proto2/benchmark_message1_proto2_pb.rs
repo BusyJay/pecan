@@ -48,6 +48,7 @@ pub struct GoogleMessage1 {
     pub field129: Option<String>,
     pub field131: Option<i32>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl GoogleMessage1 {
     pub const fn new() -> GoogleMessage1 {
@@ -94,6 +95,7 @@ impl GoogleMessage1 {
             field129: None,
             field131: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field9(&self) -> &String {
@@ -505,7 +507,10 @@ impl pecan::Message for GoogleMessage1 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.field1.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.field1, s)?;
@@ -805,7 +810,12 @@ impl pecan::Message for GoogleMessage1 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for GoogleMessage1 {
@@ -843,6 +853,7 @@ pub struct GoogleMessage1SubMessage {
     pub field207: Option<u64>,
     pub field300: Option<u64>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl GoogleMessage1SubMessage {
     pub const fn new() -> GoogleMessage1SubMessage {
@@ -868,6 +879,7 @@ impl GoogleMessage1SubMessage {
             field207: None,
             field300: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field1(&self) -> i32 {
@@ -1086,7 +1098,10 @@ impl pecan::Message for GoogleMessage1SubMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.field1 {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -1237,7 +1252,12 @@ impl pecan::Message for GoogleMessage1SubMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for GoogleMessage1SubMessage {

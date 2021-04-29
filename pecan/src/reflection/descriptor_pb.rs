@@ -8,12 +8,14 @@ use crate::prelude::*;
 pub struct FileDescriptorSet {
     pub file: Vec<FileDescriptorProto>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl FileDescriptorSet {
     pub const fn new() -> FileDescriptorSet {
         FileDescriptorSet {
             file: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
 }
@@ -27,7 +29,10 @@ impl crate::Message for FileDescriptorSet {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.file.is_empty() {
             for i in &self.file {
                 s.write_tag(10)?;
@@ -47,7 +52,12 @@ impl crate::Message for FileDescriptorSet {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for FileDescriptorSet {
@@ -77,6 +87,7 @@ pub struct FileDescriptorProto {
     pub source_code_info: Option<SourceCodeInfo>,
     pub syntax: Option<String>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl FileDescriptorProto {
     pub const fn new() -> FileDescriptorProto {
@@ -94,6 +105,7 @@ impl FileDescriptorProto {
             source_code_info: None,
             syntax: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -180,7 +192,10 @@ impl crate::Message for FileDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -292,7 +307,12 @@ impl crate::Message for FileDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for FileDescriptorProto {
@@ -313,6 +333,7 @@ pub struct DescriptorProto_ExtensionRange {
     pub end: Option<i32>,
     pub options: Option<ExtensionRangeOptions>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl DescriptorProto_ExtensionRange {
     pub const fn new() -> DescriptorProto_ExtensionRange {
@@ -321,6 +342,7 @@ impl DescriptorProto_ExtensionRange {
             end: None,
             options: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn start(&self) -> i32 {
@@ -366,7 +388,10 @@ impl crate::Message for DescriptorProto_ExtensionRange {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -398,7 +423,12 @@ impl crate::Message for DescriptorProto_ExtensionRange {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for DescriptorProto_ExtensionRange {
@@ -418,6 +448,7 @@ pub struct DescriptorProto_ReservedRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl DescriptorProto_ReservedRange {
     pub const fn new() -> DescriptorProto_ReservedRange {
@@ -425,6 +456,7 @@ impl DescriptorProto_ReservedRange {
             start: None,
             end: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn start(&self) -> i32 {
@@ -457,7 +489,10 @@ impl crate::Message for DescriptorProto_ReservedRange {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -482,7 +517,12 @@ impl crate::Message for DescriptorProto_ReservedRange {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for DescriptorProto_ReservedRange {
@@ -510,6 +550,7 @@ pub struct DescriptorProto {
     pub reserved_range: Vec<DescriptorProto_ReservedRange>,
     pub reserved_name: Vec<String>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl DescriptorProto {
     pub const fn new() -> DescriptorProto {
@@ -525,6 +566,7 @@ impl DescriptorProto {
             reserved_range: Vec::new(),
             reserved_name: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -571,7 +613,10 @@ impl crate::Message for DescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -672,7 +717,12 @@ impl crate::Message for DescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for DescriptorProto {
@@ -692,6 +742,7 @@ pub struct ExtensionRangeOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl ExtensionRangeOptions {
     pub const fn new() -> ExtensionRangeOptions {
@@ -699,6 +750,7 @@ impl ExtensionRangeOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
 }
@@ -718,7 +770,10 @@ impl crate::Message for ExtensionRangeOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
@@ -745,7 +800,12 @@ impl crate::Message for ExtensionRangeOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for ExtensionRangeOptions {
@@ -864,6 +924,7 @@ pub struct FieldDescriptorProto {
     pub options: Option<FieldOptions>,
     pub proto3_optional: Option<bool>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl FieldDescriptorProto {
     pub const fn new() -> FieldDescriptorProto {
@@ -880,6 +941,7 @@ impl FieldDescriptorProto {
             options: None,
             proto3_optional: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -1020,7 +1082,10 @@ impl crate::Message for FieldDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1108,7 +1173,12 @@ impl crate::Message for FieldDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for FieldDescriptorProto {
@@ -1128,6 +1198,7 @@ pub struct OneofDescriptorProto {
     pub name: Option<String>,
     pub options: Option<OneofOptions>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl OneofDescriptorProto {
     pub const fn new() -> OneofDescriptorProto {
@@ -1135,6 +1206,7 @@ impl OneofDescriptorProto {
             name: None,
             options: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -1173,7 +1245,10 @@ impl crate::Message for OneofDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1198,7 +1273,12 @@ impl crate::Message for OneofDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for OneofDescriptorProto {
@@ -1218,6 +1298,7 @@ pub struct EnumDescriptorProto_EnumReservedRange {
     pub start: Option<i32>,
     pub end: Option<i32>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl EnumDescriptorProto_EnumReservedRange {
     pub const fn new() -> EnumDescriptorProto_EnumReservedRange {
@@ -1225,6 +1306,7 @@ impl EnumDescriptorProto_EnumReservedRange {
             start: None,
             end: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn start(&self) -> i32 {
@@ -1257,7 +1339,10 @@ impl crate::Message for EnumDescriptorProto_EnumReservedRange {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.start {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -1282,7 +1367,12 @@ impl crate::Message for EnumDescriptorProto_EnumReservedRange {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for EnumDescriptorProto_EnumReservedRange {
@@ -1306,6 +1396,7 @@ pub struct EnumDescriptorProto {
     pub reserved_range: Vec<EnumDescriptorProto_EnumReservedRange>,
     pub reserved_name: Vec<String>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl EnumDescriptorProto {
     pub const fn new() -> EnumDescriptorProto {
@@ -1316,6 +1407,7 @@ impl EnumDescriptorProto {
             reserved_range: Vec::new(),
             reserved_name: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -1357,7 +1449,10 @@ impl crate::Message for EnumDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1411,7 +1506,12 @@ impl crate::Message for EnumDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for EnumDescriptorProto {
@@ -1432,6 +1532,7 @@ pub struct EnumValueDescriptorProto {
     pub number: Option<i32>,
     pub options: Option<EnumValueOptions>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl EnumValueDescriptorProto {
     pub const fn new() -> EnumValueDescriptorProto {
@@ -1440,6 +1541,7 @@ impl EnumValueDescriptorProto {
             number: None,
             options: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -1488,7 +1590,10 @@ impl crate::Message for EnumValueDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1520,7 +1625,12 @@ impl crate::Message for EnumValueDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for EnumValueDescriptorProto {
@@ -1541,6 +1651,7 @@ pub struct ServiceDescriptorProto {
     pub method: Vec<MethodDescriptorProto>,
     pub options: Option<ServiceOptions>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl ServiceDescriptorProto {
     pub const fn new() -> ServiceDescriptorProto {
@@ -1549,6 +1660,7 @@ impl ServiceDescriptorProto {
             method: Vec::new(),
             options: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -1588,7 +1700,10 @@ impl crate::Message for ServiceDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1622,7 +1737,12 @@ impl crate::Message for ServiceDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for ServiceDescriptorProto {
@@ -1646,6 +1766,7 @@ pub struct MethodDescriptorProto {
     pub client_streaming: Option<bool>,
     pub server_streaming: Option<bool>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl MethodDescriptorProto {
     pub const fn new() -> MethodDescriptorProto {
@@ -1657,6 +1778,7 @@ impl MethodDescriptorProto {
             client_streaming: None,
             server_streaming: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn name(&self) -> &String {
@@ -1741,7 +1863,10 @@ impl crate::Message for MethodDescriptorProto {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.name {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1794,7 +1919,12 @@ impl crate::Message for MethodDescriptorProto {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for MethodDescriptorProto {
@@ -1864,6 +1994,7 @@ pub struct FileOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl FileOptions {
     pub const fn new() -> FileOptions {
@@ -1891,6 +2022,7 @@ impl FileOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn java_package(&self) -> &String {
@@ -2149,7 +2281,10 @@ impl crate::Message for FileOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = &self.java_package {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -2316,7 +2451,12 @@ impl crate::Message for FileOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for FileOptions {
@@ -2340,6 +2480,7 @@ pub struct MessageOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl MessageOptions {
     pub const fn new() -> MessageOptions {
@@ -2351,6 +2492,7 @@ impl MessageOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn message_set_wire_format(&self) -> bool {
@@ -2412,7 +2554,10 @@ impl crate::Message for MessageOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.message_set_wire_format {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2467,7 +2612,12 @@ impl crate::Message for MessageOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for MessageOptions {
@@ -2553,6 +2703,7 @@ pub struct FieldOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl FieldOptions {
     pub const fn new() -> FieldOptions {
@@ -2566,6 +2717,7 @@ impl FieldOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn ctype(&self) -> FieldOptions_CType {
@@ -2645,7 +2797,10 @@ impl crate::Message for FieldOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.ctype {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2714,7 +2869,12 @@ impl crate::Message for FieldOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for FieldOptions {
@@ -2734,6 +2894,7 @@ pub struct OneofOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl OneofOptions {
     pub const fn new() -> OneofOptions {
@@ -2741,6 +2902,7 @@ impl OneofOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
 }
@@ -2760,7 +2922,10 @@ impl crate::Message for OneofOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.uninterpreted_option.is_empty() {
             for i in &self.uninterpreted_option {
                 s.write_tag(7994)?;
@@ -2787,7 +2952,12 @@ impl crate::Message for OneofOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for OneofOptions {
@@ -2809,6 +2979,7 @@ pub struct EnumOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl EnumOptions {
     pub const fn new() -> EnumOptions {
@@ -2818,6 +2989,7 @@ impl EnumOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn allow_alias(&self) -> bool {
@@ -2857,7 +3029,10 @@ impl crate::Message for EnumOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.allow_alias {
             s.write_tag(16)?;
             Varint::write_to(v, s)?;
@@ -2898,7 +3073,12 @@ impl crate::Message for EnumOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for EnumOptions {
@@ -2919,6 +3099,7 @@ pub struct EnumValueOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl EnumValueOptions {
     pub const fn new() -> EnumValueOptions {
@@ -2927,6 +3108,7 @@ impl EnumValueOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn deprecated(&self) -> bool {
@@ -2956,7 +3138,10 @@ impl crate::Message for EnumValueOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -2990,7 +3175,12 @@ impl crate::Message for EnumValueOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for EnumValueOptions {
@@ -3011,6 +3201,7 @@ pub struct ServiceOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl ServiceOptions {
     pub const fn new() -> ServiceOptions {
@@ -3019,6 +3210,7 @@ impl ServiceOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn deprecated(&self) -> bool {
@@ -3048,7 +3240,10 @@ impl crate::Message for ServiceOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
             Varint::write_to(v, s)?;
@@ -3082,7 +3277,12 @@ impl crate::Message for ServiceOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for ServiceOptions {
@@ -3135,6 +3335,7 @@ pub struct MethodOptions {
     pub uninterpreted_option: Vec<UninterpretedOption>,
     pub extensions: crate::ExtensionMap,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl MethodOptions {
     pub const fn new() -> MethodOptions {
@@ -3144,6 +3345,7 @@ impl MethodOptions {
             uninterpreted_option: Vec::new(),
             extensions: crate::ExtensionMap::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn deprecated(&self) -> bool {
@@ -3183,7 +3385,10 @@ impl crate::Message for MethodOptions {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if let Some(v) = self.deprecated {
             s.write_tag(264)?;
             Varint::write_to(v, s)?;
@@ -3224,7 +3429,12 @@ impl crate::Message for MethodOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for MethodOptions {
@@ -3244,6 +3454,7 @@ pub struct UninterpretedOption_NamePart {
     pub name_part: String,
     pub is_extension: bool,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl UninterpretedOption_NamePart {
     pub const fn new() -> UninterpretedOption_NamePart {
@@ -3251,6 +3462,7 @@ impl UninterpretedOption_NamePart {
             name_part: String::new(),
             is_extension: false,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
 }
@@ -3265,7 +3477,10 @@ impl crate::Message for UninterpretedOption_NamePart {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.name_part.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.name_part, s)?;
@@ -3290,7 +3505,12 @@ impl crate::Message for UninterpretedOption_NamePart {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for UninterpretedOption_NamePart {
@@ -3315,6 +3535,7 @@ pub struct UninterpretedOption {
     pub string_value: Option<crate::Bytes>,
     pub aggregate_value: Option<String>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl UninterpretedOption {
     pub const fn new() -> UninterpretedOption {
@@ -3327,6 +3548,7 @@ impl UninterpretedOption {
             string_value: None,
             aggregate_value: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn identifier_value(&self) -> &String {
@@ -3409,7 +3631,10 @@ impl crate::Message for UninterpretedOption {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.name.is_empty() {
             for i in &self.name {
                 s.write_tag(18)?;
@@ -3471,7 +3696,12 @@ impl crate::Message for UninterpretedOption {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for UninterpretedOption {
@@ -3494,6 +3724,7 @@ pub struct SourceCodeInfo_Location {
     pub trailing_comments: Option<String>,
     pub leading_detached_comments: Vec<String>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl SourceCodeInfo_Location {
     pub const fn new() -> SourceCodeInfo_Location {
@@ -3504,6 +3735,7 @@ impl SourceCodeInfo_Location {
             trailing_comments: None,
             leading_detached_comments: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn leading_comments(&self) -> &String {
@@ -3549,7 +3781,10 @@ impl crate::Message for SourceCodeInfo_Location {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
             PackedArray::<Varint>::write_to(&self.path, s)?
@@ -3598,7 +3833,12 @@ impl crate::Message for SourceCodeInfo_Location {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for SourceCodeInfo_Location {
@@ -3617,12 +3857,14 @@ impl Default for SourceCodeInfo_Location {
 pub struct SourceCodeInfo {
     pub location: Vec<SourceCodeInfo_Location>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl SourceCodeInfo {
     pub const fn new() -> SourceCodeInfo {
         SourceCodeInfo {
             location: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
 }
@@ -3636,7 +3878,10 @@ impl crate::Message for SourceCodeInfo {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.location.is_empty() {
             for i in &self.location {
                 s.write_tag(10)?;
@@ -3656,7 +3901,12 @@ impl crate::Message for SourceCodeInfo {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for SourceCodeInfo {
@@ -3678,6 +3928,7 @@ pub struct GeneratedCodeInfo_Annotation {
     pub begin: Option<i32>,
     pub end: Option<i32>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl GeneratedCodeInfo_Annotation {
     pub const fn new() -> GeneratedCodeInfo_Annotation {
@@ -3687,6 +3938,7 @@ impl GeneratedCodeInfo_Annotation {
             begin: None,
             end: None,
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
     pub fn source_file(&self) -> &String {
@@ -3734,7 +3986,10 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.path.is_empty() {
             s.write_tag(10)?;
             PackedArray::<Varint>::write_to(&self.path, s)?
@@ -3773,7 +4028,12 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for GeneratedCodeInfo_Annotation {
@@ -3792,12 +4052,14 @@ impl Default for GeneratedCodeInfo_Annotation {
 pub struct GeneratedCodeInfo {
     pub annotation: Vec<GeneratedCodeInfo_Annotation>,
     _unknown: Vec<u8>,
+    _cached_size: crate::CachedSize,
 }
 impl GeneratedCodeInfo {
     pub const fn new() -> GeneratedCodeInfo {
         GeneratedCodeInfo {
             annotation: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: crate::CachedSize::new(),
         }
     }
 }
@@ -3811,7 +4073,10 @@ impl crate::Message for GeneratedCodeInfo {
             }
         }
     }
-    fn write_to<B: crate::BufMut>(&self, s: &mut CodedOutputStream<B>) -> crate::Result<()> {
+    fn write_to_uncheck<B: crate::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> crate::Result<()> {
         if !self.annotation.is_empty() {
             for i in &self.annotation {
                 s.write_tag(10)?;
@@ -3831,7 +4096,12 @@ impl crate::Message for GeneratedCodeInfo {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl crate::DefaultInstance for GeneratedCodeInfo {

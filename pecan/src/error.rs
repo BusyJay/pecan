@@ -4,6 +4,7 @@ pub enum Error {
     Corrupted,
     Eof,
     DepthExcceedLimit(u32),
+    SizeExcceedLimit(u64),
 }
 
 impl Error {

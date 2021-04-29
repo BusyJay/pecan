@@ -34,12 +34,14 @@ impl std::fmt::Debug for NullValue {
 pub struct Struct {
     pub fields: Option<pecan::HashMap<String, Value>>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Struct {
     pub const fn new() -> Struct {
         Struct {
             fields: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn fields(&self) -> &pecan::HashMap<String, Value> {
@@ -83,7 +85,10 @@ impl pecan::Message for Struct {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.fields {
             for (key, val) in v {
                 s.write_tag(10)?;
@@ -112,7 +117,12 @@ impl pecan::Message for Struct {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Struct {
@@ -147,12 +157,14 @@ impl Default for Value_Kind {
 pub struct Value {
     pub kind: Value_Kind,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Value {
     pub const fn new() -> Value {
         Value {
             kind: Value_Kind::None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn null_value(&self) -> NullValue {
@@ -279,7 +291,10 @@ impl pecan::Message for Value {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         match &self.kind {
             Value_Kind::None => (),
             Value_Kind::NullValue(v) => {
@@ -326,7 +341,12 @@ impl pecan::Message for Value {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Value {
@@ -345,12 +365,14 @@ impl Default for Value {
 pub struct ListValue {
     pub values: Vec<Value>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl ListValue {
     pub const fn new() -> ListValue {
         ListValue {
             values: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -364,7 +386,10 @@ impl pecan::Message for ListValue {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.values.is_empty() {
             for i in &self.values {
                 s.write_tag(10)?;
@@ -384,7 +409,12 @@ impl pecan::Message for ListValue {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for ListValue {

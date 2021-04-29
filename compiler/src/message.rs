@@ -92,6 +92,7 @@ impl MessageGenerator {
                 #(#decls)*
                 #extension
                 _unknown: Vec<u8>,
+                _cached_size: pecan::CachedSize,
             }
         }
     }
@@ -117,6 +118,7 @@ impl MessageGenerator {
                     #(#init)*
                     #extension
                     _unknown: Vec::new(),
+                    _cached_size: pecan::CachedSize::new(),
                 }
             }
         }
@@ -176,16 +178,16 @@ impl MessageGenerator {
         }
     }
 
-    pub fn write_to(&self) -> TokenStream {
-        let mut write_to = vec![];
+    pub fn write_to_uncheck(&self) -> TokenStream {
+        let mut write_to_uncheck = vec![];
         for (tag, g) in &self.fields {
-            write_to.push((*tag, g.fn_write_to()));
+            write_to_uncheck.push((*tag, g.fn_write_to_uncheck()));
         }
         for g in &self.one_of_fields {
-            write_to.push(g.fn_write_to());
+            write_to_uncheck.push(g.fn_write_to_uncheck());
         }
-        write_to.sort_by_key(|i| i.0);
-        let write_to = write_to.into_iter().map(|i| i.1);
+        write_to_uncheck.sort_by_key(|i| i.0);
+        let write_to_uncheck = write_to_uncheck.into_iter().map(|i| i.1);
         let extension = if self.extension_range.is_empty() {
             quote! {}
         } else {
@@ -196,8 +198,8 @@ impl MessageGenerator {
             }
         };
         quote! {
-            fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
-                #(#write_to)*
+            fn write_to_uncheck<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+                #(#write_to_uncheck)*
                 #extension
                 if !self._unknown.is_empty() {
                     s.write_raw_bytes(&self._unknown)?;
@@ -234,6 +236,7 @@ impl MessageGenerator {
                 if !self._unknown.is_empty() {
                     l += self._unknown.len() as u64;
                 }
+                self._cached_size.set(l);
                 l
             }
         }
@@ -260,7 +263,7 @@ impl MessageGenerator {
         let decl = self.decl();
         let init = self.init();
         let merge_from = self.merge_from();
-        let write_to = self.write_to();
+        let write_to_uncheck = self.write_to_uncheck();
         let size = self.size();
         let accessors = self.accessors();
         let one_of_enums = self.one_of_fields.iter().map(|g| g.generate());
@@ -279,9 +282,14 @@ impl MessageGenerator {
             impl pecan::Message for #name {
                 #merge_from
 
-                #write_to
+                #write_to_uncheck
 
                 #size
+
+                #[inline]
+                fn cached_size(&self) -> u32 {
+                    self._cached_size.get()
+                }
             }
 
             impl pecan::DefaultInstance for #name {

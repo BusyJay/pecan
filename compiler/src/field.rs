@@ -419,7 +419,7 @@ impl FieldGenerator {
         }
     }
 
-    fn map_entry_write_to(&self, mut ident: TokenStream) -> TokenStream {
+    fn map_entry_write_to_uncheck(&self, mut ident: TokenStream) -> TokenStream {
         let tag = self.tag();
         let codec = &self.codec;
         if self.kind.can_copy() {
@@ -431,12 +431,12 @@ impl FieldGenerator {
         }
     }
 
-    fn map_write_to(&self, kg: &FieldGenerator, vg: &FieldGenerator) -> TokenStream {
+    fn map_write_to_uncheck(&self, kg: &FieldGenerator, vg: &FieldGenerator) -> TokenStream {
         let tag = self.tag();
         let key_len = kg.map_entry_len(quote!(key));
         let val_len = vg.map_entry_len(quote!(val));
-        let key_w = kg.map_entry_write_to(quote!(key));
-        let val_w = vg.map_entry_write_to(quote!(val));
+        let key_w = kg.map_entry_write_to_uncheck(quote!(key));
+        let val_w = vg.map_entry_write_to_uncheck(quote!(val));
         self.check_empty(|_, v| {
             quote! {
                 for (key, val) in #v {
@@ -450,9 +450,9 @@ impl FieldGenerator {
         })
     }
 
-    pub fn fn_write_to(&self) -> TokenStream {
+    pub fn fn_write_to_uncheck(&self) -> TokenStream {
         if let FieldKind::HashMap(kg, vg) = &self.kind {
-            return self.map_write_to(kg, vg);
+            return self.map_write_to_uncheck(kg, vg);
         }
         let tag = self.tag();
         let codec = &self.codec;
@@ -462,7 +462,7 @@ impl FieldGenerator {
                 if matches!(self.kind, FieldKind::Group) {
                     quote! {
                         s.write_tag(#tag)?;
-                        #v.write_to(s)?;
+                        #v.write_to_uncheck(s)?;
                         s.write_tag(#end_tag)?;
                     }
                 } else {
@@ -478,7 +478,7 @@ impl FieldGenerator {
                     quote! {
                         for i in #v_ref {
                             s.write_tag(#tag)?;
-                            i.write_to(s)?;
+                            i.write_to_uncheck(s)?;
                             s.write_tag(#end_tag)?;
                         }
                     }
@@ -874,7 +874,7 @@ impl OneOfGenerator {
         }
     }
 
-    pub fn fn_write_to(&self) -> (u64, TokenStream) {
+    pub fn fn_write_to_uncheck(&self) -> (u64, TokenStream) {
         let token = self.check_empty(|g, val| {
             let tag = g.tag();
             let codec = &g.codec;

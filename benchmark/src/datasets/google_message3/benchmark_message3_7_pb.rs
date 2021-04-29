@@ -7,11 +7,13 @@ use pecan::prelude::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Message11018 {
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message11018 {
     pub const fn new() -> Message11018 {
         Message11018 {
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -24,7 +26,10 @@ impl pecan::Message for Message11018 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -35,7 +40,12 @@ impl pecan::Message for Message11018 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message11018 {
@@ -57,6 +67,7 @@ pub struct Message10800 {
     pub field10810: Option<bool>,
     pub field10811: Option<f32>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message10800 {
     pub const fn new() -> Message10800 {
@@ -66,6 +77,7 @@ impl Message10800 {
             field10810: None,
             field10811: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field10808(&self) -> &String {
@@ -121,7 +133,10 @@ impl pecan::Message for Message10800 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.field10808 {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -160,7 +175,12 @@ impl pecan::Message for Message10800 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message10800 {
@@ -178,11 +198,13 @@ impl Default for Message10800 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Message10802 {
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message10802 {
     pub const fn new() -> Message10802 {
         Message10802 {
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -195,7 +217,10 @@ impl pecan::Message for Message10802 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -206,7 +231,12 @@ impl pecan::Message for Message10802 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message10802 {
@@ -228,6 +258,7 @@ pub struct Message10748 {
     pub field10752: Option<i32>,
     pub field10753: Option<i32>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message10748 {
     pub const fn new() -> Message10748 {
@@ -237,6 +268,7 @@ impl Message10748 {
             field10752: None,
             field10753: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field10750(&self) -> &String {
@@ -292,7 +324,10 @@ impl pecan::Message for Message10748 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.field10750 {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -331,7 +366,12 @@ impl pecan::Message for Message10748 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message10748 {
@@ -351,6 +391,7 @@ pub struct Message7966 {
     pub field7969: Option<String>,
     pub field7970: Option<bool>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message7966 {
     pub const fn new() -> Message7966 {
@@ -358,6 +399,7 @@ impl Message7966 {
             field7969: None,
             field7970: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field7969(&self) -> &String {
@@ -393,7 +435,10 @@ impl pecan::Message for Message7966 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.field7969 {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -418,7 +463,12 @@ impl pecan::Message for Message7966 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message7966 {
@@ -442,6 +492,7 @@ pub struct Message708 {
     pub field827: Vec<String>,
     pub field828: Vec<String>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message708 {
     pub const fn new() -> Message708 {
@@ -453,6 +504,7 @@ impl Message708 {
             field827: Vec::new(),
             field828: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field823(&self) -> &Message741 {
@@ -507,7 +559,10 @@ impl pecan::Message for Message708 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.field823 {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -566,7 +621,12 @@ impl pecan::Message for Message708 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message708 {
@@ -584,11 +644,13 @@ impl Default for Message708 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Message8942 {
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message8942 {
     pub const fn new() -> Message8942 {
         Message8942 {
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -601,7 +663,10 @@ impl pecan::Message for Message8942 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -612,7 +677,12 @@ impl pecan::Message for Message8942 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message8942 {
@@ -632,6 +702,7 @@ pub struct Message11011 {
     pub field11752: pecan::Bytes,
     pub field11753: pecan::Bytes,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message11011 {
     pub const fn new() -> Message11011 {
@@ -639,6 +710,7 @@ impl Message11011 {
             field11752: pecan::Bytes::new(),
             field11753: pecan::Bytes::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -653,7 +725,10 @@ impl pecan::Message for Message11011 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.field11752.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.field11752, s)?;
@@ -678,7 +753,12 @@ impl pecan::Message for Message11011 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message11011 {
@@ -696,11 +776,13 @@ impl Default for Message11011 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct UnusedEmptyMessage {
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl UnusedEmptyMessage {
     pub const fn new() -> UnusedEmptyMessage {
         UnusedEmptyMessage {
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -713,7 +795,10 @@ impl pecan::Message for UnusedEmptyMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -724,7 +809,12 @@ impl pecan::Message for UnusedEmptyMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for UnusedEmptyMessage {
@@ -743,12 +833,14 @@ impl Default for UnusedEmptyMessage {
 pub struct Message741 {
     pub field936: Vec<String>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Message741 {
     pub const fn new() -> Message741 {
         Message741 {
             field936: Vec::new(),
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -762,7 +854,10 @@ impl pecan::Message for Message741 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.field936.is_empty() {
             for i in &self.field936 {
                 s.write_tag(10)?;
@@ -782,7 +877,12 @@ impl pecan::Message for Message741 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Message741 {

@@ -7,11 +7,13 @@ use pecan::prelude::*;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Empty {
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl Empty {
     pub const fn new() -> Empty {
         Empty {
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -24,7 +26,10 @@ impl pecan::Message for Empty {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self._unknown.is_empty() {
             s.write_raw_bytes(&self._unknown)?;
         }
@@ -35,7 +40,12 @@ impl pecan::Message for Empty {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for Empty {

@@ -9,12 +9,14 @@ pub const FIELD_OPT: pecan::Extension<FieldOptions, LengthPrefixed> = pecan::Ext
 pub struct FieldOptions {
     pub box_field: bool,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl FieldOptions {
     pub const fn new() -> FieldOptions {
         FieldOptions {
             box_field: false,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
 }
@@ -28,7 +30,10 @@ impl pecan::Message for FieldOptions {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if self.box_field {
             s.write_tag(8)?;
             Varint::write_to(self.box_field, s)?;
@@ -46,7 +51,12 @@ impl pecan::Message for FieldOptions {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for FieldOptions {

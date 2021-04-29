@@ -459,9 +459,9 @@ impl<M: Message + Default> ReadFieldCodec<M> for LengthPrefixed {
 impl<'a, M: Message> WriteFieldCodec<&'a M> for LengthPrefixed {
     #[inline]
     fn write_to<B: BufMut>(val: &M, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        let l = val.size();
+        let l = val.cached_size();
         Varint::write_to(l, buf)?;
-        val.write_to(buf)
+        val.write_to_uncheck(buf)
     }
 
     #[inline]

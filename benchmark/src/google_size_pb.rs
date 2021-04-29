@@ -48,6 +48,7 @@ pub struct SizeMessage1 {
     pub field129: Option<String>,
     pub field131: Option<i32>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl SizeMessage1 {
     pub const fn new() -> SizeMessage1 {
@@ -94,6 +95,7 @@ impl SizeMessage1 {
             field129: None,
             field131: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field9(&self) -> &String {
@@ -505,7 +507,10 @@ impl pecan::Message for SizeMessage1 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if !self.field1.is_empty() {
             s.write_tag(10)?;
             LengthPrefixed::write_to(&self.field1, s)?;
@@ -805,7 +810,12 @@ impl pecan::Message for SizeMessage1 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for SizeMessage1 {
@@ -843,6 +853,7 @@ pub struct SizeMessage1SubMessage {
     pub field207: Option<u64>,
     pub field300: Option<u64>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl SizeMessage1SubMessage {
     pub const fn new() -> SizeMessage1SubMessage {
@@ -868,6 +879,7 @@ impl SizeMessage1SubMessage {
             field207: None,
             field300: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field1(&self) -> i32 {
@@ -1086,7 +1098,10 @@ impl pecan::Message for SizeMessage1SubMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.field1 {
             s.write_tag(8)?;
             Varint::write_to(v, s)?;
@@ -1237,7 +1252,12 @@ impl pecan::Message for SizeMessage1SubMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for SizeMessage1SubMessage {
@@ -1271,6 +1291,7 @@ pub struct SizeMessage2_Group1 {
     pub field24: Option<String>,
     pub field31: Option<SizeMessage2GroupedMessage>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl SizeMessage2_Group1 {
     pub const fn new() -> SizeMessage2_Group1 {
@@ -1292,6 +1313,7 @@ impl SizeMessage2_Group1 {
             field24: None,
             field31: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field26(&self) -> f32 {
@@ -1444,7 +1466,10 @@ impl pecan::Message for SizeMessage2_Group1 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.field5 {
             s.write_tag(40)?;
             Varint::write_to(v, s)?;
@@ -1573,7 +1598,12 @@ impl pecan::Message for SizeMessage2_Group1 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for SizeMessage2_Group1 {
@@ -1621,6 +1651,7 @@ pub struct SizeMessage2 {
     pub field205: Option<bool>,
     pub field206: Option<bool>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl SizeMessage2 {
     pub const fn new() -> SizeMessage2 {
@@ -1656,6 +1687,7 @@ impl SizeMessage2 {
             field205: None,
             field206: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field1(&self) -> &String {
@@ -1945,7 +1977,10 @@ impl pecan::Message for SizeMessage2 {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = &self.field1 {
             s.write_tag(10)?;
             LengthPrefixed::write_to(v, s)?;
@@ -1969,7 +2004,7 @@ impl pecan::Message for SizeMessage2 {
         if !self.group1.is_empty() {
             for i in &self.group1 {
                 s.write_tag(83)?;
-                i.write_to(s)?;
+                i.write_to_uncheck(s)?;
                 s.write_tag(84)?;
             }
         }
@@ -2178,7 +2213,12 @@ impl pecan::Message for SizeMessage2 {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for SizeMessage2 {
@@ -2207,6 +2247,7 @@ pub struct SizeMessage2GroupedMessage {
     pub field10: Option<f32>,
     pub field11: Option<i64>,
     _unknown: Vec<u8>,
+    _cached_size: pecan::CachedSize,
 }
 impl SizeMessage2GroupedMessage {
     pub const fn new() -> SizeMessage2GroupedMessage {
@@ -2223,6 +2264,7 @@ impl SizeMessage2GroupedMessage {
             field10: None,
             field11: None,
             _unknown: Vec::new(),
+            _cached_size: pecan::CachedSize::new(),
         }
     }
     pub fn field1(&self) -> f32 {
@@ -2345,7 +2387,10 @@ impl pecan::Message for SizeMessage2GroupedMessage {
             }
         }
     }
-    fn write_to<B: pecan::BufMut>(&self, s: &mut CodedOutputStream<B>) -> pecan::Result<()> {
+    fn write_to_uncheck<B: pecan::BufMut>(
+        &self,
+        s: &mut CodedOutputStream<B>,
+    ) -> pecan::Result<()> {
         if let Some(v) = self.field1 {
             s.write_tag(13)?;
             Fixed32::write_to(v, s)?;
@@ -2433,7 +2478,12 @@ impl pecan::Message for SizeMessage2GroupedMessage {
         if !self._unknown.is_empty() {
             l += self._unknown.len() as u64;
         }
+        self._cached_size.set(l);
         l
+    }
+    #[inline]
+    fn cached_size(&self) -> u32 {
+        self._cached_size.get()
     }
 }
 impl pecan::DefaultInstance for SizeMessage2GroupedMessage {

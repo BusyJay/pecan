@@ -8,7 +8,7 @@ pub mod stream;
 pub use self::error::{Error, Result};
 pub use self::extension::{Extension, ExtensionMap};
 pub use self::message::{
-    BufMarshal, BufMessage, BufUnMarshal, DefaultInstance, Enumerate, Message,
+    BufMarshal, BufMessage, BufUnMarshal, CachedSize, DefaultInstance, Enumerate, Message,
 };
 pub use self::stream::{CodedInputStream, CodedOutputStream};
 pub use bytes::{Buf, BufMut, Bytes};
