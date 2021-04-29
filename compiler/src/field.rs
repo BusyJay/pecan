@@ -343,8 +343,17 @@ impl FieldGenerator {
                 quote! { self.#method() }
             };
             let end_tag = self.group_end_tag();
+            let handle = if !self.repeated {
+                quote! { #accessor.merge_from(s) }
+            } else {
+                let default_val = &self.default_value;
+                quote! {{
+                    #accessor.push(#default_val);
+                    #accessor.last_mut().unwrap().merge_from(s)
+                }}
+            };
             quote! {
-                #tag => s.read_group(#end_tag, |s| #accessor.merge_from(s))?,
+                #tag => s.read_group(#end_tag, |s| #handle)?,
             }
         } else if self.optional {
             quote! {

@@ -1,6 +1,8 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(non_upper_case_globals)]
+#![allow(dead_code)]
+#[allow(unused_imports)]
 use pecan::prelude::*;
 pub const EXTENSION_INT32: pecan::Extension<i32, Varint> = pecan::Extension::new(960);
 #[derive(Default, Clone, Copy, PartialEq, Eq)]

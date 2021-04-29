@@ -33,6 +33,27 @@ const CONFORMANCE_PROTOS: &[&str] = &[
     "proto/google/protobuf/test_messages_proto3.proto",
 ];
 
+const BENCHMARK_PROTOS: &[&str] = &[
+    "proto/datasets//google_message1/proto2/benchmark_message1_proto2.proto",
+    "proto/datasets//google_message1/proto3/benchmark_message1_proto3.proto",
+    "proto/datasets//google_message4/benchmark_message4.proto",
+    "proto/datasets//google_message4/benchmark_message4_2.proto",
+    "proto/datasets//google_message4/benchmark_message4_1.proto",
+    "proto/datasets//google_message4/benchmark_message4_3.proto",
+    "proto/datasets//google_message3/benchmark_message3_6.proto",
+    "proto/datasets//google_message3/benchmark_message3_4.proto",
+    "proto/datasets//google_message3/benchmark_message3.proto",
+    "proto/datasets//google_message3/benchmark_message3_2.proto",
+    "proto/datasets//google_message3/benchmark_message3_5.proto",
+    "proto/datasets//google_message3/benchmark_message3_7.proto",
+    "proto/datasets//google_message3/benchmark_message3_3.proto",
+    "proto/datasets//google_message3/benchmark_message3_1.proto",
+    "proto/datasets//google_message3/benchmark_message3_8.proto",
+    "proto/datasets//google_message2/benchmark_message2.proto",
+    "proto/benchmarks.proto",
+    "proto/google_size.proto",
+];
+
 fn prepare_protoc() -> Command {
     let mut cmd = Command::new("protoc");
     cmd.arg("--plugin=protoc-gen-rust=./target/debug/plugin");
@@ -101,12 +122,21 @@ fn compile_conformance() {
     exec(cmd.arg("--rust_out=conformance/src/"));
 }
 
+fn compile_benchmark() {
+    let mut cmd = prepare_protoc();
+    for p in BENCHMARK_PROTOS {
+        cmd.arg(*p);
+    }
+    exec(cmd.arg("--rust_out=benchmark/src/"));
+}
+
 fn codegen() {
     exec(Command::new("cargo").args(&["build", "-p", "pecan-compiler"]));
     compile_descriptor();
     compile_compiler();
     compile_well_known_types();
     compile_conformance();
+    compile_benchmark();
 }
 
 fn main() {

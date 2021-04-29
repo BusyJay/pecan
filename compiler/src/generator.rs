@@ -147,7 +147,9 @@ impl<'a> Generator<'a> {
             #![allow(non_camel_case_types)]
             #![allow(non_snake_case)]
             #![allow(non_upper_case_globals)]
-
+            #![allow(dead_code)]
+            
+            #[allow(unused_imports)]
             use pecan::prelude::*;
         };
         for e in &self.file.proto().extension {

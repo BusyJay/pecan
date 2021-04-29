@@ -1,8 +1,12 @@
 [workspace]
 members = [
+    "benchmark",
     "conformance",
     "pecan",
     "compiler",
     "types",
     "xtask",
 ]
+
+[profile.release]
+codegen-units = 1

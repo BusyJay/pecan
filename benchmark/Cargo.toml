@@ -1,0 +1,10 @@
+[package]
+name = "benchmark"
+version = "0.1.0"
+authors = ["Jay Lee <BusyJayLee@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pecan = { path = "../pecan" }
+criterion = { version = "0.3", features = ["html_reports"] }
+bytes = "1.0"

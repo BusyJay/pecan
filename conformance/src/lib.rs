@@ -1,6 +1,4 @@
-#[allow(dead_code)]
 mod conformance;
-#[allow(dead_code)]
 mod google;
 
 use bytes::{Bytes, BytesMut};
