@@ -14,12 +14,12 @@ use std::{
 
 use self::conformance::conformance_pb::*;
 
-fn do_test(req: ConformanceRequest, resp: &mut ConformanceResponse) -> Result<()> {
+fn do_test(req: ConformanceRequest, resp: &mut ConformanceResponse) {
     if req.message_type == "conformance.FailureSet" {
         let mut buf = BytesMut::default();
         FailureSet::new().write_to_buf(&mut buf).unwrap();
         resp.set_protobuf_payload(buf.freeze());
-        return Ok(());
+        return;
     }
     let msg = match req.payload {
         ConformanceRequest_Payload::ProtobufPayload(mut payload) => {
@@ -30,18 +30,17 @@ fn do_test(req: ConformanceRequest, resp: &mut ConformanceResponse) -> Result<()
                     Box::new(TestAllTypesProto2::new())
                 } else {
                     resp.set_skipped(format!("{} is not supported", req.message_type));
-                    return Ok(());
+                    return;
                 };
 
             if let Err(e) = msg.merge_from_buf(&mut payload) {
                 resp.set_parse_error(format!("{:?}", e));
-                return Ok(());
             }
             msg
         }
         payload => {
             resp.set_skipped(format!("{:?} is not supported", payload));
-            return Ok(());
+            return;
         }
     };
 
@@ -53,11 +52,8 @@ fn do_test(req: ConformanceRequest, resp: &mut ConformanceResponse) -> Result<()
         }
         format => {
             resp.set_skipped(format!("{:?} is not supported", format));
-            return Ok(());
         }
     }
-
-    Ok(())
 }
 
 pub fn do_test_io(mut stdin: impl Read, mut stdout: impl Write) -> Result<bool> {
@@ -74,7 +70,7 @@ pub fn do_test_io(mut stdin: impl Read, mut stdout: impl Write) -> Result<bool> 
     let mut request = ConformanceRequest::new();
     request.merge_from_buf(&mut data.as_slice()).unwrap();
     let mut response = ConformanceResponse::new();
-    do_test(request, &mut response)?;
+    do_test(request, &mut response);
     let l = response.size();
     let mut bytes = Vec::with_capacity(l as usize + 4);
     let bits = (l as u32).to_ne_bytes();

@@ -1,11 +1,39 @@
 mod benchmarks_pb;
-mod datasets;
+mod datasets {
+    pub mod google_message1 {
+        pub mod proto2 {
+            pub mod benchmark_message1_proto2_pb;
+        }
+        pub mod proto3 {
+            pub mod benchmark_message1_proto3_pb;
+        }
+    }
+    pub mod google_message2 {
+        pub mod benchmark_message2_pb;
+    }
+    pub mod google_message3 {
+        pub mod benchmark_message3_1_pb;
+        pub mod benchmark_message3_2_pb;
+        pub mod benchmark_message3_3_pb;
+        pub mod benchmark_message3_4_pb;
+        pub mod benchmark_message3_5_pb;
+        pub mod benchmark_message3_6_pb;
+        pub mod benchmark_message3_7_pb;
+        pub mod benchmark_message3_8_pb;
+        pub mod benchmark_message3_pb;
+    }
+    pub mod google_message4 {
+        pub mod benchmark_message4_1_pb;
+        pub mod benchmark_message4_2_pb;
+        pub mod benchmark_message4_3_pb;
+        pub mod benchmark_message4_pb;
+    }
+}
 mod google_size_pb;
 
 use std::{env, fs, path::Path};
 
 use benchmarks_pb::BenchmarkDataset;
-use bytes::Bytes;
 use criterion::{measurement::WallTime, BenchmarkGroup, Criterion};
 use pecan::prelude::*;
 
@@ -16,7 +44,7 @@ use crate::datasets::{
     google_message4::benchmark_message4_pb::GoogleMessage4,
 };
 
-fn bench_read_from<M: Default + BufMessage<Bytes, Vec<u8>>>(
+fn bench_read_from<M: Default + Message>(
     g: &mut BenchmarkGroup<WallTime>,
     data_set: &BenchmarkDataset,
 ) {
@@ -30,7 +58,7 @@ fn bench_read_from<M: Default + BufMessage<Bytes, Vec<u8>>>(
     });
 }
 
-fn bench_merge_from<M: Default + BufMessage<Bytes, Vec<u8>>>(
+fn bench_merge_from<M: Default + Message>(
     g: &mut BenchmarkGroup<WallTime>,
     data_set: &BenchmarkDataset,
 ) {
@@ -39,11 +67,12 @@ fn bench_merge_from<M: Default + BufMessage<Bytes, Vec<u8>>>(
         let mut m = M::default();
         b.iter(|| {
             m.merge_from_buf(&mut ds.next().unwrap().clone()).unwrap();
+            m.clear();
         })
     });
 }
 
-fn bench_write_to<M: Default + BufMessage<Bytes, Vec<u8>>>(
+fn bench_write_to<M: Default + Message>(
     g: &mut BenchmarkGroup<WallTime>,
     data_set: &BenchmarkDataset,
 ) {
@@ -61,14 +90,14 @@ fn bench_write_to<M: Default + BufMessage<Bytes, Vec<u8>>>(
     g.bench_function("write_to", |b| {
         b.iter(|| {
             let m = msgs_iter.next().unwrap();
-            buffer.reserve(m.size_buf() as usize);
+            buffer.reserve(m.size() as usize);
             m.write_to_buf(&mut buffer).unwrap();
             buffer.clear();
         })
     });
 }
 
-fn build_group<M: Default + BufMessage<Bytes, Vec<u8>>>(
+fn build_group<M: Default + Message>(
     g: &mut BenchmarkGroup<WallTime>,
     data_set: &BenchmarkDataset,
 ) {
@@ -105,6 +134,7 @@ fn main() {
     let mut args = env::args();
     args.next();
     let mut c = Criterion::default();
+    // c = c.profile_time(Some(std::time::Duration::from_secs(60)));
     for f in args {
         run_one_test(&mut c, f);
     }

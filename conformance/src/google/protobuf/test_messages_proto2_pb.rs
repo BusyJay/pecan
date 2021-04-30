@@ -147,6 +147,11 @@ impl pecan::Message for TestAllTypesProto2_NestedMessage {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.a = None;
+        self.corecursive = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -244,6 +249,11 @@ impl pecan::Message for TestAllTypesProto2_Data {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.group_int32 = None;
+        self.group_uint32 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -314,6 +324,10 @@ impl pecan::Message for TestAllTypesProto2_MessageSetCorrect {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -363,7 +377,7 @@ impl pecan::Message for TestAllTypesProto2_MessageSetCorrectExtension1 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                202 => self.str = Some(LengthPrefixed::read_from(s)?),
+                202 => LengthPrefixed::merge_from(self.str_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -392,6 +406,10 @@ impl pecan::Message for TestAllTypesProto2_MessageSetCorrectExtension1 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.str = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -468,6 +486,10 @@ impl pecan::Message for TestAllTypesProto2_MessageSetCorrectExtension2 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.i = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1660,14 +1682,14 @@ impl pecan::Message for TestAllTypesProto2 {
                 93 => self.optional_float = Some(Fixed32::read_from(s)?),
                 97 => self.optional_double = Some(Fixed64::read_from(s)?),
                 104 => self.optional_bool = Some(Varint::read_from(s)?),
-                114 => self.optional_string = Some(LengthPrefixed::read_from(s)?),
-                122 => self.optional_bytes = Some(LengthPrefixed::read_from(s)?),
+                114 => LengthPrefixed::merge_from(self.optional_string_mut(), s)?,
+                122 => LengthPrefixed::merge_from(self.optional_bytes_mut(), s)?,
                 146 => LengthPrefixed::merge_from(self.optional_nested_message_mut(), s)?,
                 154 => LengthPrefixed::merge_from(self.optional_foreign_message_mut(), s)?,
                 168 => self.optional_nested_enum = Some(Varint::read_from(s)?),
                 176 => self.optional_foreign_enum = Some(Varint::read_from(s)?),
-                194 => self.optional_string_piece = Some(LengthPrefixed::read_from(s)?),
-                202 => self.optional_cord = Some(LengthPrefixed::read_from(s)?),
+                194 => LengthPrefixed::merge_from(self.optional_string_piece_mut(), s)?,
+                202 => LengthPrefixed::merge_from(self.optional_cord_mut(), s)?,
                 218 => LengthPrefixed::merge_from(self.recursive_message_mut(), s)?,
                 248 => CopyArray::<Varint>::merge_from(&mut self.repeated_int32, s)?,
                 250 => PackedArray::<Varint>::merge_from(&mut self.repeated_int32, s)?,
@@ -1923,8 +1945,8 @@ impl pecan::Message for TestAllTypesProto2 {
                         let mut val = String::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
-                                18 => val = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
+                                18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
                             }
@@ -1939,8 +1961,8 @@ impl pecan::Message for TestAllTypesProto2 {
                         let mut val = pecan::Bytes::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
-                                18 => val = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
+                                18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
                             }
@@ -1955,7 +1977,7 @@ impl pecan::Message for TestAllTypesProto2 {
                         let mut val = TestAllTypesProto2_NestedMessage::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
@@ -1971,7 +1993,7 @@ impl pecan::Message for TestAllTypesProto2 {
                         let mut val = ForeignMessageProto2::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
@@ -1987,7 +2009,7 @@ impl pecan::Message for TestAllTypesProto2 {
                         let mut val = TestAllTypesProto2_NestedEnum::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 16 => val = Varint::read_from(s)?,
                                 0 => break,
                                 _ => (),
@@ -2003,7 +2025,7 @@ impl pecan::Message for TestAllTypesProto2 {
                         let mut val = ForeignEnumProto2::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 16 => val = Varint::read_from(s)?,
                                 0 => break,
                                 _ => (),
@@ -2074,14 +2096,8 @@ impl pecan::Message for TestAllTypesProto2 {
                         TestAllTypesProto2_Oneof_Field::OneofUint32(Varint::read_from(s)?)
                 }
                 898 => LengthPrefixed::merge_from(self.oneof_nested_message_mut(), s)?,
-                906 => {
-                    self.oneof_field =
-                        TestAllTypesProto2_Oneof_Field::OneofString(LengthPrefixed::read_from(s)?)
-                }
-                914 => {
-                    self.oneof_field =
-                        TestAllTypesProto2_Oneof_Field::OneofBytes(LengthPrefixed::read_from(s)?)
-                }
+                906 => LengthPrefixed::merge_from(self.oneof_string_mut(), s)?,
+                914 => LengthPrefixed::merge_from(self.oneof_bytes_mut(), s)?,
                 920 => {
                     self.oneof_field =
                         TestAllTypesProto2_Oneof_Field::OneofBool(Varint::read_from(s)?)
@@ -3286,6 +3302,120 @@ impl pecan::Message for TestAllTypesProto2 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.optional_int32 = None;
+        self.optional_int64 = None;
+        self.optional_uint32 = None;
+        self.optional_uint64 = None;
+        self.optional_sint32 = None;
+        self.optional_sint64 = None;
+        self.optional_fixed32 = None;
+        self.optional_fixed64 = None;
+        self.optional_sfixed32 = None;
+        self.optional_sfixed64 = None;
+        self.optional_float = None;
+        self.optional_double = None;
+        self.optional_bool = None;
+        self.optional_string = None;
+        self.optional_bytes = None;
+        self.optional_nested_message = None;
+        self.optional_foreign_message = None;
+        self.optional_nested_enum = None;
+        self.optional_foreign_enum = None;
+        self.optional_string_piece = None;
+        self.optional_cord = None;
+        self.recursive_message = None;
+        self.repeated_int32.clear();
+        self.repeated_int64.clear();
+        self.repeated_uint32.clear();
+        self.repeated_uint64.clear();
+        self.repeated_sint32.clear();
+        self.repeated_sint64.clear();
+        self.repeated_fixed32.clear();
+        self.repeated_fixed64.clear();
+        self.repeated_sfixed32.clear();
+        self.repeated_sfixed64.clear();
+        self.repeated_float.clear();
+        self.repeated_double.clear();
+        self.repeated_bool.clear();
+        self.repeated_string.clear();
+        self.repeated_bytes.clear();
+        self.repeated_nested_message.clear();
+        self.repeated_foreign_message.clear();
+        self.repeated_nested_enum.clear();
+        self.repeated_foreign_enum.clear();
+        self.repeated_string_piece.clear();
+        self.repeated_cord.clear();
+        self.packed_int32.clear();
+        self.packed_int64.clear();
+        self.packed_uint32.clear();
+        self.packed_uint64.clear();
+        self.packed_sint32.clear();
+        self.packed_sint64.clear();
+        self.packed_fixed32.clear();
+        self.packed_fixed64.clear();
+        self.packed_sfixed32.clear();
+        self.packed_sfixed64.clear();
+        self.packed_float.clear();
+        self.packed_double.clear();
+        self.packed_bool.clear();
+        self.packed_nested_enum.clear();
+        self.unpacked_int32.clear();
+        self.unpacked_int64.clear();
+        self.unpacked_uint32.clear();
+        self.unpacked_uint64.clear();
+        self.unpacked_sint32.clear();
+        self.unpacked_sint64.clear();
+        self.unpacked_fixed32.clear();
+        self.unpacked_fixed64.clear();
+        self.unpacked_sfixed32.clear();
+        self.unpacked_sfixed64.clear();
+        self.unpacked_float.clear();
+        self.unpacked_double.clear();
+        self.unpacked_bool.clear();
+        self.unpacked_nested_enum.clear();
+        self.map_int32_int32 = None;
+        self.map_int64_int64 = None;
+        self.map_uint32_uint32 = None;
+        self.map_uint64_uint64 = None;
+        self.map_sint32_sint32 = None;
+        self.map_sint64_sint64 = None;
+        self.map_fixed32_fixed32 = None;
+        self.map_fixed64_fixed64 = None;
+        self.map_sfixed32_sfixed32 = None;
+        self.map_sfixed64_sfixed64 = None;
+        self.map_int32_float = None;
+        self.map_int32_double = None;
+        self.map_bool_bool = None;
+        self.map_string_string = None;
+        self.map_string_bytes = None;
+        self.map_string_nested_message = None;
+        self.map_string_foreign_message = None;
+        self.map_string_nested_enum = None;
+        self.map_string_foreign_enum = None;
+        self.oneof_field = TestAllTypesProto2_Oneof_Field::None;
+        self.data = None;
+        self.fieldname1 = None;
+        self.field_name2 = None;
+        self._field_name3 = None;
+        self.field__name4_ = None;
+        self.field0name5 = None;
+        self.field_0_name6 = None;
+        self.field_name7 = None;
+        self.field_name8 = None;
+        self.field_name9 = None;
+        self.field_name10 = None;
+        self.field_name11 = None;
+        self.field_name12 = None;
+        self.__field_name13 = None;
+        self.__field_name14 = None;
+        self.field__name15 = None;
+        self.field__name16 = None;
+        self.field_name17__ = None;
+        self.field_name18__ = None;
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3360,6 +3490,10 @@ impl pecan::Message for ForeignMessageProto2 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.c = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3438,6 +3572,10 @@ impl pecan::Message for UnknownToTestAllTypes_OptionalGroup {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.a = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3541,7 +3679,7 @@ impl pecan::Message for UnknownToTestAllTypes {
         loop {
             match s.read_tag()? {
                 8008 => self.optional_int32 = Some(Varint::read_from(s)?),
-                8018 => self.optional_string = Some(LengthPrefixed::read_from(s)?),
+                8018 => LengthPrefixed::merge_from(self.optional_string_mut(), s)?,
                 8026 => LengthPrefixed::merge_from(self.nested_message_mut(), s)?,
                 8035 => s.read_group(8036, |s| self.optionalgroup_mut().merge_from(s))?,
                 8048 => self.optional_bool = Some(Varint::read_from(s)?),
@@ -3614,6 +3752,15 @@ impl pecan::Message for UnknownToTestAllTypes {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.optional_int32 = None;
+        self.optional_string = None;
+        self.nested_message = None;
+        self.optionalgroup = None;
+        self.optional_bool = None;
+        self.repeated_int32.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

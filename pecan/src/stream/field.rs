@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ptr};
+use std::{marker::PhantomData, ptr, slice};
 
 use crate::{
     codec,
@@ -6,7 +6,7 @@ use crate::{
     Enumerate, Message,
 };
 use crate::{Error, Result};
-use bytes::{buf::UninitSlice, Buf, BufMut, Bytes};
+use bytes::{Buf, BufMut, Bytes};
 
 pub trait ReadFieldCodec<Field> {
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Field>;
@@ -34,10 +34,10 @@ impl WriteFieldCodec<bool> for Varint {
     #[inline]
     fn write_to<B: BufMut>(val: bool, buf: &mut CodedOutputStream<B>) -> Result<()> {
         loop {
-            if buf.chunk.len() > 0 {
+            if !buf.chunk.is_empty() {
                 unsafe {
                     buf.chunk.as_mut_ptr().write(val as u8);
-                    buf.chunk = UninitSlice::from_raw_parts_mut(
+                    buf.chunk = slice::from_raw_parts_mut(
                         buf.chunk.as_mut_ptr().add(1),
                         buf.chunk.len() - 1,
                     );
@@ -57,6 +57,7 @@ impl WriteFieldCodec<bool> for Varint {
 pub struct LengthPrefixed;
 
 impl ReadFieldCodec<Bytes> for LengthPrefixed {
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Bytes> {
         let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
@@ -67,6 +68,7 @@ impl ReadFieldCodec<Bytes> for LengthPrefixed {
 }
 
 impl<'a> WriteFieldCodec<&'a [u8]> for LengthPrefixed {
+    #[inline]
     fn write_to<B: BufMut>(val: &[u8], buf: &mut CodedOutputStream<B>) -> Result<()> {
         Varint::write_to(val.len() as u64, buf)?;
         buf.write_raw_bytes(val)
@@ -104,6 +106,7 @@ impl WriteFieldCodec<f64> for Fixed64 {
 }
 
 impl ReadFieldCodec<u32> for Fixed32 {
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<u32> {
         if buf.chunk.len() >= 4 {
             unsafe {
@@ -120,18 +123,17 @@ impl ReadFieldCodec<u32> for Fixed32 {
 }
 
 impl WriteFieldCodec<u32> for Fixed32 {
+    #[inline]
     fn write_to<B: BufMut>(val: u32, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        let bytes = val.to_le_bytes();
-        if buf.chunk.len() >= 8 {
+        if buf.chunk.len() >= 4 {
             unsafe {
-                ptr::copy_nonoverlapping(bytes.as_ptr(), buf.chunk.as_mut_ptr(), 4);
-                buf.chunk = UninitSlice::from_raw_parts_mut(
-                    buf.chunk.as_mut_ptr().add(4),
-                    buf.chunk.len() - 4,
-                );
+                (buf.chunk.as_mut_ptr() as *mut u32).write_unaligned(u32::to_le(val));
+                buf.chunk =
+                    slice::from_raw_parts_mut(buf.chunk.as_mut_ptr().add(4), buf.chunk.len() - 4);
             }
             return Ok(());
         }
+        let bytes = val.to_le_bytes();
         buf.write_raw_bytes(&bytes)
     }
 
@@ -142,6 +144,7 @@ impl WriteFieldCodec<u32> for Fixed32 {
 }
 
 impl ReadFieldCodec<u64> for Fixed64 {
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<u64> {
         if buf.chunk.len() >= 8 {
             unsafe {
@@ -158,18 +161,17 @@ impl ReadFieldCodec<u64> for Fixed64 {
 }
 
 impl WriteFieldCodec<u64> for Fixed64 {
+    #[inline]
     fn write_to<B: BufMut>(val: u64, buf: &mut CodedOutputStream<B>) -> Result<()> {
-        let bytes = val.to_le_bytes();
         if buf.chunk.len() >= 8 {
             unsafe {
-                ptr::copy_nonoverlapping(bytes.as_ptr(), buf.chunk.as_mut_ptr(), 8);
-                buf.chunk = UninitSlice::from_raw_parts_mut(
-                    buf.chunk.as_mut_ptr().add(8),
-                    buf.chunk.len() - 8,
-                );
+                (buf.chunk.as_mut_ptr() as *mut u64).write_unaligned(u64::to_le(val));
+                buf.chunk =
+                    slice::from_raw_parts_mut(buf.chunk.as_mut_ptr().add(8), buf.chunk.len() - 8);
             }
             return Ok(());
         }
+        let bytes = val.to_le_bytes();
         buf.write_raw_bytes(&bytes)
     }
 
@@ -280,28 +282,58 @@ impl WriteFieldCodec<i64> for Fixed64 {
     }
 }
 
-impl ReadFieldCodec<String> for LengthPrefixed {
-    fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<String> {
+impl MergeFieldCodec<Vec<u8>> for LengthPrefixed {
+    #[inline]
+    fn merge_from<B: Buf>(current: &mut Vec<u8>, buf: &mut CodedInputStream<B>) -> Result<()> {
         let len = buf.read_var_u64_raw()?;
         if len <= usize::MAX as u64 {
             let len = len as usize;
-            let mut v = Vec::with_capacity(len);
+            current.clear();
+            current.reserve(len);
             loop {
-                if buf.chunk.len() >= len - v.len() {
-                    let (res, rest) = buf.chunk.split_at(len - v.len());
+                if buf.chunk.len() >= len - current.len() {
+                    let (res, rest) = buf.chunk.split_at(len - current.len());
                     buf.chunk = rest;
-                    v.extend_from_slice(res);
-                    match String::from_utf8(v) {
-                        Ok(s) => {
-                            return Ok(s);
-                        }
-                        Err(_) => return Err(Error::corrupted()),
+                    unsafe {
+                        let target = current.as_mut_ptr().add(current.len());
+                        ptr::copy_nonoverlapping(res.as_ptr(), target, res.len());
+                        current.set_len(len);
                     }
+                    return Ok(());
+                }
+                unsafe {
+                    let target = current.as_mut_ptr().add(current.len());
+                    ptr::copy_nonoverlapping(buf.chunk.as_ptr(), target, buf.chunk.len());
+                    current.set_len(current.len() + buf.chunk.len());
                 }
                 buf.renew()?;
             }
         }
         Err(Error::corrupted())
+    }
+}
+
+impl MergeFieldCodec<String> for LengthPrefixed {
+    #[inline]
+    fn merge_from<B: Buf>(current: &mut String, buf: &mut CodedInputStream<B>) -> Result<()> {
+        unsafe { LengthPrefixed::merge_from(current.as_mut_vec(), buf) }
+    }
+}
+
+impl MergeFieldCodec<Bytes> for LengthPrefixed {
+    #[inline]
+    fn merge_from<B: Buf>(current: &mut Bytes, buf: &mut CodedInputStream<B>) -> Result<()> {
+        *current = LengthPrefixed::read_from(buf)?;
+        Ok(())
+    }
+}
+
+impl ReadFieldCodec<String> for LengthPrefixed {
+    #[inline]
+    fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<String> {
+        let mut s = String::new();
+        LengthPrefixed::merge_from(&mut s, buf)?;
+        Ok(s)
     }
 }
 
@@ -410,14 +442,9 @@ impl WriteFieldCodec<u64> for Varint {
         buf.write_var_u64_raw(val)
     }
 
-    fn size(mut val: u64) -> u64 {
-        for i in 1..=9 {
-            val >>= 7;
-            if val == 0 {
-                return i;
-            }
-        }
-        10
+    #[inline]
+    fn size(val: u64) -> u64 {
+        (((64 - (val | 0x1).leading_zeros()) - 1) / 7 + 1) as u64
     }
 }
 
@@ -442,6 +469,7 @@ impl<E: Enumerate> WriteFieldCodec<E> for Varint {
 }
 
 impl<M: Message> MergeFieldCodec<M> for LengthPrefixed {
+    #[inline]
     fn merge_from<B: Buf>(current: &mut M, buf: &mut CodedInputStream<B>) -> Result<()> {
         buf.read_length_limited(|buf| current.merge_from(buf))
     }
@@ -479,6 +507,7 @@ impl<Item, Codec> MergeFieldCodec<Vec<Item>> for RefArray<Codec>
 where
     Codec: ReadFieldCodec<Item>,
 {
+    #[inline]
     fn merge_from<B: Buf>(current: &mut Vec<Item>, buf: &mut CodedInputStream<B>) -> Result<()> {
         current.push(Codec::read_from(buf)?);
         Ok(())
@@ -507,6 +536,7 @@ impl<Item, Codec> MergeFieldCodec<Vec<Item>> for CopyArray<Codec>
 where
     Codec: ReadFieldCodec<Item>,
 {
+    #[inline]
     fn merge_from<B: Buf>(current: &mut Vec<Item>, buf: &mut CodedInputStream<B>) -> Result<()> {
         current.push(Codec::read_from(buf)?);
         Ok(())
@@ -536,6 +566,7 @@ impl<Item, ItemCodec> MergeFieldCodec<Vec<Item>> for PackedArray<ItemCodec>
 where
     ItemCodec: ReadFieldCodec<Item>,
 {
+    #[inline]
     fn merge_from<B: Buf>(current: &mut Vec<Item>, buf: &mut CodedInputStream<B>) -> Result<()> {
         let len: u64 = Varint::read_from(buf)?;
         let limit = buf.progress() + len;
@@ -554,6 +585,7 @@ impl<Item, ItemCodec> ReadFieldCodec<Vec<Item>> for PackedArray<ItemCodec>
 where
     ItemCodec: ReadFieldCodec<Item>,
 {
+    #[inline]
     fn read_from<B: Buf>(buf: &mut CodedInputStream<B>) -> Result<Vec<Item>> {
         let mut res = Vec::new();
         Self::merge_from(&mut res, buf)?;
@@ -566,6 +598,7 @@ where
     Item: Copy,
     ItemCodec: WriteFieldCodec<Item>,
 {
+    #[inline]
     fn write_to<B: BufMut>(val: &'a [Item], buf: &mut CodedOutputStream<B>) -> Result<()> {
         let l: u64 = val.iter().map(|v| ItemCodec::size(*v)).sum();
         Varint::write_to(l, buf)?;
@@ -575,6 +608,7 @@ where
         Ok(())
     }
 
+    #[inline]
     fn size(val: &'a [Item]) -> u64 {
         let l: u64 = val.iter().map(|v| ItemCodec::size(*v)).sum();
         Varint::size(l) + l

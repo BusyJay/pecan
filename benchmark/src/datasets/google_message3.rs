@@ -1,9 +1,0 @@
-pub mod benchmark_message3_1_pb;
-pub mod benchmark_message3_2_pb;
-pub mod benchmark_message3_3_pb;
-pub mod benchmark_message3_4_pb;
-pub mod benchmark_message3_5_pb;
-pub mod benchmark_message3_6_pb;
-pub mod benchmark_message3_7_pb;
-pub mod benchmark_message3_8_pb;
-pub mod benchmark_message3_pb;

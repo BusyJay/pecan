@@ -55,6 +55,10 @@ impl crate::Message for FileDescriptorSet {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.file.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -173,8 +177,8 @@ impl crate::Message for FileDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => self.package = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.package_mut(), s)?,
                 26 => RefArray::<LengthPrefixed>::merge_from(&mut self.dependency, s)?,
                 34 => RefArray::<LengthPrefixed>::merge_from(&mut self.message_type, s)?,
                 42 => RefArray::<LengthPrefixed>::merge_from(&mut self.enum_type, s)?,
@@ -186,7 +190,7 @@ impl crate::Message for FileDescriptorProto {
                 82 => PackedArray::<Varint>::merge_from(&mut self.public_dependency, s)?,
                 88 => CopyArray::<Varint>::merge_from(&mut self.weak_dependency, s)?,
                 90 => PackedArray::<Varint>::merge_from(&mut self.weak_dependency, s)?,
-                98 => self.syntax = Some(LengthPrefixed::read_from(s)?),
+                98 => LengthPrefixed::merge_from(self.syntax_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -310,6 +314,21 @@ impl crate::Message for FileDescriptorProto {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name = None;
+        self.package = None;
+        self.dependency.clear();
+        self.public_dependency.clear();
+        self.weak_dependency.clear();
+        self.message_type.clear();
+        self.enum_type.clear();
+        self.service.clear();
+        self.extension.clear();
+        self.options = None;
+        self.source_code_info = None;
+        self.syntax = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -426,6 +445,12 @@ impl crate::Message for DescriptorProto_ExtensionRange {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.start = None;
+        self.end = None;
+        self.options = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -520,6 +545,11 @@ impl crate::Message for DescriptorProto_ReservedRange {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.start = None;
+        self.end = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -598,7 +628,7 @@ impl crate::Message for DescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.field, s)?,
                 26 => RefArray::<LengthPrefixed>::merge_from(&mut self.nested_type, s)?,
                 34 => RefArray::<LengthPrefixed>::merge_from(&mut self.enum_type, s)?,
@@ -720,6 +750,19 @@ impl crate::Message for DescriptorProto {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name = None;
+        self.field.clear();
+        self.extension.clear();
+        self.nested_type.clear();
+        self.enum_type.clear();
+        self.extension_range.clear();
+        self.oneof_decl.clear();
+        self.options = None;
+        self.reserved_range.clear();
+        self.reserved_name.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -802,6 +845,11 @@ impl crate::Message for ExtensionRangeOptions {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1066,16 +1114,16 @@ impl crate::Message for FieldDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => self.extendee = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.extendee_mut(), s)?,
                 24 => self.number = Some(Varint::read_from(s)?),
                 32 => self.label = Some(Varint::read_from(s)?),
                 40 => self.r#type = Some(Varint::read_from(s)?),
-                50 => self.type_name = Some(LengthPrefixed::read_from(s)?),
-                58 => self.default_value = Some(LengthPrefixed::read_from(s)?),
+                50 => LengthPrefixed::merge_from(self.type_name_mut(), s)?,
+                58 => LengthPrefixed::merge_from(self.default_value_mut(), s)?,
                 66 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 72 => self.oneof_index = Some(Varint::read_from(s)?),
-                82 => self.json_name = Some(LengthPrefixed::read_from(s)?),
+                82 => LengthPrefixed::merge_from(self.json_name_mut(), s)?,
                 136 => self.proto3_optional = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -1176,6 +1224,20 @@ impl crate::Message for FieldDescriptorProto {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name = None;
+        self.number = None;
+        self.label = None;
+        self.r#type = None;
+        self.type_name = None;
+        self.extendee = None;
+        self.default_value = None;
+        self.oneof_index = None;
+        self.json_name = None;
+        self.options = None;
+        self.proto3_optional = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1238,7 +1300,7 @@ impl crate::Message for OneofDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
                 18 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -1275,6 +1337,11 @@ impl crate::Message for OneofDescriptorProto {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name = None;
+        self.options = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1370,6 +1437,11 @@ impl crate::Message for EnumDescriptorProto_EnumReservedRange {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.start = None;
+        self.end = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1439,7 +1511,7 @@ impl crate::Message for EnumDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.value, s)?,
                 26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 34 => RefArray::<LengthPrefixed>::merge_from(&mut self.reserved_range, s)?,
@@ -1508,6 +1580,14 @@ impl crate::Message for EnumDescriptorProto {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name = None;
+        self.value.clear();
+        self.options = None;
+        self.reserved_range.clear();
+        self.reserved_name.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1582,7 +1662,7 @@ impl crate::Message for EnumValueDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
                 16 => self.number = Some(Varint::read_from(s)?),
                 26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
@@ -1627,6 +1707,12 @@ impl crate::Message for EnumValueDescriptorProto {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name = None;
+        self.number = None;
+        self.options = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1692,7 +1778,7 @@ impl crate::Message for ServiceDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.method, s)?,
                 26 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 0 => return Ok(()),
@@ -1739,6 +1825,12 @@ impl crate::Message for ServiceDescriptorProto {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name = None;
+        self.method.clear();
+        self.options = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1852,9 +1944,9 @@ impl crate::Message for MethodDescriptorProto {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => self.input_type = Some(LengthPrefixed::read_from(s)?),
-                26 => self.output_type = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.input_type_mut(), s)?,
+                26 => LengthPrefixed::merge_from(self.output_type_mut(), s)?,
                 34 => LengthPrefixed::merge_from(self.options_mut(), s)?,
                 40 => self.client_streaming = Some(Varint::read_from(s)?),
                 48 => self.server_streaming = Some(Varint::read_from(s)?),
@@ -1921,6 +2013,15 @@ impl crate::Message for MethodDescriptorProto {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name = None;
+        self.input_type = None;
+        self.output_type = None;
+        self.options = None;
+        self.client_streaming = None;
+        self.server_streaming = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -2249,11 +2350,11 @@ impl crate::Message for FileOptions {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.java_package = Some(LengthPrefixed::read_from(s)?),
-                66 => self.java_outer_classname = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.java_package_mut(), s)?,
+                66 => LengthPrefixed::merge_from(self.java_outer_classname_mut(), s)?,
                 72 => self.optimize_for = Some(Varint::read_from(s)?),
                 80 => self.java_multiple_files = Some(Varint::read_from(s)?),
-                90 => self.go_package = Some(LengthPrefixed::read_from(s)?),
+                90 => LengthPrefixed::merge_from(self.go_package_mut(), s)?,
                 128 => self.cc_generic_services = Some(Varint::read_from(s)?),
                 136 => self.java_generic_services = Some(Varint::read_from(s)?),
                 144 => self.py_generic_services = Some(Varint::read_from(s)?),
@@ -2261,14 +2362,14 @@ impl crate::Message for FileOptions {
                 184 => self.deprecated = Some(Varint::read_from(s)?),
                 216 => self.java_string_check_utf8 = Some(Varint::read_from(s)?),
                 248 => self.cc_enable_arenas = Some(Varint::read_from(s)?),
-                290 => self.objc_class_prefix = Some(LengthPrefixed::read_from(s)?),
-                298 => self.csharp_namespace = Some(LengthPrefixed::read_from(s)?),
-                314 => self.swift_prefix = Some(LengthPrefixed::read_from(s)?),
-                322 => self.php_class_prefix = Some(LengthPrefixed::read_from(s)?),
-                330 => self.php_namespace = Some(LengthPrefixed::read_from(s)?),
+                290 => LengthPrefixed::merge_from(self.objc_class_prefix_mut(), s)?,
+                298 => LengthPrefixed::merge_from(self.csharp_namespace_mut(), s)?,
+                314 => LengthPrefixed::merge_from(self.swift_prefix_mut(), s)?,
+                322 => LengthPrefixed::merge_from(self.php_class_prefix_mut(), s)?,
+                330 => LengthPrefixed::merge_from(self.php_namespace_mut(), s)?,
                 336 => self.php_generic_services = Some(Varint::read_from(s)?),
-                354 => self.php_metadata_namespace = Some(LengthPrefixed::read_from(s)?),
-                362 => self.ruby_package = Some(LengthPrefixed::read_from(s)?),
+                354 => LengthPrefixed::merge_from(self.php_metadata_namespace_mut(), s)?,
+                362 => LengthPrefixed::merge_from(self.ruby_package_mut(), s)?,
                 7994 => RefArray::<LengthPrefixed>::merge_from(&mut self.uninterpreted_option, s)?,
                 0 => return Ok(()),
                 tag => {
@@ -2454,6 +2555,31 @@ impl crate::Message for FileOptions {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.java_package = None;
+        self.java_outer_classname = None;
+        self.java_multiple_files = None;
+        self.java_generate_equals_and_hash = None;
+        self.java_string_check_utf8 = None;
+        self.optimize_for = None;
+        self.go_package = None;
+        self.cc_generic_services = None;
+        self.java_generic_services = None;
+        self.py_generic_services = None;
+        self.php_generic_services = None;
+        self.deprecated = None;
+        self.cc_enable_arenas = None;
+        self.objc_class_prefix = None;
+        self.csharp_namespace = None;
+        self.swift_prefix = None;
+        self.php_class_prefix = None;
+        self.php_namespace = None;
+        self.php_metadata_namespace = None;
+        self.ruby_package = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -2614,6 +2740,15 @@ impl crate::Message for MessageOptions {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.message_set_wire_format = None;
+        self.no_standard_descriptor_accessor = None;
+        self.deprecated = None;
+        self.map_entry = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -2872,6 +3007,17 @@ impl crate::Message for FieldOptions {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.ctype = None;
+        self.packed = None;
+        self.jstype = None;
+        self.lazy = None;
+        self.deprecated = None;
+        self.weak = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -2954,6 +3100,11 @@ impl crate::Message for OneofOptions {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3076,6 +3227,13 @@ impl crate::Message for EnumOptions {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.allow_alias = None;
+        self.deprecated = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3178,6 +3336,12 @@ impl crate::Message for EnumValueOptions {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.deprecated = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3279,6 +3443,12 @@ impl crate::Message for ServiceOptions {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.deprecated = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3432,6 +3602,13 @@ impl crate::Message for MethodOptions {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.deprecated = None;
+        self.idempotency_level = None;
+        self.uninterpreted_option.clear();
+        self.extensions.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3470,7 +3647,7 @@ impl crate::Message for UninterpretedOption_NamePart {
     fn merge_from<B: crate::Buf>(&mut self, s: &mut CodedInputStream<B>) -> crate::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name_part = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name_part, s)?,
                 16 => self.is_extension = Varint::read_from(s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -3507,6 +3684,11 @@ impl crate::Message for UninterpretedOption_NamePart {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name_part.clear();
+        self.is_extension = false;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3620,12 +3802,12 @@ impl crate::Message for UninterpretedOption {
         loop {
             match s.read_tag()? {
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.name, s)?,
-                26 => self.identifier_value = Some(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.identifier_value_mut(), s)?,
                 32 => self.positive_int_value = Some(Varint::read_from(s)?),
                 40 => self.negative_int_value = Some(Varint::read_from(s)?),
                 49 => self.double_value = Some(Fixed64::read_from(s)?),
-                58 => self.string_value = Some(LengthPrefixed::read_from(s)?),
-                66 => self.aggregate_value = Some(LengthPrefixed::read_from(s)?),
+                58 => LengthPrefixed::merge_from(self.string_value_mut(), s)?,
+                66 => LengthPrefixed::merge_from(self.aggregate_value_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -3699,6 +3881,16 @@ impl crate::Message for UninterpretedOption {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.identifier_value = None;
+        self.positive_int_value = None;
+        self.negative_int_value = None;
+        self.double_value = None;
+        self.string_value = None;
+        self.aggregate_value = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3771,8 +3963,8 @@ impl crate::Message for SourceCodeInfo_Location {
                 8 => CopyArray::<Varint>::merge_from(&mut self.path, s)?,
                 18 => PackedArray::<Varint>::merge_from(&mut self.span, s)?,
                 16 => CopyArray::<Varint>::merge_from(&mut self.span, s)?,
-                26 => self.leading_comments = Some(LengthPrefixed::read_from(s)?),
-                34 => self.trailing_comments = Some(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.leading_comments_mut(), s)?,
+                34 => LengthPrefixed::merge_from(self.trailing_comments_mut(), s)?,
                 50 => {
                     RefArray::<LengthPrefixed>::merge_from(&mut self.leading_detached_comments, s)?
                 }
@@ -3835,6 +4027,14 @@ impl crate::Message for SourceCodeInfo_Location {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.path.clear();
+        self.span.clear();
+        self.leading_comments = None;
+        self.trailing_comments = None;
+        self.leading_detached_comments.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3903,6 +4103,10 @@ impl crate::Message for SourceCodeInfo {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.location.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3978,7 +4182,7 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
             match s.read_tag()? {
                 10 => PackedArray::<Varint>::merge_from(&mut self.path, s)?,
                 8 => CopyArray::<Varint>::merge_from(&mut self.path, s)?,
-                18 => self.source_file = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixed::merge_from(self.source_file_mut(), s)?,
                 24 => self.begin = Some(Varint::read_from(s)?),
                 32 => self.end = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
@@ -4030,6 +4234,13 @@ impl crate::Message for GeneratedCodeInfo_Annotation {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.path.clear();
+        self.source_file = None;
+        self.begin = None;
+        self.end = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -4098,6 +4309,10 @@ impl crate::Message for GeneratedCodeInfo {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.annotation.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

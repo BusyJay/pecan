@@ -277,7 +277,7 @@ impl FieldGenerator {
     fn map_entry_merge_from(&self, ident: TokenStream) -> TokenStream {
         let tag = self.tag();
         let codec = &self.codec;
-        if matches!(self.kind, FieldKind::Message) {
+        if !self.kind.can_copy() {
             quote! {
                 #tag => #codec::merge_from(&mut #ident, s)?,
             }
@@ -321,21 +321,7 @@ impl FieldGenerator {
         let name = self.name();
         let tag = self.tag();
         let codec = &self.codec;
-        if matches!(self.kind, FieldKind::Message) {
-            let accessor = if !self.optional {
-                if self.opt.box_field {
-                    quote! { &mut *self.#name }
-                } else {
-                    quote! { &mut self.#name }
-                }
-            } else {
-                let method = format_ident!("{}_mut", self.name);
-                quote! { self.#method() }
-            };
-            quote! {
-                #tag => #codec::merge_from(#accessor, s)?,
-            }
-        } else if matches!(self.kind, FieldKind::Group) {
+        if matches!(self.kind, FieldKind::Group) {
             let accessor = if !self.optional {
                 quote! { self.#name }
             } else {
@@ -354,6 +340,20 @@ impl FieldGenerator {
             };
             quote! {
                 #tag => s.read_group(#end_tag, |s| #handle)?,
+            }
+        } else if !self.kind.can_copy() {
+            let accessor = if !self.optional {
+                if self.opt.box_field {
+                    quote! { &mut *self.#name }
+                } else {
+                    quote! { &mut self.#name }
+                }
+            } else {
+                let method = format_ident!("{}_mut", self.name);
+                quote! { self.#method() }
+            };
+            quote! {
+                #tag => #codec::merge_from(#accessor, s)?,
             }
         } else if self.optional {
             quote! {
@@ -605,6 +605,20 @@ impl FieldGenerator {
         }
     }
 
+    pub fn field_clear(&self) -> TokenStream {
+        let name = self.name();
+        let default_value = &self.default_value;
+        if self.optional {
+            quote! { self.#name = None; }
+        } else if self.repeated {
+            quote! { self.#name.clear(); }
+        } else if self.kind.can_copy() {
+            quote! { self.#name = #default_value; }
+        } else {
+            quote! { self.#name.clear(); }
+        }
+    }
+
     pub fn tag_len(&self) -> (u64, Literal) {
         let len_raw = Varint::size(self.tag);
         (len_raw, Literal::u64_unsuffixed(len_raw))
@@ -815,6 +829,12 @@ impl OneOfGenerator {
         }
     }
 
+    pub fn field_clear(&self) -> TokenStream {
+        let name = self.field_name();
+        let ty = self.type_name();
+        quote! { self.#name = #ty::None; }
+    }
+
     pub fn fn_merge_from(&self) -> impl Iterator<Item = (u64, TokenStream)> + '_ {
         let ty = self.type_name();
         let name = self.field_name();
@@ -822,7 +842,7 @@ impl OneOfGenerator {
             let tag = g.tag();
             let codec = &g.codec;
             let val = g.tag_value();
-            let token = if matches!(g.kind, FieldKind::Message) {
+            let token = if !g.kind.can_copy() {
                 let method = format_ident!("{}_mut", g.name);
                 quote! {
                     #tag => #codec::merge_from(self.#method(), s)?,

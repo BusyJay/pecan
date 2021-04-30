@@ -1,9 +1,9 @@
 pub mod field;
 
 use crate::{codec, extension::ExtensionMap, Error, Result};
-use bytes::{buf::UninitSlice, Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use field::{Fixed32, Fixed64, LengthPrefixed, ReadFieldCodec, Varint, WriteFieldCodec};
-use std::{mem, ptr};
+use std::{mem, ptr, slice};
 
 pub struct CodedInputStream<'a, B: Buf> {
     buf: &'a mut B,
@@ -47,10 +47,12 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    #[inline]
     fn progress(&self) -> u64 {
         self.flushed + self.last_len as u64 - self.chunk.len() as u64
     }
 
+    #[inline]
     pub fn read_tag(&mut self) -> Result<u64> {
         match self.progress().cmp(&self.limit) {
             std::cmp::Ordering::Less => {
@@ -66,6 +68,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    #[inline]
     fn read_var_u64_raw(&mut self) -> Result<u64> {
         let (mut tmp, mut lp) = match codec::decode_var_u64(&mut self.chunk) {
             Ok(v) => return Ok(v),
@@ -87,6 +90,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    #[inline]
     fn copy_to_bytes(&mut self, len: usize) -> Result<Bytes> {
         self.flush();
         if self.buf.remaining() >= len {
@@ -97,6 +101,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    #[inline]
     fn read_raw_bytes(&mut self, mut target: &mut [u8]) -> Result<()> {
         loop {
             if self.chunk.len() >= target.len() {
@@ -112,6 +117,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    #[inline]
     pub fn read_extension(&mut self, tag: u64, extension: &mut ExtensionMap) -> Result<()> {
         let mut data = BytesMut::new();
         if let Some(buf) = extension.get_raw(tag) {
@@ -161,6 +167,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         }
     }
 
+    #[inline]
     fn flush(&mut self) {
         self.flushed += (self.last_len - self.chunk.len()) as u64;
         self.buf.advance(self.last_len - self.chunk.len());
@@ -168,6 +175,7 @@ impl<'a, B: Buf> CodedInputStream<'a, B> {
         self.chunk = &[];
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.progress() >= self.limit || self.chunk.is_empty() && !self.buf.has_remaining()
     }
@@ -244,13 +252,13 @@ impl<'a, B: Buf> Drop for CodedInputStream<'a, B> {
 
 pub struct CodedOutputStream<'a, B: BufMut> {
     buf: &'a mut B,
-    chunk: &'a mut UninitSlice,
+    chunk: &'a mut [u8],
     last_len: usize,
 }
 
 impl<'a, B: BufMut> CodedOutputStream<'a, B> {
     pub fn new(buf: &mut B) -> CodedOutputStream<B> {
-        let chunk: &mut UninitSlice = unsafe { mem::transmute(buf.chunk_mut()) };
+        let chunk: &mut [u8] =  unsafe { &mut *(buf.chunk_mut() as *mut _ as *mut [u8]) };
         CodedOutputStream {
             last_len: chunk.len(),
             buf,
@@ -262,15 +270,16 @@ impl<'a, B: BufMut> CodedOutputStream<'a, B> {
         unsafe {
             self.buf.advance_mut(self.last_len);
         }
-        self.chunk = unsafe { mem::transmute(self.buf.chunk_mut()) };
+        self.chunk = unsafe { &mut *(self.buf.chunk_mut() as *mut _ as *mut [u8]) };
         self.last_len = self.chunk.len();
-        if self.chunk.len() > 0 {
+        if !self.chunk.is_empty() {
             Ok(())
         } else {
             Err(Error::Eof)
         }
     }
 
+    #[inline]
     fn write_var_u64_raw(&mut self, mut val: u64) -> Result<()> {
         loop {
             match codec::encode_var_u64(&mut self.chunk, val) {
@@ -289,12 +298,13 @@ impl<'a, B: BufMut> CodedOutputStream<'a, B> {
         self.write_var_u64_raw(tag)
     }
 
+    #[inline]
     pub fn write_raw_bytes(&mut self, mut s: &[u8]) -> Result<()> {
         loop {
             if self.chunk.len() >= s.len() {
                 unsafe {
                     ptr::copy_nonoverlapping(s.as_ptr(), self.chunk.as_mut_ptr(), s.len());
-                    self.chunk = UninitSlice::from_raw_parts_mut(
+                    self.chunk = slice::from_raw_parts_mut(
                         self.chunk.as_mut_ptr().add(s.len()),
                         self.chunk.len() - s.len(),
                     );

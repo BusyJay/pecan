@@ -11,6 +11,7 @@ pub trait Message {
     fn write_to_uncheck<B: BufMut>(&self, s: &mut CodedOutputStream<B>) -> Result<()>;
     fn size(&self) -> u64;
     fn cached_size(&self) -> u32;
+    fn clear(&mut self);
 
     fn write_to<B: BufMut>(&self, s: &mut CodedOutputStream<B>) -> Result<()> {
         let l = self.size();

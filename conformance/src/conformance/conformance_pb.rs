@@ -125,6 +125,10 @@ impl pecan::Message for FailureSet {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.failure.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -270,26 +274,14 @@ impl pecan::Message for ConformanceRequest {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => {
-                    self.payload =
-                        ConformanceRequest_Payload::ProtobufPayload(LengthPrefixed::read_from(s)?)
-                }
-                18 => {
-                    self.payload =
-                        ConformanceRequest_Payload::JsonPayload(LengthPrefixed::read_from(s)?)
-                }
+                10 => LengthPrefixed::merge_from(self.protobuf_payload_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.json_payload_mut(), s)?,
                 24 => self.requested_output_format = Varint::read_from(s)?,
-                34 => self.message_type = LengthPrefixed::read_from(s)?,
+                34 => LengthPrefixed::merge_from(&mut self.message_type, s)?,
                 40 => self.test_category = Varint::read_from(s)?,
                 50 => LengthPrefixed::merge_from(self.jspb_encoding_options_mut(), s)?,
-                58 => {
-                    self.payload =
-                        ConformanceRequest_Payload::JspbPayload(LengthPrefixed::read_from(s)?)
-                }
-                66 => {
-                    self.payload =
-                        ConformanceRequest_Payload::TextPayload(LengthPrefixed::read_from(s)?)
-                }
+                58 => LengthPrefixed::merge_from(self.jspb_payload_mut(), s)?,
+                66 => LengthPrefixed::merge_from(self.text_payload_mut(), s)?,
                 72 => self.print_unknown_fields = Varint::read_from(s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -373,6 +365,15 @@ impl pecan::Message for ConformanceRequest {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.payload = ConformanceRequest_Payload::None;
+        self.requested_output_format = WireFormat::new();
+        self.message_type.clear();
+        self.test_category = TestCategory::new();
+        self.jspb_encoding_options = None;
+        self.print_unknown_fields = false;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -572,37 +573,14 @@ impl pecan::Message for ConformanceResponse {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => {
-                    self.result =
-                        ConformanceResponse_Result::ParseError(LengthPrefixed::read_from(s)?)
-                }
-                18 => {
-                    self.result =
-                        ConformanceResponse_Result::RuntimeError(LengthPrefixed::read_from(s)?)
-                }
-                26 => {
-                    self.result =
-                        ConformanceResponse_Result::ProtobufPayload(LengthPrefixed::read_from(s)?)
-                }
-                34 => {
-                    self.result =
-                        ConformanceResponse_Result::JsonPayload(LengthPrefixed::read_from(s)?)
-                }
-                42 => {
-                    self.result = ConformanceResponse_Result::Skipped(LengthPrefixed::read_from(s)?)
-                }
-                50 => {
-                    self.result =
-                        ConformanceResponse_Result::SerializeError(LengthPrefixed::read_from(s)?)
-                }
-                58 => {
-                    self.result =
-                        ConformanceResponse_Result::JspbPayload(LengthPrefixed::read_from(s)?)
-                }
-                66 => {
-                    self.result =
-                        ConformanceResponse_Result::TextPayload(LengthPrefixed::read_from(s)?)
-                }
+                10 => LengthPrefixed::merge_from(self.parse_error_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.runtime_error_mut(), s)?,
+                26 => LengthPrefixed::merge_from(self.protobuf_payload_mut(), s)?,
+                34 => LengthPrefixed::merge_from(self.json_payload_mut(), s)?,
+                42 => LengthPrefixed::merge_from(self.skipped_mut(), s)?,
+                50 => LengthPrefixed::merge_from(self.serialize_error_mut(), s)?,
+                58 => LengthPrefixed::merge_from(self.jspb_payload_mut(), s)?,
+                66 => LengthPrefixed::merge_from(self.text_payload_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -671,6 +649,10 @@ impl pecan::Message for ConformanceResponse {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.result = ConformanceResponse_Result::None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -736,6 +718,10 @@ impl pecan::Message for JspbEncodingConfig {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.use_jspb_array_any_format = false;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

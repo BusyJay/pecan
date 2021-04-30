@@ -54,6 +54,10 @@ impl pecan::Message for FieldOptions {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.box_field = false;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()

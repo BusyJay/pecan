@@ -157,6 +157,15 @@ impl pecan::Message for Message12774 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field12777 = None;
+        self.field12778 = None;
+        self.field12779 = None;
+        self.field12780 = None;
+        self.field12781 = None;
+        self.field12782 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -244,6 +253,11 @@ impl pecan::Message for Message12796 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field12800.clear();
+        self.field12801 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -395,6 +409,14 @@ impl pecan::Message for Message12821 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field12848 = None;
+        self.field12849 = None;
+        self.field12850 = None;
+        self.field12851 = None;
+        self.field12852 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -604,6 +626,17 @@ impl pecan::Message for Message12820 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field12840 = None;
+        self.field12841 = None;
+        self.field12842 = None;
+        self.field12843 = None;
+        self.field12844 = None;
+        self.field12845 = None;
+        self.field12846 = None;
+        self.field12847 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -774,6 +807,15 @@ impl pecan::Message for Message12819 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field12834 = None;
+        self.field12835 = None;
+        self.field12836 = None;
+        self.field12837 = None;
+        self.field12838 = None;
+        self.field12839 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -918,6 +960,14 @@ impl pecan::Message for Message12818 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field12829 = None;
+        self.field12830 = None;
+        self.field12831 = None;
+        self.field12832 = None;
+        self.field12833.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1049,12 +1099,12 @@ impl pecan::Message for Message10319 {
         loop {
             match s.read_tag()? {
                 8 => self.field10340 = Some(Varint::read_from(s)?),
-                18 => self.field10344 = Some(LengthPrefixed::read_from(s)?),
-                26 => self.field10343 = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixed::merge_from(self.field10344_mut(), s)?,
+                26 => LengthPrefixed::merge_from(self.field10343_mut(), s)?,
                 32 => self.field10341 = Some(Varint::read_from(s)?),
                 40 => self.field10342 = Some(Varint::read_from(s)?),
-                50 => self.field10345 = Some(LengthPrefixed::read_from(s)?),
-                58 => self.field10346 = Some(LengthPrefixed::read_from(s)?),
+                50 => LengthPrefixed::merge_from(self.field10345_mut(), s)?,
+                58 => LengthPrefixed::merge_from(self.field10346_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -1125,6 +1175,16 @@ impl pecan::Message for Message10319 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field10340 = None;
+        self.field10341 = None;
+        self.field10342 = None;
+        self.field10343 = None;
+        self.field10344 = None;
+        self.field10345 = None;
+        self.field10346 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1229,6 +1289,11 @@ impl pecan::Message for Message6578 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field6632 = None;
+        self.field6633 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1415,18 +1480,18 @@ impl pecan::Message for Message6126 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field6152 = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.field6152, s)?,
                 16 => CopyArray::<Varint>::merge_from(&mut self.field6160, s)?,
                 18 => PackedArray::<Varint>::merge_from(&mut self.field6160, s)?,
                 24 => CopyArray::<Varint>::merge_from(&mut self.field6161, s)?,
                 26 => PackedArray::<Varint>::merge_from(&mut self.field6161, s)?,
                 32 => self.field6157 = Some(Varint::read_from(s)?),
-                42 => self.field6158 = Some(LengthPrefixed::read_from(s)?),
+                42 => LengthPrefixed::merge_from(self.field6158_mut(), s)?,
                 48 => self.field6159 = Some(Varint::read_from(s)?),
                 58 => RefArray::<LengthPrefixed>::merge_from(&mut self.field6162, s)?,
                 66 => RefArray::<LengthPrefixed>::merge_from(&mut self.field6165, s)?,
                 74 => RefArray::<LengthPrefixed>::merge_from(&mut self.field6153, s)?,
-                82 => self.field6155 = Some(LengthPrefixed::read_from(s)?),
+                82 => LengthPrefixed::merge_from(self.field6155_mut(), s)?,
                 90 => RefArray::<LengthPrefixed>::merge_from(&mut self.field6163, s)?,
                 98 => LengthPrefixed::merge_from(self.field6156_mut(), s)?,
                 104 => self.field6166 = Some(Varint::read_from(s)?),
@@ -1606,6 +1671,28 @@ impl pecan::Message for Message6126 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field6152.clear();
+        self.field6153.clear();
+        self.field6154 = None;
+        self.field6155 = None;
+        self.field6156 = None;
+        self.field6157 = None;
+        self.field6158 = None;
+        self.field6159 = None;
+        self.field6160.clear();
+        self.field6161.clear();
+        self.field6162.clear();
+        self.field6163.clear();
+        self.field6164 = None;
+        self.field6165.clear();
+        self.field6166 = None;
+        self.field6167 = None;
+        self.field6168 = None;
+        self.field6169.clear();
+        self.field6170 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1716,7 +1803,7 @@ impl pecan::Message for Message5881 {
                 18 => LengthPrefixed::merge_from(self.field5899_mut(), s)?,
                 26 => LengthPrefixed::merge_from(self.field5900_mut(), s)?,
                 34 => LengthPrefixed::merge_from(self.field5901_mut(), s)?,
-                42 => self.field5898 = Some(LengthPrefixed::read_from(s)?),
+                42 => LengthPrefixed::merge_from(self.field5898_mut(), s)?,
                 50 => LengthPrefixed::merge_from(self.field5902_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -1782,6 +1869,15 @@ impl pecan::Message for Message5881 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field5897 = 0f64;
+        self.field5898 = None;
+        self.field5899 = None;
+        self.field5900 = None;
+        self.field5901 = None;
+        self.field5902 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1837,6 +1933,9 @@ impl pecan::Message for Message6110 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -1928,7 +2027,7 @@ impl pecan::Message for Message6107 {
             match s.read_tag()? {
                 10 => LengthPrefixed::merge_from(self.field6134_mut(), s)?,
                 16 => self.field6135 = Some(Varint::read_from(s)?),
-                26 => self.field6136 = Some(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.field6136_mut(), s)?,
                 32 => CopyArray::<Varint>::merge_from(&mut self.field6137, s)?,
                 34 => PackedArray::<Varint>::merge_from(&mut self.field6137, s)?,
                 40 => self.field6138 = Some(Varint::read_from(s)?),
@@ -2001,6 +2100,15 @@ impl pecan::Message for Message6107 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field6134 = None;
+        self.field6135 = None;
+        self.field6136 = None;
+        self.field6137.clear();
+        self.field6138 = None;
+        self.field6139.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -2040,7 +2148,7 @@ impl pecan::Message for Message6129 {
         loop {
             match s.read_tag()? {
                 8 => self.field6171 = Varint::read_from(s)?,
-                18 => self.field6172 = LengthPrefixed::read_from(s)?,
+                18 => LengthPrefixed::merge_from(&mut self.field6172, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -2080,6 +2188,11 @@ impl pecan::Message for Message6129 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field6171 = crate::datasets::google_message4::benchmark_message4_3_pb::Enum6130::new();
+        self.field6172.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -2775,18 +2888,18 @@ impl pecan::Message for Message5908 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field5971 = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.field5971_mut(), s)?,
                 16 => self.field5972 = Some(Varint::read_from(s)?),
                 24 => self.field5973 = Some(Varint::read_from(s)?),
                 32 => self.field5975 = Some(Varint::read_from(s)?),
                 45 => self.field5977 = Some(Fixed32::read_from(s)?),
                 53 => self.field5978 = Some(Fixed32::read_from(s)?),
-                58 => self.field5979 = Some(LengthPrefixed::read_from(s)?),
+                58 => LengthPrefixed::merge_from(self.field5979_mut(), s)?,
                 64 => self.field5980 = Some(Varint::read_from(s)?),
                 74 => LengthPrefixed::merge_from(self.field5981_mut(), s)?,
                 82 => LengthPrefixed::merge_from(self.field5982_mut(), s)?,
                 88 => self.field5983 = Some(Varint::read_from(s)?),
-                98 => self.field5990 = Some(LengthPrefixed::read_from(s)?),
+                98 => LengthPrefixed::merge_from(self.field5990_mut(), s)?,
                 106 => LengthPrefixed::merge_from(self.field5991_mut(), s)?,
                 114 => LengthPrefixed::merge_from(self.field5992_mut(), s)?,
                 122 => LengthPrefixed::merge_from(self.field5993_mut(), s)?,
@@ -3203,6 +3316,59 @@ impl pecan::Message for Message5908 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field5971 = None;
+        self.field5972 = None;
+        self.field5973 = None;
+        self.field5974 = None;
+        self.field5975 = None;
+        self.field5976 = None;
+        self.field5977 = None;
+        self.field5978 = None;
+        self.field5979 = None;
+        self.field5980 = None;
+        self.field5981 = None;
+        self.field5982 = None;
+        self.field5983 = None;
+        self.field5984 = None;
+        self.field5985 = None;
+        self.field5986 = None;
+        self.field5987 = None;
+        self.field5988 = None;
+        self.field5989.clear();
+        self.field5990 = None;
+        self.field5991 = None;
+        self.field5992 = None;
+        self.field5993 = None;
+        self.field5994 = None;
+        self.field5995 = None;
+        self.field5996 = None;
+        self.field5997 = None;
+        self.field5998 = None;
+        self.field5999 = None;
+        self.field6000 = None;
+        self.field6001 = None;
+        self.field6002 = None;
+        self.field6003.clear();
+        self.field6004 = None;
+        self.field6005 = None;
+        self.field6006 = None;
+        self.field6007 = None;
+        self.field6008 = None;
+        self.field6009 = None;
+        self.field6010 = None;
+        self.field6011 = None;
+        self.field6012 = None;
+        self.field6013 = None;
+        self.field6014 = None;
+        self.field6015 = None;
+        self.field6016 = None;
+        self.field6017 = None;
+        self.field6018 = None;
+        self.field6019 = None;
+        self.field6020 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3378,6 +3544,15 @@ impl pecan::Message for Message3850 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field3924 = None;
+        self.field3925 = None;
+        self.field3926 = None;
+        self.field3927 = None;
+        self.field3928 = None;
+        self.field3929 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3433,6 +3608,9 @@ impl pecan::Message for Message7865 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3628,6 +3806,16 @@ impl pecan::Message for Message7511 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field7523 = None;
+        self.field7524 = None;
+        self.field7525 = None;
+        self.field7526 = None;
+        self.field7527 = None;
+        self.field7528 = None;
+        self.field7529 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3683,6 +3871,9 @@ impl pecan::Message for Message3920 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3743,7 +3934,7 @@ impl pecan::Message for Message7928 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field7940 = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.field7940_mut(), s)?,
                 16 => self.field7941 = Some(Varint::read_from(s)?),
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -3780,6 +3971,11 @@ impl pecan::Message for Message7928 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field7940 = None;
+        self.field7941 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -3918,6 +4114,13 @@ impl pecan::Message for Message7921 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field7936 = None;
+        self.field7937 = None;
+        self.field7938 = None;
+        self.field7939 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -4012,6 +4215,11 @@ impl pecan::Message for Message7920 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field7934 = None;
+        self.field7935 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -4084,7 +4292,7 @@ impl pecan::Message for Message7919 {
             match s.read_tag()? {
                 9 => self.field7931 = Some(Fixed64::read_from(s)?),
                 16 => self.field7932 = Some(Varint::read_from(s)?),
-                26 => self.field7933 = Some(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.field7933_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -4127,6 +4335,12 @@ impl pecan::Message for Message7919 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field7931 = None;
+        self.field7932 = None;
+        self.field7933 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -4241,6 +4455,12 @@ impl pecan::Message for Message12817 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field12826 = None;
+        self.field12827 = None;
+        self.field12828 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -4291,8 +4511,8 @@ impl pecan::Message for Message6054 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field6089 = LengthPrefixed::read_from(s)?,
-                18 => self.field6090 = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(&mut self.field6089, s)?,
+                18 => LengthPrefixed::merge_from(self.field6090_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -4328,6 +4548,11 @@ impl pecan::Message for Message6054 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field6089.clear();
+        self.field6090 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -4385,6 +4610,9 @@ impl pecan::Message for Message6127 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -4423,8 +4651,8 @@ impl pecan::Message for Message6052 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field6084 = LengthPrefixed::read_from(s)?,
-                18 => self.field6085 = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.field6084, s)?,
+                18 => LengthPrefixed::merge_from(&mut self.field6085, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -4460,6 +4688,11 @@ impl pecan::Message for Message6052 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field6084.clear();
+        self.field6085.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -4540,7 +4773,7 @@ impl pecan::Message for Message6024 {
         loop {
             match s.read_tag()? {
                 8 => self.field6048 = Some(Varint::read_from(s)?),
-                18 => self.field6049 = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixed::merge_from(self.field6049_mut(), s)?,
                 26 => LengthPrefixed::merge_from(self.field6050_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -4584,6 +4817,12 @@ impl pecan::Message for Message6024 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field6048 = None;
+        self.field6049 = None;
+        self.field6050 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -4649,9 +4888,9 @@ impl pecan::Message for Message5861 {
         loop {
             match s.read_tag()? {
                 8 => self.field5882 = Varint::read_from(s)?,
-                18 => self.field5883 = LengthPrefixed::read_from(s)?,
+                18 => LengthPrefixed::merge_from(&mut self.field5883, s)?,
                 24 => self.field5884 = Some(Varint::read_from(s)?),
-                34 => self.field5885 = Some(LengthPrefixed::read_from(s)?),
+                34 => LengthPrefixed::merge_from(self.field5885_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -4706,6 +4945,13 @@ impl pecan::Message for Message5861 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field5882 = crate::datasets::google_message4::benchmark_message4_3_pb::Enum5862::new();
+        self.field5883.clear();
+        self.field5884 = None;
+        self.field5885 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -4754,7 +5000,7 @@ impl pecan::Message for Message5880 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field5896 = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.field5896_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -4783,6 +5029,10 @@ impl pecan::Message for Message5880 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field5896 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -4905,7 +5155,7 @@ impl pecan::Message for Message5867 {
         loop {
             match s.read_tag()? {
                 8 => self.field5890 = Some(Varint::read_from(s)?),
-                18 => self.field5891 = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixed::merge_from(self.field5891_mut(), s)?,
                 24 => self.field5892 = Some(Varint::read_from(s)?),
                 32 => self.field5893 = Some(Varint::read_from(s)?),
                 40 => self.field5894 = Some(Varint::read_from(s)?),
@@ -4973,6 +5223,15 @@ impl pecan::Message for Message5867 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field5890 = None;
+        self.field5891 = None;
+        self.field5892 = None;
+        self.field5893 = None;
+        self.field5894 = None;
+        self.field5895 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -5070,6 +5329,13 @@ impl pecan::Message for Message4016 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field4017 = 0;
+        self.field4018 = 0;
+        self.field4019 = 0;
+        self.field4020 = 0;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -5125,6 +5391,9 @@ impl pecan::Message for Message6108 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -5270,6 +5539,13 @@ impl pecan::Message for Message5907 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field5967 = None;
+        self.field5968 = None;
+        self.field5969 = None;
+        self.field5970 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -5325,6 +5601,9 @@ impl pecan::Message for UnusedEmptyMessage {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -5415,6 +5694,11 @@ impl pecan::Message for Message5903 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field5965 = 0;
+        self.field5966 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

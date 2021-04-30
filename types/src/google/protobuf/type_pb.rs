@@ -79,7 +79,7 @@ impl pecan::Message for Type {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.fields, s)?,
                 26 => RefArray::<LengthPrefixed>::merge_from(&mut self.oneofs, s)?,
                 34 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
@@ -154,6 +154,15 @@ impl pecan::Message for Type {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.fields.clear();
+        self.oneofs.clear();
+        self.options.clear();
+        self.source_context = None;
+        self.syntax = Syntax::new();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -306,13 +315,13 @@ impl pecan::Message for Field {
                 8 => self.kind = Varint::read_from(s)?,
                 16 => self.cardinality = Varint::read_from(s)?,
                 24 => self.number = Varint::read_from(s)?,
-                34 => self.name = LengthPrefixed::read_from(s)?,
-                50 => self.type_url = LengthPrefixed::read_from(s)?,
+                34 => LengthPrefixed::merge_from(&mut self.name, s)?,
+                50 => LengthPrefixed::merge_from(&mut self.type_url, s)?,
                 56 => self.oneof_index = Varint::read_from(s)?,
                 64 => self.packed = Varint::read_from(s)?,
                 74 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
-                82 => self.json_name = LengthPrefixed::read_from(s)?,
-                90 => self.default_value = LengthPrefixed::read_from(s)?,
+                82 => LengthPrefixed::merge_from(&mut self.json_name, s)?,
+                90 => LengthPrefixed::merge_from(&mut self.default_value, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -407,6 +416,19 @@ impl pecan::Message for Field {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.kind = Field_Kind::new();
+        self.cardinality = Field_Cardinality::new();
+        self.number = 0;
+        self.name.clear();
+        self.type_url.clear();
+        self.oneof_index = 0;
+        self.packed = false;
+        self.options.clear();
+        self.json_name.clear();
+        self.default_value.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -469,7 +491,7 @@ impl pecan::Message for Enum {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.enumvalue, s)?,
                 26 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 34 => LengthPrefixed::merge_from(self.source_context_mut(), s)?,
@@ -535,6 +557,14 @@ impl pecan::Message for Enum {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.enumvalue.clear();
+        self.options.clear();
+        self.source_context = None;
+        self.syntax = Syntax::new();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -575,7 +605,7 @@ impl pecan::Message for EnumValue {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
                 16 => self.number = Varint::read_from(s)?,
                 26 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 0 => return Ok(()),
@@ -622,6 +652,12 @@ impl pecan::Message for EnumValue {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.number = 0;
+        self.options.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -673,7 +709,7 @@ impl pecan::Message for Option {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
                 18 => LengthPrefixed::merge_from(self.value_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -710,6 +746,11 @@ impl pecan::Message for Option {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.value = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

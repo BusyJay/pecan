@@ -63,6 +63,11 @@ impl pecan::Message for Duration {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.seconds = 0;
+        self.nanos = 0;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()

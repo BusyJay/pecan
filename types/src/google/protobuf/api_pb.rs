@@ -52,10 +52,10 @@ impl pecan::Message for Api {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
                 18 => RefArray::<LengthPrefixed>::merge_from(&mut self.methods, s)?,
                 26 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
-                34 => self.version = LengthPrefixed::read_from(s)?,
+                34 => LengthPrefixed::merge_from(&mut self.version, s)?,
                 42 => LengthPrefixed::merge_from(self.source_context_mut(), s)?,
                 50 => RefArray::<LengthPrefixed>::merge_from(&mut self.mixins, s)?,
                 56 => self.syntax = Varint::read_from(s)?,
@@ -136,6 +136,16 @@ impl pecan::Message for Api {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.methods.clear();
+        self.options.clear();
+        self.version.clear();
+        self.source_context = None;
+        self.mixins.clear();
+        self.syntax = crate::google::protobuf::type_pb::Syntax::new();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -184,10 +194,10 @@ impl pecan::Message for Method {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
-                18 => self.request_type_url = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
+                18 => LengthPrefixed::merge_from(&mut self.request_type_url, s)?,
                 24 => self.request_streaming = Varint::read_from(s)?,
-                34 => self.response_type_url = LengthPrefixed::read_from(s)?,
+                34 => LengthPrefixed::merge_from(&mut self.response_type_url, s)?,
                 40 => self.response_streaming = Varint::read_from(s)?,
                 50 => RefArray::<LengthPrefixed>::merge_from(&mut self.options, s)?,
                 56 => self.syntax = Varint::read_from(s)?,
@@ -264,6 +274,16 @@ impl pecan::Message for Method {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.request_type_url.clear();
+        self.request_streaming = false;
+        self.response_type_url.clear();
+        self.response_streaming = false;
+        self.options.clear();
+        self.syntax = crate::google::protobuf::type_pb::Syntax::new();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -302,8 +322,8 @@ impl pecan::Message for Mixin {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = LengthPrefixed::read_from(s)?,
-                18 => self.root = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.name, s)?,
+                18 => LengthPrefixed::merge_from(&mut self.root, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -339,6 +359,11 @@ impl pecan::Message for Mixin {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name.clear();
+        self.root.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

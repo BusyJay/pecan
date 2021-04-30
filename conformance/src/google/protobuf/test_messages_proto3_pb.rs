@@ -170,6 +170,11 @@ impl pecan::Message for TestAllTypesProto3_NestedMessage {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.a = 0;
+        self.corecursive = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1352,15 +1357,15 @@ impl pecan::Message for TestAllTypesProto3 {
                 93 => self.optional_float = Fixed32::read_from(s)?,
                 97 => self.optional_double = Fixed64::read_from(s)?,
                 104 => self.optional_bool = Varint::read_from(s)?,
-                114 => self.optional_string = LengthPrefixed::read_from(s)?,
-                122 => self.optional_bytes = LengthPrefixed::read_from(s)?,
+                114 => LengthPrefixed::merge_from(&mut self.optional_string, s)?,
+                122 => LengthPrefixed::merge_from(&mut self.optional_bytes, s)?,
                 146 => LengthPrefixed::merge_from(self.optional_nested_message_mut(), s)?,
                 154 => LengthPrefixed::merge_from(self.optional_foreign_message_mut(), s)?,
                 168 => self.optional_nested_enum = Varint::read_from(s)?,
                 176 => self.optional_foreign_enum = Varint::read_from(s)?,
                 184 => self.optional_aliased_enum = Varint::read_from(s)?,
-                194 => self.optional_string_piece = LengthPrefixed::read_from(s)?,
-                202 => self.optional_cord = LengthPrefixed::read_from(s)?,
+                194 => LengthPrefixed::merge_from(&mut self.optional_string_piece, s)?,
+                202 => LengthPrefixed::merge_from(&mut self.optional_cord, s)?,
                 218 => LengthPrefixed::merge_from(self.recursive_message_mut(), s)?,
                 250 => PackedArray::<Varint>::merge_from(&mut self.repeated_int32, s)?,
                 248 => CopyArray::<Varint>::merge_from(&mut self.repeated_int32, s)?,
@@ -1616,8 +1621,8 @@ impl pecan::Message for TestAllTypesProto3 {
                         let mut val = String::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
-                                18 => val = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
+                                18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
                             }
@@ -1632,8 +1637,8 @@ impl pecan::Message for TestAllTypesProto3 {
                         let mut val = pecan::Bytes::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
-                                18 => val = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
+                                18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
                             }
@@ -1648,7 +1653,7 @@ impl pecan::Message for TestAllTypesProto3 {
                         let mut val = TestAllTypesProto3_NestedMessage::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
@@ -1664,7 +1669,7 @@ impl pecan::Message for TestAllTypesProto3 {
                         let mut val = ForeignMessage::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
@@ -1680,7 +1685,7 @@ impl pecan::Message for TestAllTypesProto3 {
                         let mut val = TestAllTypesProto3_NestedEnum::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 16 => val = Varint::read_from(s)?,
                                 0 => break,
                                 _ => (),
@@ -1696,7 +1701,7 @@ impl pecan::Message for TestAllTypesProto3 {
                         let mut val = ForeignEnum::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 16 => val = Varint::read_from(s)?,
                                 0 => break,
                                 _ => (),
@@ -1767,14 +1772,8 @@ impl pecan::Message for TestAllTypesProto3 {
                         TestAllTypesProto3_Oneof_Field::OneofUint32(Varint::read_from(s)?)
                 }
                 898 => LengthPrefixed::merge_from(self.oneof_nested_message_mut(), s)?,
-                906 => {
-                    self.oneof_field =
-                        TestAllTypesProto3_Oneof_Field::OneofString(LengthPrefixed::read_from(s)?)
-                }
-                914 => {
-                    self.oneof_field =
-                        TestAllTypesProto3_Oneof_Field::OneofBytes(LengthPrefixed::read_from(s)?)
-                }
+                906 => LengthPrefixed::merge_from(self.oneof_string_mut(), s)?,
+                914 => LengthPrefixed::merge_from(self.oneof_bytes_mut(), s)?,
                 920 => {
                     self.oneof_field =
                         TestAllTypesProto3_Oneof_Field::OneofBool(Varint::read_from(s)?)
@@ -3249,6 +3248,151 @@ impl pecan::Message for TestAllTypesProto3 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.optional_int32 = 0;
+        self.optional_int64 = 0;
+        self.optional_uint32 = 0;
+        self.optional_uint64 = 0;
+        self.optional_sint32 = 0;
+        self.optional_sint64 = 0;
+        self.optional_fixed32 = 0;
+        self.optional_fixed64 = 0;
+        self.optional_sfixed32 = 0;
+        self.optional_sfixed64 = 0;
+        self.optional_float = 0f32;
+        self.optional_double = 0f64;
+        self.optional_bool = false;
+        self.optional_string.clear();
+        self.optional_bytes.clear();
+        self.optional_nested_message = None;
+        self.optional_foreign_message = None;
+        self.optional_nested_enum = TestAllTypesProto3_NestedEnum::new();
+        self.optional_foreign_enum = ForeignEnum::new();
+        self.optional_aliased_enum = TestAllTypesProto3_AliasedEnum::new();
+        self.optional_string_piece.clear();
+        self.optional_cord.clear();
+        self.recursive_message = None;
+        self.repeated_int32.clear();
+        self.repeated_int64.clear();
+        self.repeated_uint32.clear();
+        self.repeated_uint64.clear();
+        self.repeated_sint32.clear();
+        self.repeated_sint64.clear();
+        self.repeated_fixed32.clear();
+        self.repeated_fixed64.clear();
+        self.repeated_sfixed32.clear();
+        self.repeated_sfixed64.clear();
+        self.repeated_float.clear();
+        self.repeated_double.clear();
+        self.repeated_bool.clear();
+        self.repeated_string.clear();
+        self.repeated_bytes.clear();
+        self.repeated_nested_message.clear();
+        self.repeated_foreign_message.clear();
+        self.repeated_nested_enum.clear();
+        self.repeated_foreign_enum.clear();
+        self.repeated_string_piece.clear();
+        self.repeated_cord.clear();
+        self.packed_int32.clear();
+        self.packed_int64.clear();
+        self.packed_uint32.clear();
+        self.packed_uint64.clear();
+        self.packed_sint32.clear();
+        self.packed_sint64.clear();
+        self.packed_fixed32.clear();
+        self.packed_fixed64.clear();
+        self.packed_sfixed32.clear();
+        self.packed_sfixed64.clear();
+        self.packed_float.clear();
+        self.packed_double.clear();
+        self.packed_bool.clear();
+        self.packed_nested_enum.clear();
+        self.unpacked_int32.clear();
+        self.unpacked_int64.clear();
+        self.unpacked_uint32.clear();
+        self.unpacked_uint64.clear();
+        self.unpacked_sint32.clear();
+        self.unpacked_sint64.clear();
+        self.unpacked_fixed32.clear();
+        self.unpacked_fixed64.clear();
+        self.unpacked_sfixed32.clear();
+        self.unpacked_sfixed64.clear();
+        self.unpacked_float.clear();
+        self.unpacked_double.clear();
+        self.unpacked_bool.clear();
+        self.unpacked_nested_enum.clear();
+        self.map_int32_int32 = None;
+        self.map_int64_int64 = None;
+        self.map_uint32_uint32 = None;
+        self.map_uint64_uint64 = None;
+        self.map_sint32_sint32 = None;
+        self.map_sint64_sint64 = None;
+        self.map_fixed32_fixed32 = None;
+        self.map_fixed64_fixed64 = None;
+        self.map_sfixed32_sfixed32 = None;
+        self.map_sfixed64_sfixed64 = None;
+        self.map_int32_float = None;
+        self.map_int32_double = None;
+        self.map_bool_bool = None;
+        self.map_string_string = None;
+        self.map_string_bytes = None;
+        self.map_string_nested_message = None;
+        self.map_string_foreign_message = None;
+        self.map_string_nested_enum = None;
+        self.map_string_foreign_enum = None;
+        self.oneof_field = TestAllTypesProto3_Oneof_Field::None;
+        self.optional_bool_wrapper = None;
+        self.optional_int32_wrapper = None;
+        self.optional_int64_wrapper = None;
+        self.optional_uint32_wrapper = None;
+        self.optional_uint64_wrapper = None;
+        self.optional_float_wrapper = None;
+        self.optional_double_wrapper = None;
+        self.optional_string_wrapper = None;
+        self.optional_bytes_wrapper = None;
+        self.repeated_bool_wrapper.clear();
+        self.repeated_int32_wrapper.clear();
+        self.repeated_int64_wrapper.clear();
+        self.repeated_uint32_wrapper.clear();
+        self.repeated_uint64_wrapper.clear();
+        self.repeated_float_wrapper.clear();
+        self.repeated_double_wrapper.clear();
+        self.repeated_string_wrapper.clear();
+        self.repeated_bytes_wrapper.clear();
+        self.optional_duration = None;
+        self.optional_timestamp = None;
+        self.optional_field_mask = None;
+        self.optional_struct = None;
+        self.optional_any = None;
+        self.optional_value = None;
+        self.optional_null_value = pecan_types::google::protobuf::struct_pb::NullValue::new();
+        self.repeated_duration.clear();
+        self.repeated_timestamp.clear();
+        self.repeated_fieldmask.clear();
+        self.repeated_struct.clear();
+        self.repeated_any.clear();
+        self.repeated_value.clear();
+        self.repeated_list_value.clear();
+        self.fieldname1 = 0;
+        self.field_name2 = 0;
+        self._field_name3 = 0;
+        self.field__name4_ = 0;
+        self.field0name5 = 0;
+        self.field_0_name6 = 0;
+        self.field_name7 = 0;
+        self.field_name8 = 0;
+        self.field_name9 = 0;
+        self.field_name10 = 0;
+        self.field_name11 = 0;
+        self.field_name12 = 0;
+        self.__field_name13 = 0;
+        self.__field_name14 = 0;
+        self.field__name15 = 0;
+        self.field__name16 = 0;
+        self.field_name17__ = 0;
+        self.field_name18__ = 0;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -3314,6 +3458,10 @@ impl pecan::Message for ForeignMessage {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.c = 0;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

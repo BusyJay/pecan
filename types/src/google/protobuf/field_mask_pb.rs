@@ -55,6 +55,10 @@ impl pecan::Message for FieldMask {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.paths.clear();
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()

@@ -124,6 +124,26 @@ impl MessageGenerator {
         }
     }
 
+    fn clear(&self) -> TokenStream {
+        let mut clear = vec![];
+        for f in &self.decl_order {
+            let token = match f {
+                Field::Normal(tag) => self.fields[tag].field_clear(),
+                Field::OneOf(off) => self.one_of_fields[*off].field_clear(),
+            };
+            clear.push(token);
+        }
+        if !self.extension_range.is_empty() {
+            clear.push(quote! { self.extensions.clear(); });
+        }
+        quote! {
+            fn clear(&mut self) {
+                #(#clear)*
+                self._unknown.clear();
+            }
+        }
+    }
+
     fn merge_from(&self) -> TokenStream {
         let mut merge_from = vec![];
         for (tag, g) in &self.fields {
@@ -267,6 +287,7 @@ impl MessageGenerator {
         let size = self.size();
         let accessors = self.accessors();
         let one_of_enums = self.one_of_fields.iter().map(|g| g.generate());
+        let clear = self.clear();
 
         quote! {
             #(#one_of_enums)*
@@ -285,6 +306,8 @@ impl MessageGenerator {
                 #write_to_uncheck
 
                 #size
+
+                #clear
 
                 #[inline]
                 fn cached_size(&self) -> u32 {

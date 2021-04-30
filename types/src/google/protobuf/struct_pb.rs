@@ -70,7 +70,7 @@ impl pecan::Message for Struct {
                         let mut val = Value::new();
                         loop {
                             match s.read_tag()? {
-                                10 => key = LengthPrefixed::read_from(s)?,
+                                10 => LengthPrefixed::merge_from(&mut key, s)?,
                                 18 => LengthPrefixed::merge_from(&mut val, s)?,
                                 0 => break,
                                 _ => (),
@@ -119,6 +119,10 @@ impl pecan::Message for Struct {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.fields = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -282,7 +286,7 @@ impl pecan::Message for Value {
             match s.read_tag()? {
                 8 => self.kind = Value_Kind::NullValue(Varint::read_from(s)?),
                 17 => self.kind = Value_Kind::NumberValue(Fixed64::read_from(s)?),
-                26 => self.kind = Value_Kind::StringValue(LengthPrefixed::read_from(s)?),
+                26 => LengthPrefixed::merge_from(self.string_value_mut(), s)?,
                 32 => self.kind = Value_Kind::BoolValue(Varint::read_from(s)?),
                 42 => LengthPrefixed::merge_from(self.struct_value_mut(), s)?,
                 50 => LengthPrefixed::merge_from(self.list_value_mut(), s)?,
@@ -343,6 +347,10 @@ impl pecan::Message for Value {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.kind = Value_Kind::None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -411,6 +419,10 @@ impl pecan::Message for ListValue {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.values.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

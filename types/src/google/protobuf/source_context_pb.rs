@@ -23,7 +23,7 @@ impl pecan::Message for SourceContext {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.file_name = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.file_name, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -52,6 +52,10 @@ impl pecan::Message for SourceContext {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.file_name.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

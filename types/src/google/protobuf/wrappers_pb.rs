@@ -53,6 +53,10 @@ impl pecan::Message for DoubleValue {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.value = 0f64;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -118,6 +122,10 @@ impl pecan::Message for FloatValue {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.value = 0f32;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -185,6 +193,10 @@ impl pecan::Message for Int64Value {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.value = 0;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -250,6 +262,10 @@ impl pecan::Message for UInt64Value {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.value = 0;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -317,6 +333,10 @@ impl pecan::Message for Int32Value {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.value = 0;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -382,6 +402,10 @@ impl pecan::Message for UInt32Value {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.value = 0;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -449,6 +473,10 @@ impl pecan::Message for BoolValue {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.value = false;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -485,7 +513,7 @@ impl pecan::Message for StringValue {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.value = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.value, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -514,6 +542,10 @@ impl pecan::Message for StringValue {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.value.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -551,7 +583,7 @@ impl pecan::Message for BytesValue {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.value = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.value, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -580,6 +612,10 @@ impl pecan::Message for BytesValue {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.value.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

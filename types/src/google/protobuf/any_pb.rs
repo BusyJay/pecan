@@ -25,8 +25,8 @@ impl pecan::Message for Any {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.type_url = LengthPrefixed::read_from(s)?,
-                18 => self.value = LengthPrefixed::read_from(s)?,
+                10 => LengthPrefixed::merge_from(&mut self.type_url, s)?,
+                18 => LengthPrefixed::merge_from(&mut self.value, s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -62,6 +62,11 @@ impl pecan::Message for Any {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.type_url.clear();
+        self.value.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

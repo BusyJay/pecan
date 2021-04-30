@@ -2,8 +2,8 @@
 members = [
     "benchmark",
     "conformance",
-    "pecan",
     "compiler",
+    "pecan",
     "types",
     "xtask",
 ]

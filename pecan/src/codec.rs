@@ -1,5 +1,6 @@
+use core::slice;
+
 use crate::{Error, Result};
-use bytes::buf::UninitSlice;
 
 macro_rules! us {
     ($bytes:ident, $off:expr) => {
@@ -82,14 +83,15 @@ pub fn decode_var_u64_resume(bytes: &mut &[u8], mut res: u64, lp: u8) -> Result<
     Err(Error::WantMore(res, off as u8 + lp))
 }
 
-pub fn encode_var_u64(buf: &mut &mut UninitSlice, mut val: u64) -> Result<()> {
+#[inline]
+pub fn encode_var_u64(buf: &mut &mut [u8], mut val: u64) -> Result<()> {
     let ptr = buf.as_mut_ptr();
     let len = buf.len();
-    for i in 0..len {
+    for i in 0..std::cmp::min(len, 11) {
         if val < 0x80 {
             unsafe {
                 ptr.add(i).write(val as u8);
-                *buf = UninitSlice::from_raw_parts_mut(ptr.add(i + 1), len - i - 1);
+                *buf = slice::from_raw_parts_mut(ptr.add(i + 1), len - i - 1);
             }
             return Ok(());
         } else {
@@ -141,12 +143,15 @@ mod tests {
             u64::MAX,
             i64::MAX as u64,
         ] {
-            let mut data = unsafe { UninitSlice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
+            let mut data: &mut [u8] = &mut buf;
             encode_var_u64(&mut data, *i).unwrap();
+            let data_len = data.len();
+            let wrote_len = buf.len() - data_len;
             let mut read = &buf[..];
             let res = decode_var_u64(&mut read).unwrap();
             assert_eq!(res, *i, "{:?}", buf);
-            assert_eq!(data.len(), read.len(), "{}", i);
+            let read_len = buf.len() - read.len();
+            assert_eq!(wrote_len, read_len, "{}", i);
         }
     }
 
@@ -164,7 +169,7 @@ mod tests {
             i64::MAX as u64,
         ] {
             let mut buf = [0; 11];
-            let mut data = unsafe { UninitSlice::from_raw_parts_mut(buf.as_mut_ptr(), buf.len()) };
+            let mut data: &mut [u8] = &mut buf;
             encode_var_u64(&mut data, *i).unwrap();
             let total = 11 - data.len();
             for mut step in 0..11 {
@@ -172,10 +177,11 @@ mod tests {
                 let mut val = *i;
                 loop {
                     let mut b = vec![0; step];
-                    let mut data = unsafe { UninitSlice::from_raw_parts_mut(b.as_mut_ptr(), step) };
+                    let mut data = b.as_mut_slice();
                     match encode_var_u64(&mut data, val) {
                         Ok(()) => {
-                            unsafe { b.set_len(step - data.len()) }
+                            let read = step - data.len();
+                            unsafe { b.set_len(read) }
                             buf.push(b);
                             break;
                         }

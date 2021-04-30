@@ -71,7 +71,7 @@ impl pecan::Message for Version {
                 8 => self.major = Some(Varint::read_from(s)?),
                 16 => self.minor = Some(Varint::read_from(s)?),
                 24 => self.patch = Some(Varint::read_from(s)?),
-                34 => self.suffix = Some(LengthPrefixed::read_from(s)?),
+                34 => LengthPrefixed::merge_from(self.suffix_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
             }
@@ -121,6 +121,13 @@ impl pecan::Message for Version {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.major = None;
+        self.minor = None;
+        self.patch = None;
+        self.suffix = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -189,7 +196,7 @@ impl pecan::Message for CodeGeneratorRequest {
         loop {
             match s.read_tag()? {
                 10 => RefArray::<LengthPrefixed>::merge_from(&mut self.file_to_generate, s)?,
-                18 => self.parameter = Some(LengthPrefixed::read_from(s)?),
+                18 => LengthPrefixed::merge_from(self.parameter_mut(), s)?,
                 26 => LengthPrefixed::merge_from(self.compiler_version_mut(), s)?,
                 122 => RefArray::<LengthPrefixed>::merge_from(&mut self.proto_file, s)?,
                 0 => return Ok(()),
@@ -246,6 +253,13 @@ impl pecan::Message for CodeGeneratorRequest {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.file_to_generate.clear();
+        self.parameter = None;
+        self.proto_file.clear();
+        self.compiler_version = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -367,9 +381,9 @@ impl pecan::Message for CodeGeneratorResponse_File {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.name = Some(LengthPrefixed::read_from(s)?),
-                18 => self.insertion_point = Some(LengthPrefixed::read_from(s)?),
-                122 => self.content = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.name_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.insertion_point_mut(), s)?,
+                122 => LengthPrefixed::merge_from(self.content_mut(), s)?,
                 130 => LengthPrefixed::merge_from(self.generated_code_info_mut(), s)?,
                 0 => return Ok(()),
                 tag => s.read_unknown_field(tag, &mut self._unknown)?,
@@ -420,6 +434,13 @@ impl pecan::Message for CodeGeneratorResponse_File {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.name = None;
+        self.insertion_point = None;
+        self.content = None;
+        self.generated_code_info = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -482,7 +503,7 @@ impl pecan::Message for CodeGeneratorResponse {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.error = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.error_mut(), s)?,
                 16 => self.supported_features = Some(Varint::read_from(s)?),
                 122 => RefArray::<LengthPrefixed>::merge_from(&mut self.file, s)?,
                 0 => return Ok(()),
@@ -529,6 +550,12 @@ impl pecan::Message for CodeGeneratorResponse {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.error = None;
+        self.supported_features = None;
+        self.file.clear();
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

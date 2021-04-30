@@ -175,18 +175,18 @@ impl pecan::Message for GoogleMessage2_Group1 {
             match s.read_tag()? {
                 40 => self.field5 = Some(Varint::read_from(s)?),
                 93 => self.field11 = Fixed32::read_from(s)?,
-                98 => self.field12 = Some(LengthPrefixed::read_from(s)?),
-                106 => self.field13 = Some(LengthPrefixed::read_from(s)?),
+                98 => LengthPrefixed::merge_from(self.field12_mut(), s)?,
+                106 => LengthPrefixed::merge_from(self.field13_mut(), s)?,
                 114 => RefArray::<LengthPrefixed>::merge_from(&mut self.field14, s)?,
                 120 => self.field15 = Varint::read_from(s)?,
-                130 => self.field16 = Some(LengthPrefixed::read_from(s)?),
+                130 => LengthPrefixed::merge_from(self.field16_mut(), s)?,
                 160 => self.field20 = Some(Varint::read_from(s)?),
                 178 => RefArray::<LengthPrefixed>::merge_from(&mut self.field22, s)?,
-                194 => self.field24 = Some(LengthPrefixed::read_from(s)?),
+                194 => LengthPrefixed::merge_from(self.field24_mut(), s)?,
                 213 => self.field26 = Some(Fixed32::read_from(s)?),
-                218 => self.field27 = Some(LengthPrefixed::read_from(s)?),
+                218 => LengthPrefixed::merge_from(self.field27_mut(), s)?,
                 224 => self.field28 = Some(Varint::read_from(s)?),
-                234 => self.field29 = Some(LengthPrefixed::read_from(s)?),
+                234 => LengthPrefixed::merge_from(self.field29_mut(), s)?,
                 250 => LengthPrefixed::merge_from(self.field31_mut(), s)?,
                 584 => CopyArray::<Varint>::merge_from(&mut self.field73, s)?,
                 586 => PackedArray::<Varint>::merge_from(&mut self.field73, s)?,
@@ -332,6 +332,25 @@ impl pecan::Message for GoogleMessage2_Group1 {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field11 = 0f32;
+        self.field26 = None;
+        self.field12 = None;
+        self.field13 = None;
+        self.field14.clear();
+        self.field15 = 0;
+        self.field5 = None;
+        self.field27 = None;
+        self.field28 = None;
+        self.field29 = None;
+        self.field16 = None;
+        self.field22.clear();
+        self.field73.clear();
+        self.field20 = None;
+        self.field24 = None;
+        self.field31 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {
@@ -670,11 +689,11 @@ impl pecan::Message for GoogleMessage2 {
     fn merge_from<B: pecan::Buf>(&mut self, s: &mut CodedInputStream<B>) -> pecan::Result<()> {
         loop {
             match s.read_tag()? {
-                10 => self.field1 = Some(LengthPrefixed::read_from(s)?),
-                18 => self.field2 = Some(LengthPrefixed::read_from(s)?),
+                10 => LengthPrefixed::merge_from(self.field1_mut(), s)?,
+                18 => LengthPrefixed::merge_from(self.field2_mut(), s)?,
                 24 => self.field3 = Some(Varint::read_from(s)?),
                 32 => self.field4 = Some(Varint::read_from(s)?),
-                50 => self.field6 = Some(LengthPrefixed::read_from(s)?),
+                50 => LengthPrefixed::merge_from(self.field6_mut(), s)?,
                 83 => s.read_group(84, |s| {
                     self.group1.push(GoogleMessage2_Group1::new());
                     self.group1.last_mut().unwrap().merge_from(s)
@@ -948,6 +967,39 @@ impl pecan::Message for GoogleMessage2 {
         self._cached_size.set(l);
         l
     }
+    fn clear(&mut self) {
+        self.field1 = None;
+        self.field3 = None;
+        self.field4 = None;
+        self.field30 = None;
+        self.field75 = None;
+        self.field6 = None;
+        self.field2 = None;
+        self.field21 = None;
+        self.field71 = None;
+        self.field25 = None;
+        self.field109 = None;
+        self.field210 = None;
+        self.field211 = None;
+        self.field212 = None;
+        self.field213 = None;
+        self.field216 = None;
+        self.field217 = None;
+        self.field218 = None;
+        self.field220 = None;
+        self.field221 = None;
+        self.field222 = None;
+        self.field63 = None;
+        self.group1.clear();
+        self.field128.clear();
+        self.field131 = None;
+        self.field127.clear();
+        self.field129 = None;
+        self.field130.clear();
+        self.field205 = None;
+        self.field206 = None;
+        self._unknown.clear();
+    }
     #[inline]
     fn cached_size(&self) -> u32 {
         self._cached_size.get()
@@ -1212,6 +1264,20 @@ impl pecan::Message for GoogleMessage2GroupedMessage {
         }
         self._cached_size.set(l);
         l
+    }
+    fn clear(&mut self) {
+        self.field1 = None;
+        self.field2 = None;
+        self.field3 = None;
+        self.field4 = None;
+        self.field5 = None;
+        self.field6 = None;
+        self.field7 = None;
+        self.field8 = None;
+        self.field9 = None;
+        self.field10 = None;
+        self.field11 = None;
+        self._unknown.clear();
     }
     #[inline]
     fn cached_size(&self) -> u32 {

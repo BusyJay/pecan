@@ -102,6 +102,12 @@ impl ExtensionMap {
     pub fn is_empty(&self) -> bool {
         self.map.as_ref().map_or(true, |m| m.is_empty())
     }
+
+    pub fn clear(&mut self) {
+        if let Some(m) = &mut self.map {
+            m.clear();
+        }
+    }
 }
 
 impl Debug for ExtensionMap {
